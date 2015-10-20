@@ -5,7 +5,6 @@ chmod 755 mam
 chmod 644 mam/*.py
 
 chmod 755 nebula.py
-chmod 644 toolset.py
 chmod 755 run_service.py
 
 chmod 755 vendor/
