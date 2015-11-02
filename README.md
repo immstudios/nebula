@@ -35,16 +35,11 @@ git clone https://github.com/immstudios/nebula
 
 ### Starting 
 
+Preffered way is to start Nebula in GNU Screen:
+
 ```bash
 cd /opt/nebula && ./nebula.py
 ```
-
-Preffered way is to start Nebula in GNU Screen, but it is also possible to start Nebula as a Linux daemon.
-
-```bash
-cd /opt/nebula && ./nebula.py -d
-```
-
 
 Need help?
 ----------
