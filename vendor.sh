@@ -16,6 +16,10 @@ fi
 
 while read repo; do
 
+    if [ -z "$repo" ]; then
+        continue 
+    fi
+
     RNAME=`basename $repo`
     DNAME=$VENDORDIR"/"$RNAME
 
