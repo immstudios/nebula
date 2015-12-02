@@ -4,6 +4,7 @@ Nebula
 Nebula is media asset management and workflow automation system for TV and radio broadcast. 
 
 This is not a working version of the software. Please use stable version 4.X:
+
     - [https://github.com/opennx/nx.server](Server)
     - [https://github.com/opennx/nx.client](Client)
 
@@ -26,8 +27,8 @@ Installation
 ### Prerequisities
 
  - Debian Jessie
- - ffmpeg (media processing nodes) - use inst.ffmpeg.sh script
- - nginx (core node) - use inst.nginx.sh script
+ - ffmpeg (media processing nodes) - use [https://github.com/immstudios/installers/blob/master/install..sh](inst.ffmpeg.sh) script
+ - nginx (core node) - use [https://github.com/immstudios/installers/blob/master/install.nginx.sh](inst.nginx.sh) script
  
 ### Installation
 
