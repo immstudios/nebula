@@ -1,0 +1,33 @@
+<script type="text/javascript">
+
+var firefly_kill = function()
+    {
+       var data = {
+            firefly_kill: 1
+        }
+
+        nx.com.post({
+            url: nx.settings.controller,
+            data: data,
+            element: $('#nx-messages'),
+            notifyDone: true,
+            notifyFail: true,
+            notifyError: true,
+            /*
+            postError: nx.utils.logDev,
+            postFail: nx.utils.logDev,
+            postDone: nx.utils.logError
+            */
+        });
+    }
+
+
+
+$( function(){
+   
+    $('.firefly-kill').on('click', function(e){
+        e.preventDefault();
+        firefly_kill();
+    });
+});
+</script>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="/static/favicon.png">
+
+    <title>{{ current_controller.title }}</title>
+
+    <link href="/static/fonts/roboto/stylesheet.css" rel="stylesheet">
+    <link href="/static/css/bootstrap.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-datetimepicker.css" rel="stylesheet">
+    <link href="/static/tools/bootstrap-sortable/bootstrap-sortable.css" rel="stylesheet">
+    <link href="/static/css/basic.css" rel="stylesheet">
+
+    {% block css %}
+    {% endblock %}    
+        
+    <script type="text/javascript">
+        var nx = { 
+            settings : {
+                controller: '/{{ current_controller.controller }}'
+            }
+        }
+    </script>
+</head>
+
+<body>
+
+{% if current_user.id %}
+ {# Navigation #}
+<header class="navbar navbar-inverse navbar-fixed-top bs-docs-nav" role="banner">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".bs-navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="/"><span class="text-primary-brand">{{ current_user.name + "@" if current_user.is_authenticated() }}nebula</span></a>
+    </div>
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+
+        {% include 'nav_bar.html' %}
+
+        <ul class="nav navbar-nav navbar-right">
+            <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span></a></li>
+        </ul>
+</nav>
+  </div>
+</header>
+{% endif %}
+
+    {# Main content #}
+    <div class="container-fluid">
+        
+        <div class="text-center">
+            <div class="nx-messages"></div>
+        
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <div id='nx-flash-messages'>
+               
+                {% for category, message in messages %}
+                    <div class="alert alert-dismissable fade in alert-{{category}}">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        {{ category|alert_icon|safe }} {{ message }}
+                    </div>
+                {% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+
+        </div>
+
+        {% if current_user.is_authenticated() %}
+            
+            {# Main content #}
+
+            {% block body %}
+                Logged in
+            {% endblock %}
+        {% else %}
+
+        {# User login #}
+
+        <div class="col-lg-12 text-center">
+            <div class="login-box">
+            <form action="/login" method="post" name="login">
+                <div class="form-group">
+                    <input class="form-control" id="username" name='username' placeholder="Login" type="text">
+                </div>
+                <div class="form-group">
+                    <input class="form-control" id="password" name="password" placeholder="Password" type="password">
+                </div>
+                <div class="form-group">
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name='remember'> Remember me
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                        <button type='submit' class="btn btn-default btn-info btn-block">Login</button>
+                </div>
+            </form>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+        	$('#username, #password').css({
+        		'-webkit-text-fill-color: #333;': '#BBB'
+        	});
+        </script>
+
+        {% endif %}
+    </div> <!-- container -->
+    
+    {# JS main #}
+
+    <script src="/static/js/jquery-2.1.1.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/moment/moment-with-locales.min.js"></script>
+    <script src="/static/js/bootstrap-datetimepicker.min.js"></script>
+    <script src="/static/tools/bootstrap-sortable/bootstrap-sortable.js"></script>
+    <script src="/static/js/nx.js"></script>
+    <script src="/static/js/boot.js"></script>
+
+    {# JS custom #}
+
+    {% block js %}
+    {% endblock %}
+</body>
+</html>

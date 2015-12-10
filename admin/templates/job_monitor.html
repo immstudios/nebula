@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+{% block body %}
+
+
+
+{% set job_control = 'can/job_control'|ACL %}
+
+
+<div class="view_switcher">
+    
+	<div class="col-lg-12">
+
+		{% set activeClass = " class=\"active\"" %}
+
+		<ul class="nav nav-tabs">
+		  <li role="presentation"{{ activeClass|safe if current_controller.current_view=="active" }}>
+		  	<a href="/jobs/active{{ "/search/"+current_controller.search if current_controller.search|length>1 }}">Active</a>
+		  </li>
+		  <li role="presentation"{{ activeClass|safe if current_controller.current_view=="completed" }}>
+		  	<a href="/jobs/completed{{ "/search/"+current_controller.search if current_controller.search|length>1 }}">Completed</a>
+		  </li>
+		  <li role="presentation"{{ activeClass|safe if current_controller.current_view=="failed" }}>
+		  	<a href="/jobs/failed{{ "/search/"+current_controller.search if current_controller.search|length>1 }}">Failed</a>
+		  </li>
+
+		  <li role="form" class="pull-right">
+			<form class="job_search form-inline" role="form" method="GET" action="/jobs/{{ current_controller.current_view }}/search">
+				<div class="form-group">
+					<div class="input-group">
+						<label class="sr-only" for="fulltext">Search job</label>
+						<input type="text" class="form-control input-md job-fulltext" placeholder="Search term" name="job-search" value="{{ current_controller.search }}">
+						<div class="input-group-addon">
+							<button class="btn-job-search btn btn-xs"><span class="glyphicon glyphicon-search"></span></button>
+							<button class="btn-job-search-clear btn btn-xs"><span class="glyphicon glyphicon-remove"></span></button>
+						</div>
+					</div>
+				</div>
+			</form>
+		  </li>	
+		</ul>
+
+	</div>	
+
+	<div class="clearfix"></div>
+</div>
+
+
+<div class="col-lg-12">
+	<div class="table-responsive">
+	    <table class="table table-hover table-striped">
+	        <thead>
+	            <tr>
+	                <th style='width:50px;'>#</th>
+	                <th>Asset</th>
+	                <th>Action</th>
+	                <th>Priority</th>
+	                <th style='width:160px;'>Progress</th>
+	                <th style='width:150px;'>Status</th>
+	                <th style='width:50px;'>&nbsp;</th>
+	            </tr>
+	        </thead>
+	        <tbody id='jobs_body'>
+	            {% for job in jobs%}
+	            	
+
+	            	{% set action_permit = False %}
+	            	
+	            	{% if job_control['can/job_control'] == True %} 
+	            		{% set action_permit = True %}
+	            	{% endif %}
+
+
+	            	{% if action_permit == False and job_control['can/job_control'] != False and job_control['can/job_control'] != True and job.id_action in job_control['can/job_control'] %}
+	            		{% set action_permit = True %}
+	            	{% endif %}	
+
+	                <tr>                
+	                    <td>{{ job.id_job }}</td>
+	                    <td class='oneliner'>{{ job.asset_title }}</td>
+	                    <td>{{ job.action_title }}</td>
+	                    <td>{{ job.priority }}</td>
+	                    
+	                    <td id='job_progress_{{job.id_job}}' data-id_job="{{job.id_job}}">
+	                        {% if job.progress == -2%}
+	                            <span class="glyphicon glyphicon-ok"></span>
+	                        {% elif job.progress == -3%}
+	                            <span class="glyphicon glyphicon-remove"></span>
+	                        {% elif job.progress == -1%}
+	                            <span class="glyphicon glyphicon-refresh"></span>
+	                        {% else %}
+	                            <div class="progress job-progress">
+	                                <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="{{ job.progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ job.progress }}%;">{{ job.progress }}%</div>
+	                            </div>
+	                        {% endif %}
+	                    </td>
+	                    
+	                    <td id='job_msg_{{job.id_job}}'>{{job.message}}</td>
+	                    
+	                    <td class="action-box">
+	                    {% if action_permit == True %}
+	                        {% if job.progress < -1 %}
+	                            <button class="btn btn-default btn-xs btn-primary job-action" data-action="-1" data-id-job="{{job.id_job}}"><span class="glyphicon glyphicon-repeat"></span></button>
+	                        {% else %}
+	                            <button class="btn btn-default btn-xs btn-danger job-action" data-action="-4" data-id-job="{{job.id_job}}"><span class="glyphicon glyphicon-remove"></span></button>
+	                        {% endif %}
+	                    {% endif %}    
+	                    </td>
+	                </tr>
+	            {% endfor %}
+	        </tbody>
+	    </table>
+	</div>
+</div>
+{% endblock %}
+
+
+
+{% block js %}
+    <script type='text/javascript'>
+    
+    /* ******************     
+    | States
+        
+        PROGRESS  = 0-100   
+        PENDING   = -1
+        COMPLETED = -2
+        FAILED    = -3
+        ABORTED   = -4
+    | 
+    ******************* */ 
+
+    var search_cache = '{{ current_controller.search }}';
+    var redirect_path = search_cache.length>1 ? $('.job_search').attr('action')+'/'+search_cache: nx.settings.controller+'/{{ current_controller.current_view }}'; 
+
+    var job_search = function(){
+        var search = $('.job-fulltext').val();
+        if(search.length>1){
+        	var url = $('.job_search').attr('action')+'/'+search;
+        	document.location.href = url;
+        }else{
+        	var url = $('.job_search').attr('action')+'/'+search;
+        	document.location.href = '/jobs/{{ current_controller.current_view }}';
+        }
+    }
+
+    var job_action = function(e){
+        
+        var data = {
+            id_job : e.data('id-job'), 
+            action : e.data('action')
+        }
+
+        nx.com.post({
+            url: nx.settings.controller+'/{{ current_controller.current_view }}',
+            data: data,
+            element: $('#nx-messages'),
+            notifyDone: true,
+            notifyFail: true,
+            notifyError: true,
+            postDone: load_job_callback
+        });        
+    }
+
+    var load_job_callback = function(){
+        document.location.href = redirect_path;
+    }
+
+
+{% if current_controller.current_view=="active"%}
+
+    /* ***********************
+	|
+	| ACTIVE JOBS LIVE UPDATE
+	| START
+	*********************** */ 	
+
+    var timeout_init = function() {
+        setTimeout('update_progress()', 2000);
+    }
+
+    var buttonSwap = function(element, id_job, state){
+		var btnRepeat = $('<button class="btn btn-default btn-xs btn-primary job-action" data-action="'+state+'" data-id-job="'+id_job+'"><span class="glyphicon glyphicon-repeat"></span></button>');
+		var btnRemove = $('<button class="btn btn-default btn-xs btn-danger job-action" data-action="'+state+'" data-id-job="'+id_job+'"><span class="glyphicon glyphicon-remove"></span></button>');
+
+
+		if(state == -1){
+			element.html(btnRepeat);
+		}else{
+			element.html(btnRemove);
+		}
+	}
+
+    var update_progress = function() {
+        
+    	$.getJSON(nx.settings.controller+"/json").done(function(data) {
+            
+            $.each( data, function( id_job, item ) {
+                pval = item[0];
+                pmsg = item[1];
+                var progressWrap = $("#job_progress_" + id_job);
+                var id_job = progressWrap.data('id_job');	
+                var btnParent = progressWrap.parent('tr').find('td.action-box');
+
+                if (pval == -2){
+                    progressWrap.html("<span class='glyphicon glyphicon-ok'></span>");
+                    buttonSwap(btnParent, id_job, -1);
+                }
+                else if (pval == -3){
+                    progressWrap.html("<span class='glyphicon glyphicon-remove'></span>");
+                    buttonSwap(btnParent, id_job, -1);
+                }
+                else if(pval == -1) {
+                    progressWrap.html("<span class='glyphicon glyphicon-refresh'></span>"); 
+                    buttonSwap(btnParent, id_job, -4);
+                }else{
+                	
+                	var progressBar = progressWrap.find(".progress-bar");
+                	var moveItem = false;
+
+                	if(progressBar.length == 0){
+                		//console.log('Changed: '+pval); 
+                		
+                		prp = $('<div class="progress job-progress"><div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="'+pval+'" aria-valuemin="0" aria-valuemax="100" style="width: '+pval+'%;">'+pval+'%</div></div>');
+
+                		progressWrap.html(prp);
+                		progressBar = progressWrap.find(".progress-bar");
+                		moveItem = true;
+                	}else{
+                		//console.log('Just add: '+pval);
+                	}
+                	progressBar.html(pval+'%').css('width', pval+'%').attr('aria-valuenow', pval); 
+
+                	// move up
+                	if(moveItem === true){
+                		parent = progressWrap.parent('tr');		
+                		parent.prependTo('#jobs_body');
+                		buttonSwap(btnParent, id_job, -4);
+	               	}
+                }
+             
+                $("#job_msg_" + id_job).html(pmsg);
+
+              });
+            });
+
+        timeout_init();
+    }
+
+    // ts go
+    $(document).ready(function(){
+        timeout_init();
+    }); 
+
+    /* ***********************
+	|
+	| ACTIVE JOBS LIVE UPDATE
+	| END
+	*********************** */ 	
+
+{% endif %}
+	
+	if(search_cache.length>0){
+		$('.job-fulltext').css({
+			'border-color': 'rgba(82,168,236,.8)',
+			'outline': '0',
+			'outline': 'thin dotted \9',
+			'-webkit-box-shadow': '0 0 8px rgba(82,168,236,.6)',
+			'box-shadow': '0 0 8px rgba(82,168,236,.6)'
+		});
+	}
+
+	$('.job_search').on('submit', function(e){
+		e.preventDefault();
+		job_search();
+	});
+
+	$('.btn-job-search').on('click', function(e){
+		e.preventDefault();
+		job_search();
+	});
+
+	$('.btn-job-search-clear').on('click', function(e){
+		e.preventDefault();
+		$('.job-fulltext').val('');
+		job_search();
+	});
+
+    $('.action-box').on('click', '.job-action', function(){
+        job_action($(this));    
+    });
+
+    $('.job_state').on('click', 'button', function(e){
+        e.preventDefault();
+        var controller = $(this).data('controller');
+        document.location.href = controller;
+    });
+
+    </script>
+
+{% endblock%}

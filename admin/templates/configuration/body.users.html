@@ -1,0 +1,192 @@
+{% if current_controller.current_item > -1 %}
+
+{% set subtitle = 'New' %}
+{% if current_controller.current_item > 0 and data.status == True %}
+    {% set subtitle = data.meta.login %}
+{% endif %}
+
+<ol class="breadcrumb">
+  <li><a href="/{{ current_controller.controller }}/{{ current_controller.current_view }}">Users</a></li>
+  <li class="active">{{ subtitle }}</li>
+</ol>
+
+
+<div class="col-lg-4 col-md-6 col-sm-12 user-form">
+    
+    <div class="page-header">
+       <h3>User basics</h3>
+    </div>
+
+    <form class="form-horizontal" autocomplete="off">
+
+        <div class="form-group">
+          <label class="col-sm-3 control-label" for="_login">Login</label>  
+          <div  class="col-sm-9">
+              <input id="_login" name="_login" type="text" autocomplete="off" autocorrect="off" placeholder="Unique login" class="form-control input-md" required="" value="{{ data.meta.login }}">
+          </div>
+        </div>
+
+
+        <div class="form-group">
+          <label class="col-sm-3 control-label" for="_login">Full name</label>  
+          <div  class="col-sm-9">
+              <input id="_full_name" name="_full_name" type="text" autocomplete="off" autocorrect="off" placeholder="Full name" class="form-control input-md" required="" value="{{ data.meta.full_name }}">
+          </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-sm-offset-3 col-sm-9">
+                <div class="checkbox">
+                    <label for="is_admin">
+                        <input type="checkbox" id="is_admin" {% if data.meta.is_admin == 'true' %}checked{% endif %}> Admin
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+          <label class="col-sm-3 control-label" for="password">Password</label>  
+          <div  class="col-sm-9">
+              <div class="input-group">
+                 <input id="password" name="password" type="password" placeholder="password" class="form-control input-md col-sm-4" {% if current_controller.current_item == 0 %}required{% endif %}>
+                 <span class="input-group-addon">-</span>
+                 <input id="password-retype" name="password-retype" type="password" placeholder="password again" class="form-control input-md col-sm-4" {% if current_controller.current_item == 0 %}required{% endif %}>
+              </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-sm-offset-3 col-sm-10">
+                <button class="btn btn-success btn-save"><span class="glyphicon glyphicon-ok"></span> Save</button>
+                <button class="btn btn-primary btn-save-and-close"><span class="glyphicon glyphicon-ok"></span> Save and close</button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+
+{% if current_controller.current_item > 0 and data.status == True %}
+    <div class="col-lg-4 col-md-6 col-sm-12 sessions-wrap">
+        
+        <div class="page-header">
+           <h3>Permissions</h3>
+        </div>
+
+        <form class="form-horizontal" autocomplete="off">
+        {% for token in data.acl %}
+           
+            <div class="form-group">
+              <label class="col-sm-4 control-label" for="acl_{{ token }}">{{ token }}</label>  
+              <div class="col-sm-8">
+                  <input id="acl_{{ token }}" name="{{ token }}" type="text" autocomplete="off" autocorrect="off" placeholder="true, false [or,array]" class="form-control input-md acl-list" required="" value="{{ data.acl[token] }}">
+              </div>
+            </div>
+            
+        {% endfor %}
+        </form>
+    </div>
+
+
+    <div class="col-lg-4 col-md-12 col-sm-12 sessions-wrap">
+        
+        <div class="page-header">
+           <h3>User sessions</h3>
+        </div>
+
+
+        <div class="table-responsive">
+            
+            <table class="table table-hover table-striped">
+                <thead>
+                    <tr>
+                        <th>Session ost</th>
+                        <th class="hidden-xs">Modified</th>
+                        <th class="hidden-xs">Created</th>
+                        <th style='width:76px;'>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="slist">
+                {% for session in data.sessions %}
+                    <tr>
+                        <td>{{session.host}}</td>
+                        <td class="hidden-xs">{{session.mtime|datetime}}</td>
+                        <td class="hidden-xs">{{session.mtime|datetime}}</td>
+                        <td style='width:76px;'>
+                            <button class="btn btn-default btn-xs btn-danger btn-force-logout" data-s-key="{{session.key}}" data-s-host="{{session.host}}"><span class="glyphicon glyphicon-flash"></span> Force logout</button>
+                        </td>
+                    </tr>
+                {% endfor %}        
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+{% endif %}
+
+
+{% else %}
+
+<div class="table-responsive user-list ui-form">
+    
+    <table class="table table-hover table-striped sortable">
+        <thead>
+            <tr>
+                <th style='width:50px;' data-firstsort="asc">#</th>
+                <th data-firstsort="asc">Login</th>
+                <th data-firstsort="asc" class="hidden-xs">Full name</th>
+                <th data-firstsort="asc">Admin</th>
+                <th data-firstsort="asc" class="hidden-xs">Modified</th>
+                <th data-firstsort="asc" class="hidden-xs">Created</th>
+                <th style='width:170px;' data-defaultsort="disabled">
+                     <button id="btn_user_0" class="btn btn-default btn-sm btn-edit btn-success" data-id-obj="0" data-action="edit"><span class="glyphicon glyphicon-plus"></span> New</button>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+           {% for user in data.users %}
+            <tr>
+                <td>{{user.id}}</td>
+                <td>{{user.login}}</td>
+                <td class="hidden-xs">{{user.full_name}}</td>
+                <td>{{user.is_admin|bool_icon|safe}}</td>
+                <td class="hidden-xs">{{user.mtime|datetime}}</td>
+                <td class="hidden-xs">{{user.ctime|datetime}}</td>
+                <td>
+                    <button class="btn btn-default btn-sm btn-edit btn-primary" data-id-obj="{{user.id}}" data-action="edit"><span class="glyphicon glyphicon-edit"></span> Edit</button>
+                    
+                    {% if user.is_disabled == 'true' %}
+                        <button class="btn btn-default btn-sm btn-edit btn-success" data-id-obj="{{user.id}}" data-title="{{ user.login }}" data-is-disabled="1" data-action="toggle"><span class="glyphicon glyphicon-ban-cirlce"></span> Enable</button>    
+                    {% else %}
+                        <button class="btn btn-default btn-sm btn-edit btn-warning" data-id-obj="{{user.id}}" data-title="{{ user.login }}" data-is-disabled="0" data-action="toggle"><span class="glyphicon glyphicon-ban-cirlce"></span> Disable</button>  
+                    {% endif %}
+                </td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h3 class="modal-title">Confirm user enable/disable</h3>
+      </div>
+      <div class="modal-body">
+        <p>Confirm disable user <strong class="remove-target"></strong>.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary modal-cancel" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger modal-confirm">Confirm</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+{% endif %}

@@ -1,0 +1,151 @@
+{% if current_controller.current_item > -1 %}
+
+<script src="/static/tools/codemirror/lib/codemirror.js"></script>
+<script src="/static/tools/codemirror/addon/edit/matchbrackets.js"></script>
+<script src="/static/tools/codemirror/addon/scroll/simplescrollbars.js"></script>
+<script src="/static/tools/codemirror/addon/fold/foldcode.js"></script>
+<script src="/static/tools/codemirror/addon/fold/foldgutter.js"></script>
+<script src="/static/tools/codemirror/addon/fold/indent-fold.js"></script>
+<script src="/static/tools/codemirror/addon/fold/brace-fold.js"></script>
+<script src="/static/tools/codemirror/addon/fold/xml-fold.js"></script>
+<script src="/static/tools/codemirror/addon/fold/markdown-fold.js"></script>
+<script src="/static/tools/codemirror/addon/fold/comment-fold.js"></script>
+<script src="/static/tools/codemirror/mode/xml/xml.js"></script>
+
+<script type="text/javascript">
+$( function(){
+	
+	// INIT WYSIWYG
+	var code_editor = CodeMirror.fromTextArea(document.getElementById("config"), {
+		mode: "text/xml",
+		styleActiveLine: true,
+		matchBrackets: true,
+		lineNumbers: true,
+		lineWrapping: true,
+		extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+		foldGutter: true,
+		viewportMargin: Infinity, 
+		scrollbarStyle: "simple", 
+		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"], 
+		theme: 'base16-dark'
+	});
+	 
+	// SAVE REDIRECT
+	var postSave = function(r,d){
+		nx.utils.logDev(r,d);
+		if(d.close === true){
+			document.location.href = '/{{ current_controller.controller }}/{{ current_controller.current_view }}';
+		}
+	}
+
+	// SAVE REQUEST
+	$('.btn-save, .btn-save-and-close').on('click', function(e){
+		e.preventDefault();
+
+		var config = code_editor.getValue();
+		var id_view = {{ current_controller.current_item }};
+
+		if( $('#title').val().length>0 && parseInt($('#position').val())>0 )
+		{	
+
+			var data = {
+				query_table: 'nx_views', 
+				query_key: 'id_view', 
+				query_val: id_view, 
+				close: $(this).hasClass('btn-save-and-close') || id_view == 0 ? true: false,
+				query_data: JSON.stringify({
+					title: $('#title').val(),
+					owner: parseInt($('#owner').val()), 
+					position: parseInt($('#position').val()),
+					config: config
+				})
+			}
+
+			//console.log(data);
+	        nx.com.post({
+	            url: '/{{ current_controller.controller }}/api',
+	            data: data,
+	            element: $('.nx-messages'),
+	            notifyDone: true,
+	            notifyFail: true,
+	            notifyError: true,
+	            postDone: postSave,
+	            postFail: nx.utils.logDev,
+	            postError: nx.utils.logError,
+	        });
+	    }else{
+
+	    	nx.utils.alert({
+	    		type: 'warning',
+	    		message: 'Title and position required, can\'t save',
+	    		clear: true,
+	    		close: true
+	    	});	    	
+	    }
+
+	});
+
+
+
+});
+</script>
+
+{% else %}
+
+<script type="text/javascript">
+$( function(){
+	$('button[data-action="edit"]').on('click', function(e){
+		e.preventDefault();
+		document.location.href = '/{{ current_controller.controller }}/{{ current_controller.current_view }}/'+$(this).data('id-obj');
+	});
+
+
+	// REMOVE REDIRECT
+	var removeDone = function(r,d){
+		
+		if(r.status === true){
+			document.location.href = '/{{ current_controller.controller }}/{{ current_controller.current_view }}';
+		}
+	}
+
+
+	// REMOVE REQUEST
+	$('button[data-action="remove"]').on('click', function(e){
+		e.preventDefault();
+
+		$('.remove-target').html( 'ID: '+$(this).data('id-obj')+' / '+$(this).data('title') );
+		$('.modal').modal();
+		
+		var id_obj = $(this).data('id-obj');
+
+		$('.modal-confirm').on('click', function(e){
+
+			e.preventDefault();
+
+			var data = {
+				remove_confirm: 1, 
+				query_table: 'nx_views', 
+				query_key: 'id_view', 
+				query_val: id_obj
+			}
+
+			//console.log(data);
+	        nx.com.post({
+	            url: '/{{ current_controller.controller }}/api',
+	            data: data,
+	            element: $('.nx-messages'),
+	            notifyDone: true,
+	            notifyFail: true,
+	            notifyError: true,
+	            postDone: removeDone,
+	            postFail: nx.utils.logDev,
+	            postError: nx.utils.logError,
+	        });
+	
+		});
+    });    
+
+});
+</script>
+
+{% endif %}

@@ -1,0 +1,165 @@
+{% if current_controller.current_item > -1 %}
+
+<script src="/static/tools/codemirror/lib/codemirror.js"></script>
+<script src="/static/tools/codemirror/addon/edit/matchbrackets.js"></script>
+<script src="/static/tools/codemirror/addon/scroll/simplescrollbars.js"></script>
+<script src="/static/tools/codemirror/addon/fold/foldcode.js"></script>
+<script src="/static/tools/codemirror/addon/fold/foldgutter.js"></script>
+<script src="/static/tools/codemirror/addon/fold/indent-fold.js"></script>
+<script src="/static/tools/codemirror/addon/fold/brace-fold.js"></script>
+<script src="/static/tools/codemirror/addon/fold/xml-fold.js"></script>
+<script src="/static/tools/codemirror/addon/fold/markdown-fold.js"></script>
+<script src="/static/tools/codemirror/addon/fold/comment-fold.js"></script>
+<script src="/static/tools/codemirror/mode/xml/xml.js"></script>
+
+<script type="text/javascript">
+$( function(){
+	var code_editor = CodeMirror.fromTextArea(document.getElementById("settings"), {
+		mode: "application/xml",
+		/*
+		mode: {
+			name: "python",
+			version: 2,
+			singleLineStringErrors: false
+        },
+        */
+        alignCDATA : true, 
+		styleActiveLine: true,
+		matchBrackets: true,
+		lineNumbers: true,
+		lineWrapping: true,
+		extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+		foldGutter: true,
+		viewportMargin: Infinity, 
+		scrollbarStyle: "simple", 
+		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"], 
+		theme: 'base16-dark'
+	});
+
+	// SAVE REDIRECT
+	var postSave = function(r,d)
+	{
+		//nx.utils.logDev(d);
+		if(d.close === true){
+			document.location.href = '/{{ current_controller.controller }}/{{ current_controller.current_view }}';
+		}
+	}	 
+
+	// SAVE REQUEST
+	$('.btn-save, .btn-save-and-close').on('click', function(e){
+		e.preventDefault();
+
+		var settings = code_editor.getValue();
+		var id_service = {{ current_controller.current_item }}; 
+
+		if( $('#title').val().length>0 && $('#host').val().length>0 && $('#agent').val().length>0 && parseInt($('#loop_delay').val())>0 )
+		{
+
+			var data = {
+				query_table: 'nx_services', 
+				query_key: 'id_service', 
+				query_val: id_service, 
+				close: $(this).hasClass('btn-save-and-close') || id_service == 0 ? true: false,
+				query_data: JSON.stringify({
+					agent: $('#agent').val(),
+					title: $('#title').val(),
+					host: $('#host').val(), 
+					autostart: $('#autostart').prop('checked')===true?1:0,
+					loop_delay: parseInt($('#loop_delay').val()),
+					{% if current_controller.current_item == 0 %}
+					state: 0,
+					pid: 0,
+					last_seen: 0,
+					{% endif %}
+					settings: settings
+				})
+			}
+
+			//console.log(data);
+	        nx.com.post({
+	            url: '/{{ current_controller.controller }}/api',
+	            data: data,
+	            element: $('.nx-messages'),
+	            notifyDone: true,
+	            notifyFail: true,
+	            notifyError: true,
+	            postDone: postSave,
+	            postFail: nx.utils.logDev,
+	            postError: nx.utils.logError,
+	        });
+
+	    }else{
+
+	    	nx.utils.alert({
+	    		type: 'warning',
+	    		message: 'Title, agent, host and loop_delay greater then 0 is required, can\'t save',
+	    		clear: true,
+	    		close: true
+	    	});	    	
+	    }
+
+	});
+
+
+});
+</script>
+
+{% else %}
+
+<script type="text/javascript">
+$( function(){
+	$('button[data-action="edit"]').on('click', function(e){
+		e.preventDefault();
+		document.location.href = '/{{ current_controller.controller }}/{{ current_controller.current_view }}/'+$(this).data('id-obj');
+	});
+
+
+	// REMOVE REDIRECT
+	var removeDone = function(r,d){
+		if(r.status === true){
+			document.location.href = '/{{ current_controller.controller }}/{{ current_controller.current_view }}';
+		}
+	}
+
+
+	// REMOVE REQUEST
+	$('button[data-action="remove"]').on('click', function(e){
+		e.preventDefault();
+
+		$('.remove-target').html( 'ID: '+$(this).data('id-obj')+' / '+$(this).data('title') );
+		$('.modal').modal();
+		
+		var id_obj = $(this).data('id-obj');
+
+		$('.modal-confirm').on('click', function(e){
+
+			e.preventDefault();
+
+			var data = {
+				remove_confirm: 1, 
+				query_table: 'nx_services', 
+				query_key: 'id_service', 
+				query_val: id_obj
+			}
+
+			//console.log(data);
+	        nx.com.post({
+	            url: '/{{ current_controller.controller }}/api',
+	            data: data,
+	            element: $('.nx-messages'),
+	            notifyDone: true,
+	            notifyFail: true,
+	            notifyError: true,
+	            postDone: removeDone,
+	            postFail: nx.utils.logDev,
+	            postError: nx.utils.logError,
+	        });
+	
+		});
+    });    
+
+
+});
+</script>
+
+{% endif %}

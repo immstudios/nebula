@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="text-center">
+	<div class="nx-error-message">
+		<div class="alert alert-danger">
+			<h2>System Error</h2>
+			<p>
+				<span class="glyphicon glyphicon-ban-circle"></span> {{ current_controller.acl.reason }}
+			</p>
+			<p></p>
+		</div>
+	</div>	
+</div>
+
+{% endblock %}

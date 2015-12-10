@@ -8,6 +8,8 @@ This is not a working version of the software. Please use stable version 4.X:
     - [https://github.com/opennx/nx.server](Server)
     - [https://github.com/opennx/nx.client](Client)
 
+Version 5 should be almost fully compatible. Data migration after upgrade should not be neccessary.
+Several deprecated methods will be removed, workers and plugins will have to be updated.
 
 Key features
 ------------
@@ -15,10 +17,11 @@ Key features
  - media asset management, metadata handling
  - conversion, video and audio normalization using Themis library
  - programme planning, scheduling
- - playout control (CasparCG and Liquidsoap)
+ - linear playout control (CasparCG and Liquidsoap)
+ - VOD and pseudolinear output automation
  - dynamic CG (nxcg)
  - web publishing
- - statistics
+ - statistics reporting
 
 
 Installation
@@ -45,6 +48,11 @@ Preffered way is to start Nebula in GNU Screen:
 ```bash
 cd /opt/nebula && ./nebula.py
 ```
+
+### Stopping
+
+To stop nebula press `CTRL+S` ONCE.
+
 
 Need help?
 ----------

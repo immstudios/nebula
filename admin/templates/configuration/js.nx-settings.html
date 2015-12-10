@@ -1,0 +1,144 @@
+<script type="text/javascript">
+
+// SAVE REDIRECT
+var postSave = function(r,d){
+	if(r.status === true)
+	{	
+		document.location.href = '/{{ current_controller.controller }}/{{ current_controller.current_view }}';
+	}
+}
+
+var addSetting = function(){
+
+	var widget = $('<div class="col-lg-4 col-md-6 col-sm-6 add-widget">'
+			+'	<div class="form-group">'
+			+'		<div class="col-sm-5">'
+			+'			<input name="setting-key" type="text" autocomplete="off" autocorrect="off" placeholder="key" class="form-control input-md nx_settings_item_key" value="">'
+			+'		</div>'
+			+'		<div class="col-sm-7">'
+			+'			<div class="input-group">'
+  			+'				<input name="setting-value" type="text" autocomplete="off" autocorrect="off" placeholder="value" class="form-control input-md nx_settings_item_add" value="">'
+			+'		    	<div class="input-group-addon">'
+			+'		      		<a href="#" class="btn-remove"><span class="glyphicon glyphicon-minus"></span></a>'
+			+'		    	</div>'
+			+'		    </div>'
+			+'		</div>'
+			+'	</div>'
+			+'</div>'	
+			+ '');
+
+	widget.find('.nx_settings_item_key').on('change', function(e){
+		$(this).val( sanitizeSettingKey( $(this).val() ) );
+	});
+
+	widget.find('.btn-remove').on('click', function(e){
+		e.preventDefault();
+		widget.remove();
+	});
+
+	$('#nx_settings_wrap').prepend(widget);	
+}
+
+var sanitizeSettingKey = function(key){
+
+	var res = key.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+	return res;
+}
+
+var saveSettings = function(){
+
+	var query_data = {}
+	var canSend = true;
+
+	$('.nx_settings_item').each( function(i){
+		key = $(this).attr('name');
+		query_data[key] = $(this).val();
+	});
+	
+	$('.add-widget').each( function(i){
+		key = $(this).find('.nx_settings_item_key');
+		val = $(this).find('.nx_settings_item_add');
+		if(key.val().length>0 && val.val().length>0){
+			query_data[key.val()] = val.val();
+		}else{
+
+			if(key.val().length==0){
+				key.parent().addClass('has-error');
+			}	
+			if(val.val().length==0){
+				val.parent().parent().addClass('has-error');
+			}	
+
+			canSend = false;
+		}
+	});
+
+	if(canSend === true)
+	{	
+		var data = {
+			close: false,
+			query_table: 'nx_settings', 
+			query_data: JSON.stringify(query_data)
+		}
+
+		//console.log(data);
+        nx.com.post({
+            url: '/{{ current_controller.controller }}/api',
+            data: data,
+            element: $('#nx-messages'),
+            notifyDone: true,
+            notifyFail: true,
+            notifyError: true,
+            postDone: postSave,
+            postFail: nx.utils.logDev,
+            postError: nx.utils.logError,
+        });
+    }
+}
+
+$( function(){
+
+
+	// ADD SETTING
+	$('.btn-add').on('click', function(e){
+
+		addSetting();
+	});
+
+	// SAVE REQUEST
+	$('.btn-save').on('click', function(e){
+		e.preventDefault();
+
+		var remove_str = '<p>Following items will be removed!</p>';
+		var remove_text = false;	
+
+		$('.nx_settings_item').each( function(i){
+			key = $(this).attr('name');
+			if($(this).val().length == 0)
+			{	
+				remove_str += '<p><span class="glyphicon glyphicon-erase"></span> <strong>'+key+'</strong></p>';
+				remove_text = true;
+			}
+		});
+
+		$('.confirm-target').html( 'NX settings modification' );
+		if(remove_text === true)
+		{
+			$('.confirm-items').html( remove_str );
+		}
+
+		$('.modal').modal();
+		
+		var id_obj = $(this).data('id-obj');
+
+		$('.modal-confirm').on('click', function(e){
+			e.preventDefault();
+
+			$('.modal').modal('hide');
+			saveSettings();
+		});	
+	        
+	});
+
+});
+</script>
