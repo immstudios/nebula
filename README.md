@@ -5,10 +5,10 @@ Nebula is media asset management and workflow automation system for TV and radio
 
 This is not a working version of the software. Please use stable version 4.X:
 
-    - [https://github.com/opennx/nx.server](Server)
-    - [https://github.com/opennx/nx.client](Client)
+ - [Server](https://github.com/opennx/nx.server)
+ - [Client](https://github.com/opennx/nx.client)
 
-Version 5 should be almost fully compatible. Data migration after upgrade should not be neccessary.
+Version 5 should be data-compatible with version 4.
 Several deprecated methods will be removed, workers and plugins will have to be updated.
 
 Key features
@@ -23,6 +23,14 @@ Key features
  - web publishing
  - statistics reporting
 
+### Integration
+ 
+ - CasparCG
+ - Unity
+ - Mediatheque 
+ - Dramatica
+ - Themis
+ - Warp
 
 Installation
 ------------
@@ -30,11 +38,10 @@ Installation
 ### Prerequisities
 
  - Debian Jessie
- - ffmpeg (media processing nodes) - use [https://github.com/immstudios/installers/blob/master/install..sh](inst.ffmpeg.sh) script
- - nginx (core node) - use [https://github.com/immstudios/installers/blob/master/install.nginx.sh](inst.nginx.sh) script
+ - ffmpeg (media processing nodes) - use [inst.ffmpeg.sh](https://github.com/immstudios/installers/blob/master/install.ffmpeg.sh) script
+ - nginx (core node) - use [inst.nginx.sh](https://github.com/immstudios/installers/blob/master/install.nginx.sh) script
  
 ### Installation
-
 
 ```bash
 cd /opt
