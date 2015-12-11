@@ -16,8 +16,21 @@ class Admin():
             'server.socket_port': config.get("admin_port", 8080),
             })
 
+        cherrypy.engine.subscribe('start', self.start)
         cherrypy.tree.mount(NebulaAdmin(), "/")
+
+        cherrypy.engine.subscribe('stop', self.stop)
         cherrypy.engine.start()
+
+    def start(self):
+        self.is_running = True
+
+    def stop(self):
+        self.is_running = False
+
+    @property
+    def is_running(self):
+        cherrypy.engine
 
     def shutdown(self):
         cherrypy.engine.exit()
