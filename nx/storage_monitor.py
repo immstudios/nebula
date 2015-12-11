@@ -1,20 +1,9 @@
 from core import *
 from .db import *
+from .agents import BaseMonitor
 
-class StorageMonitor():
-    def __init__(self, once=False):
-        if once: 
-            self._main()
-        else:
-            thread.start_new_thread(self._run,())
-            logging.info("Storage monitor started")
-
-    def _run(self):
-        while True:
-            self._main()
-            time.sleep(60)
-
-    def _main(self):
+class StorageMonitor(BaseMonitor):
+    def main(self):
         for id_storage in storages:
             storage = storages[id_storage]
             if ismount(storage.get_path()): 
@@ -69,5 +58,3 @@ class StorageMonitor():
 
         c = shell(cmd) 
         print c.stderr().read()
-
-

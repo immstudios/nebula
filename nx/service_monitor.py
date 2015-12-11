@@ -1,7 +1,11 @@
+from core import *
+from .db import *
+from .agents import BaseMonitor
 
-
-class ServiceMonitor():
+class ServiceMonitor(BaseMonitor):
     def __init__(self):
+        super(ServiceMonitor, self).__init__(self)
+
         self.services = {}
         db = DB()
         db.query("SELECT id_service,pid FROM nx_services WHERE host='%s'" % HOSTNAME)
@@ -14,7 +18,8 @@ class ServiceMonitor():
         thread.start_new_thread(self._run,())
         logging.info("Service monitor started")
         
-    def get_running_services(self):
+    @property
+    def running_services(self):
         result = []
         for id_service in self.services.keys():
             proc, title = self.services[id_service]
@@ -22,12 +27,8 @@ class ServiceMonitor():
                 result.append((id_service, title))
         return result
 
-    def _run(self):
-        while True:
-            self._main()
-            time.sleep(1)
 
-    def _main(self):
+    def main(self):
         db = DB()
         db.query("SELECT id_service, agent, title, autostart, loop_delay, settings, state, pid FROM nx_services WHERE host='%s'" % HOSTNAME)
      
