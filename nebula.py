@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+#
+# To my future self: keep this simple, please.
+#
+
 from __future__ import print_function
 
 import os
@@ -25,7 +29,7 @@ for pname in os.listdir("vendor"):
 from nx import *
 
 ##
-# Start dispatch only if this script is executed (not imported)
+# Start agents only if this script is executed (not imported)
 ##
 
 if __name__ == "__main__":
@@ -35,14 +39,29 @@ if __name__ == "__main__":
     from nx.service_monitor import ServiceMonitor
     from nx.system_monitor import SystemMonitor
 
+    def are_running(agents):
+        for agent in agents:
+            if agent.is_running:
+                break
+        else:
+            return False
+        return True
+
+    def shutdown(agents):
+        logging.warning("Shutting down agents")
+        for agent in agents:
+            agent.shutdown()
+        while are_running(agents):
+            time.sleep(.5)
+
     agents = []
+
     for agent in [Admin, StorageMonitor, ServiceMonitor, SystemMonitor]:
         try:
             agents.append(agent())
         except:
             log_traceback()
-            for ex in agents:
-                ex.shutdown()
+            shutdown(agents)
             critical_error("Unable to start Nebula")
 
     while True:
@@ -50,9 +69,6 @@ if __name__ == "__main__":
             time.sleep(1)
         except KeyboardInterrupt:
             logging.warning("Shutting down nebula. Please wait...")
-
-            for ex in agents:
-                ex.shutdown()
-
+            shutdown(agents)
             logging.goodnews("Exiting gracefully")
             sys.exit(0)
