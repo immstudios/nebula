@@ -20,11 +20,12 @@ if sys.version_info[:2] < (3, 0):
 # Vendor imports
 ##
 
-for pname in os.listdir("vendor"):
-    pname = os.path.join("vendor", pname)
-    pname = os.path.abspath(pname)
-    if not pname in sys.path:
-        sys.path.append(pname)
+if os.path.exists("vendor"):
+    for pname in os.listdir("vendor"):
+        pname = os.path.join("vendor", pname)
+        pname = os.path.abspath(pname)
+        if not pname in sys.path:
+            sys.path.append(pname)
     
 from nx import *
 
