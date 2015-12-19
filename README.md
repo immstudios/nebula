@@ -58,7 +58,7 @@ cd /opt/nebula && ./nebula.py
 
 ### Stopping
 
-To stop nebula press `CTRL+S` ONCE.
+To stop nebula press `CTRL+C` ONCE.
 
 
 Need help?
