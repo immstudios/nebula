@@ -1,33 +1,36 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#
-# To my future self: keep this simple, please.
-#
-
 from __future__ import print_function
 
 import os
 import sys
 
-print ("")
+##
+# Env setup
+##
 
 if sys.version_info[:2] < (3, 0):
     reload(sys)
     sys.setdefaultencoding('utf-8')
 
+nebula_root = os.path.abspath(os.path.split(sys.argv[0])[0])
+
 ##
 # Vendor imports
 ##
 
-if os.path.exists("vendor"):
-    for pname in os.listdir("vendor"):
-        pname = os.path.join("vendor", pname)
+vendor_dir = os.path.join(nebula_root, "vendor")
+if os.path.exists(vendor_dir):
+    for pname in os.listdir(vendor_dir):
+        pname = os.path.join(vendor_dir, pname)
         pname = os.path.abspath(pname)
         if not pname in sys.path:
-            sys.path.append(pname)
+            sys.path.insert(0, pname)
     
 from nx import *
+
+config["nebula_root"] = nebula_root
 
 ##
 # Start agents only if this script is executed (not imported)
@@ -49,7 +52,7 @@ if __name__ == "__main__":
         return True
 
     def shutdown(agents):
-        logging.warning("Shutting down agents")
+        logging.info("Shutting down agents")
         for agent in agents:
             agent.shutdown()
         while are_running(agents):
@@ -57,7 +60,7 @@ if __name__ == "__main__":
 
     agents = []
 
-    for agent in [Admin, StorageMonitor, ServiceMonitor, SystemMonitor]:
+    for agent in [Admin]:#, StorageMonitor, ServiceMonitor, SystemMonitor]:
         try:
             agents.append(agent())
         except:
@@ -69,6 +72,7 @@ if __name__ == "__main__":
         try:
             time.sleep(1)
         except KeyboardInterrupt:
+            print() 
             logging.warning("Shutting down nebula. Please wait...")
             shutdown(agents)
             logging.goodnews("Exiting gracefully")
