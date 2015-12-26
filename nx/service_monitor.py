@@ -3,9 +3,7 @@ from .db import *
 from .agents import BaseMonitor
 
 class ServiceMonitor(BaseMonitor):
-    def __init__(self):
-        super(ServiceMonitor, self).__init__(self)
-
+    def on_init(self):
         self.services = {}
         db = DB()
         db.query("SELECT id_service,pid FROM nx_services WHERE host='%s'" % HOSTNAME)
@@ -15,8 +13,6 @@ class ServiceMonitor(BaseMonitor):
         db.query("UPDATE nx_services SET state = 0 WHERE host='%s'" % HOSTNAME)
         db.commit()
 
-        thread.start_new_thread(self._run,())
-        logging.info("Service monitor started")
         
     @property
     def running_services(self):

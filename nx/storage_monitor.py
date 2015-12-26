@@ -2,6 +2,7 @@ from core import *
 from .db import *
 from .agents import BaseMonitor
 
+
 class StorageMonitor(BaseMonitor):
     def main(self):
         for id_storage in storages:
