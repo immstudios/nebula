@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# PLEASE MAKE ME NICER
-
 from nx import *
 
 MAX_RETRIES = 3
@@ -27,11 +22,11 @@ class Job():
         qactions = ", ".join([str(k) for k in actions])
 
         db = DB()
-        db.query("""UPDATE nx_jobs 
+        db.query("""UPDATE nx_jobs
             SET id_service = {id_service},
                 stime      = {stime},
                 etime      = 0
-            WHERE 
+            WHERE
                 id_job IN (SELECT id_job from nx_jobs
                     WHERE progress   = -1
                     AND   id_service IN (0, {id_service})
@@ -42,15 +37,15 @@ class Job():
                     )
                   """.format(
                       stime       = time.time(),
-                      id_service  = self.id_service, 
-                      actions     = qactions, 
+                      id_service  = self.id_service,
+                      actions     = qactions,
                       max_retries = MAX_RETRIES
                       )
             )
 
         db.commit()
 
-        db.query("""SELECT id_job, id_object, id_action, settings, priority, retries FROM nx_jobs 
+        db.query("""SELECT id_job, id_object, id_action, settings, priority, retries FROM nx_jobs
             WHERE progress = -1
             AND id_service= %s
             """, [self.id_service]
@@ -96,14 +91,14 @@ class Job():
     def fail(self, message="Failed"):
         db = DB()
         db.query("""UPDATE nx_jobs
-            SET retries   = {retries}, 
-                priority  = {priority}, 
+            SET retries   = {retries},
+                priority  = {priority},
                 progress  = -3,
                 message   = '{message}'
-            WHERE 
+            WHERE
                 id_job  = {id_job}
             """.format(
-                    retries  = self.retries+1, 
+                    retries  = self.retries+1,
                     priority = max(0,self.priority-1),
                     message  = message,
                     id_job   = self.id_job
@@ -117,14 +112,14 @@ class Job():
     def done(self, message="Completed"):
         db = DB()
         db.query("""UPDATE nx_jobs
-            SET   
+            SET
                 progress  = -2,
                 etime     = {etime},
                 message   = '{message}'
-            WHERE 
+            WHERE
                 id_job  = {id_job}
             """.format(
-                    etime   = time.time(), 
+                    etime   = time.time(),
                     message = message,
                     id_job  = self.id_job
                     )

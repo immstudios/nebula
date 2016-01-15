@@ -1,11 +1,9 @@
 from .core import *
-from .db import DB
+from .connection import *
 
 
-def reconfigure():
-    logging.info("Loading configuration...")
-    db = DB()
-
+def load_site_settings(db):
+    global config
     config["playout_channels"] = {}
     config["ingest_channels"] = {}
     config["views"] = {}
@@ -39,29 +37,46 @@ def reconfigure():
             config["ingest_channels"][id_channel] = ch_config
 
 
-    for obj in [messaging, meta_types]:
-        obj.configure()
-    
-    ##
-    # Storages
-    ##
+def load_meta_types(db):
+    global meta_types
+    db.query("SELECT namespace, tag, editable, searchable, class, default_value,  settings FROM nx_meta_types")
+    for ns, tag, editable, searchable, class_, default, settings in db.fetchall():
+        meta_type = MetaType(tag)
+        meta_type.namespace  = ns
+        meta_type.editable   = bool(editable)
+        meta_type.searchable = bool(searchable)
+        meta_type.class_     = class_
+        meta_type.default    = default
+        meta_type.settings   = json.loads(settings)
+        db.query("SELECT lang, alias, col_header FROM nx_meta_aliases WHERE tag='{0}'".format(tag))
+        for lang, alias, col_header in db.fetchall():
+            meta_type.aliases[lang] = alias, col_header
+        meta_types[tag] = meta_type
+    return True
 
-    storages.clear()
+
+def load_storages(db):
+    global storages
     db.query("SELECT id_storage, title, protocol, path, login, password FROM nx_storages")
     for id_storage, title, protocol, path, login, password in db.fetchall():
-        storage = Storage()
-        storage["id_storage"] = id_storage
-        storage["title"]      = title
-        storage["protocol"]   = protocol
-        storage["path"]       = path
-        storage["login"]      = login
-        storage["password"]   = password
+        storage = Storage(
+            id=id_storage,
+            title=title,
+            protocol=protocol,
+            path=path,
+            login=login,
+            password=password
+            )
         storages.add(storage)
 
-    logging.goodnews("Nebula configuration updated")
 
-#reconfigure()
+def load_all():
+    db = DB()
+    load_site_settings(db)
+    load_meta_types(db)
+    load_storages(db)
 
+    cache.configure()
+    messaging.configure()
 
-
-
+load_all()

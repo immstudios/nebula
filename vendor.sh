@@ -17,7 +17,7 @@ fi
 while read repo; do
 
     if [ -z "$repo" ]; then
-        continue 
+        continue
     fi
 
     RNAME=`basename $repo`
@@ -36,4 +36,3 @@ while read repo; do
     fi
 
 done < $VENDORLST
-

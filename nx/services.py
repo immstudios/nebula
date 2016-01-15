@@ -1,12 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+from .core import *
+from .connection import *
 
-import traceback
+__all__ = ["BaseService"]
 
-from nx.common import *
-from nx.connection import *
-
-class ServicePrototype(object):
+class BaseService(object):
     def __init__(self, id_service, settings=False):
         logging.debug("Initializing service")
         self.id_service = id_service
@@ -17,7 +14,7 @@ class ServicePrototype(object):
         except SystemExit:
             pass
         except:
-            logging.error("Unable to initialize service: {}".format(traceback.format_exc()))
+            log_traceback("Unable to initialize service")
             self.shutdown()
         else:
             db = DB()
@@ -59,4 +56,3 @@ class ServicePrototype(object):
         if state in [STOPPED, STOPPING, KILL]:
             self.shutdown()
 
-__all__ = ["ServicePrototype"]

@@ -1,6 +1,4 @@
-from .constants import VIDEO, AUDIO, IMAGE 
-
-__all__ = ["file_types"]
+from .constants import *
 
 file_types = {
     "dv"   : VIDEO,

@@ -5,31 +5,32 @@ import jinja2
 from nx import *
 
 from .admin import NebulaAdmin
-from .api import NebulaApi
+from .api import NebulaAPI
 
 class Admin():
-    def __init__(self):
+    def __init__(self, blocking=False):
         self.is_running = False
         self.admin_config = {
-            '/': { 
-                'tools.sessions.on': True, 
+            '/': {
+                'tools.sessions.on': True,
                 'tools.staticdir.root': os.path.join(config["nebula_root"], "admin")
-                 }, 
-            '/static': { 
-                'tools.staticdir.on': True, 
-                'tools.staticdir.dir': "static" 
-                }, 
-            } 
+                 },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': "static"
+                },
+            }
         self.api_config = {
-            '/': { 
-                'tools.sessions.on': True, 
-                 }, 
-            } 
-        
+            '/': {
+                'tools.sessions.on' : True,
+                'tools.trailing_slash.on' : False
+                 },
+            }
+
         cherrypy.config.update({
-            'server.socket_host': config.get("admin_host", "127.0.0.1"),
+            'server.socket_host': config.get("admin_host", "0.0.0.0"),
             'server.socket_port': config.get("admin_port", 8080),
-            'log.screen' : False
+#            'log.screen' : False
             })
 
         cherrypy.engine.subscribe('start', self.start)
@@ -38,6 +39,8 @@ class Admin():
 
         cherrypy.engine.subscribe('stop', self.stop)
         cherrypy.engine.start()
+        if blocking:
+            cherrypy.engine.block()
 
     def start(self):
         self.is_running = True

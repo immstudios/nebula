@@ -1,8 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-from nx.common import *
-from nx.connection import *
+from .common import *
+from .constants import *
 
 class MetaType(object):
     def __init__(self, title):
@@ -19,7 +16,7 @@ class MetaType(object):
         if not lang in self.aliases:
             return self.title.replace("_"," ").capitalize()
         return self.aliases[lang][0]
-        
+
     def col_header(self, lang='en-US'):
         if not lang in self.aliases:
             return self.title.replace("_"," ").capitalize()
@@ -49,42 +46,6 @@ class MetaTypes(dict):
     def __getitem__(self, key):
         return self.get(key, self._default())
 
-    def load(self):
-        if connection_type == "server":
-            db = DB()
-            db.query("SELECT namespace, tag, editable, searchable, class, default_value,  settings FROM nx_meta_types")
-            for ns, tag, editable, searchable, class_, default, settings in db.fetchall():
-                meta_type = MetaType(tag)
-                meta_type.namespace  = ns
-                meta_type.editable   = bool(editable)
-                meta_type.searchable = bool(searchable)
-                meta_type.class_     = class_
-                meta_type.default    = default
-                meta_type.settings   = json.loads(settings)
-                db.query("SELECT lang, alias, col_header FROM nx_meta_aliases WHERE tag='{0}'".format(tag))
-                for lang, alias, col_header in db.fetchall():
-                    meta_type.aliases[lang] = alias, col_header
-                self[tag] = meta_type
-            return True
-
-        elif connection_type == "client":
-            ret_code, result = query("meta_types")
-            if ret_code < 300:  
-                for t in result:
-                    m = MetaType(t["title"])
-                    m.namespace   = t["namespace"]
-                    m.editable    = t["editable"]
-                    m.searchable  = t["searchable"]
-                    m.class_      = t["class"]
-                    m.default     = t["default"]
-                    m.settings    = t["settings"]
-                    m.aliases     = t["aliases"]
-                    self[t["title"]] = m
-                return True
-            else:
-                return False
-        return False
-
     def _default(self):
         meta_type = MetaType("Unknown")
         meta_type.namespace  = "site"
@@ -111,12 +72,12 @@ class MetaTypes(dict):
             return self.format(key, self[key].default)
 
     def tag_alias(self, key, lang):
-        if key in self: 
+        if key in self:
             return self[key].alias(lang)
         return key
 
     def col_alias(self, key, lang):
-        if key in self: 
+        if key in self:
             return self[key].col_header(lang)
         return key
 
@@ -140,14 +101,14 @@ class MetaTypes(dict):
         elif mtype.class_ == TIMECODE:    return float(value)
         elif mtype.class_ == REGIONS:     return value if type(value) == dict else json.loads(value)
         elif mtype.class_ == FRACTION:    return str(value).strip().replace(":","/")
-    
+
         elif mtype.class_ == SELECT:      return value
         elif mtype.class_ == CS_SELECT:   return value
         elif mtype.class_ == ENUM:        return int(value)
         elif mtype.class_ == CS_ENUM:     return int(value)
         elif mtype.class_ == SELECT:      return value
         elif mtype.class_ == CS_SELECT:   return value
-    
+
         return value
 
     def unformat(self, key, value):
@@ -157,9 +118,7 @@ class MetaTypes(dict):
         elif mtype.class_ == REGIONS or key.startswith("can/"):
             return json.dumps(value)
         return value
- 
+
 
 meta_types = MetaTypes()
 
-if connection_type == "server":
-    meta_types.load()

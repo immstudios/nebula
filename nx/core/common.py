@@ -11,28 +11,14 @@ from xml.etree import ElementTree as ET
 from nxtools import *
 from .constants import *
 
-logging.info("Initializing Nebula core")
-
-__all__ = [
-        "ismount",
-        "python_cmd",
-        "success",
-        "failed",
-        "hash",
-        "xml",
-        "config",
-        "messaging",
-        "logging",
-        "storages"
-        ]
 
 if PLATFORM == "windows":
-    python_cmd = "c:\\python27\\python.exe"
+    python_cmd = "c:\\python27\python.exe"
     def ismount(path):
         return True
 else:
     python_cmd = "python"
-    from posixpath import ismount  
+    from posixpath import ismount
 
 ##
 # Utilities
@@ -44,7 +30,7 @@ def success(ret_code):
 def failed(ret_code):
     return not success(ret_code)
 
-def hash(string):
+def get_hash(string):
     return hashlib.sha256(string).hexdigest()
 
 def xml(text):
@@ -57,10 +43,9 @@ def xml(text):
 class Config(dict):
     def __init__(self):
         super(Config, self).__init__()
-        logging.debug("Loading local settings")
-        self["site"] = "Unnamed"
-        self["host"] = socket.gethostname()  # Machine hostname
+        self["site_name"] = "Unnamed"
         self["user"] = "Nebula"              # Service identifier. Should be overwritten by service/script.
+        self["host"] = socket.gethostname()  # Machine hostname
         try:
             local_settings = json.loads(open("local_settings.json").read())
         except:
@@ -82,22 +67,20 @@ class Messaging():
         self.port = int(config.get("seismic_port", 42112))
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 255)
-  
+
     def send(self, method, **data):
         try:
             self.sock.sendto(
                     json.dumps([
-                        time.time(), 
-                        config["site"], 
-                        config["host"], 
-                        method, 
+                        time.time(),
+                        config["site_name"],
+                        config["host"],
+                        method,
                         data
-                        ]), 
+                        ]),
                     (self.addr, self.port))
         except:
-            pass
-            #TODO: Uncomment in prod
-            #log_traceback(handlers=False) 
+            log_traceback(handlers=False)
 
 messaging = Messaging()
 
@@ -122,23 +105,26 @@ class Storage():
     def __getitem__(self, key):
         return self.settings[key]
 
+    def __repr__(self):
+        return "storage ID:{} ({})".format(self.id, self["title"])
+
     @property
     def id(self):
         return self["id"]
 
     @property
     def local_path(self):
-        if self.protocol == LOCAL:
+        if self["protocol"] == LOCAL:
             return self["path"]
         elif PLATFORM == "unix":
-            return os.path.join("/mnt/{}_{:02d}".format(config["site"], self.id))
-        elif PLATFORM == "windows":
+            return os.path.join("/mnt/{}_{:02d}".format(config["site_name"], self.id))
+        #lif PLATFORM == "windows":
             #TODO
-            pass
+        #   pass
+        logging.warning("Unsuported {} platform: {}".format(self, self["protocol"]))
 
     def __len__(self):
         return ismount(self.local_path) and len(os.listdir(self.local_path)) != 0
-
 
 
 class Storages():
@@ -157,5 +143,6 @@ class Storages():
 
     def __iter__(self):
         return self.data.__iter__()
+
 
 storages  = Storages()

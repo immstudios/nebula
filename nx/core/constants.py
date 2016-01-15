@@ -1,22 +1,22 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-########################################################################
-## Constants
-
+##
 # service states
+##
+
 STOPPED  = 0           # Service is stopped. Surprisingly.
 STARTED  = 1           # Service is started and running
 STARTING = 2           # Service start requested.
 STOPPING = 3           # Service graceful stop requested. It should shutdown itself after current iteration
 KILL     = 4           # Service force stop requested. Dispatch is about to kill -9 it
 
+##
+# Object types
+##
 
 ASSET = 0
 ITEM  = 1
 BIN   = 2
 EVENT = 3
-USER  = 4 
+USER  = 4
 
 OBJECT_TYPES = {
  "asset"  : 0,
@@ -26,8 +26,10 @@ OBJECT_TYPES = {
  "user"   : 4
  }
 
+##
+# Content types
+##
 
-# content_type
 TEXT     = 0
 VIDEO    = 1
 AUDIO    = 2
@@ -40,7 +42,10 @@ CONTENT_TYPES = {
     "IMAGE" : IMAGE
 }
 
-# media_type
+##
+# Media types
+##
+
 FILE     = 0           # There is (or should be) physical file specified by 'storage' and 'path' metadata
 VIRTUAL  = 1           # Asset exists only as DB record (macro, text...)
 
@@ -63,7 +68,7 @@ TIMECODE     = 6       # Timecode information, stored as float(seconds), present
 REGIONS      = 7
 FRACTION     = 8       # 16/9 etc...
 SELECT       = 9       # Select box ops stored as {'value':'title', 'another_value':'another title'}
-CS_SELECT    = 10      
+CS_SELECT    = 10
 ENUM         = 11      # Similar to select - for integer values
 CS_ENUM      = 12
 
@@ -87,16 +92,6 @@ PLAYOUT   = 0
 INGEST    = 1
 CAMPAIGN  = 2
 
-#################################################
-## Log levels
-
-DEBUG       = 0
-INFO        = 1
-WARNING     = 2
-ERROR       = 3
-GOOD_NEWS   = 4
-
-## Log level
 #################################################
 ## Block playback modes
 
