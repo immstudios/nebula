@@ -9,8 +9,9 @@ This is not a working version of the software. Please use stable version 4:
  - [Client](https://github.com/opennx/nx.client)
 
 Version 5 should be data-compatible with version 4, but there will be API changes.
+
 Several deprecated methods will be removed, workers and plugins will have to be updated.
-Both generations are currently maintained and actively developed.
+This version is under heavy development and new features are backported if possible.
 
 Key features
 ------------
@@ -26,12 +27,12 @@ Key features
 
 ### Integration
 
- - CasparCG
- - Unity
- - Mediatheque
- - Dramatica
- - Themis
- - Warp
+ - CasparCG - Video and CG Playout server
+ - Unity - Pseudo-linear streaming server
+ - Mediatheque - VOD HLS CDN (RTFM BTW)
+ - Dramatica - Automated playlist creation
+ - Themis - File ingest server
+ - Warp - Web CMS
 
 Installation
 ------------
