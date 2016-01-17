@@ -1,5 +1,17 @@
-import psycopg2
+import time
 from .core import *
+
+try:
+    import psycopg2
+except ImportError:
+    log_traceback()
+    critical_error("Unable to import psycopg2")
+
+try:
+    import pylibmc
+except ImportError:
+    log_traceback()
+    critical_error("Unable to import pylibmc")
 
 __all__ = ["DB", "cache", "Cache"]
 
@@ -62,11 +74,9 @@ class DB(BaseDB):
     def lastid (self):
         self.query("select lastval()")
         return self.fetchall()[0][0]
-
-#######################################################################################################
-## Cache
-
-import pylibmc
+##
+# Cache
+##
 
 class Cache():
     def __init__(self):
@@ -111,7 +121,7 @@ class Cache():
                 time.sleep(.3)
                 self.connect()
         else:
-            critical_error ("Memcache save failed. This should never happen. Check MC server")
+            critical_error("Memcache save failed. This should never happen. Check MC server")
             sys.exit(-1)
         return True
 
@@ -128,7 +138,7 @@ class Cache():
                 time.sleep(.3)
                 self.connect()
         else:
-            critical_error ("Memcache delete failed. This should never happen. Check MC server")
+            critical_error("Memcache delete failed. This should never happen. Check MC server")
             sys.exit(-1)
         return True
 
@@ -161,7 +171,7 @@ class Cache():
                     time.sleep(.3)
                     self.connect()
             else:
-                critical_error ("Memcache save failed. This should never happen. Check MC server")
+                critical_error("Memcache save failed. This should never happen. Check MC server")
                 sys.exit(-1)
         self.pool.relinquish()
         return True
@@ -180,7 +190,7 @@ class Cache():
                     time.sleep(.3)
                     self.connect()
             else:
-                critical_error ("Memcache delete failed. This should never happen. Check MC server")
+                critical_error("Memcache delete failed. This should never happen. Check MC server")
                 sys.exit(-1)
         self.pool.relinquish()
         return True
