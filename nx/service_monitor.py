@@ -1,19 +1,27 @@
-from core import *
-from .db import *
-from .agents import BaseMonitor
+from .core import *
+from .connection import *
+from .agents import BaseAgent
 
-class ServiceMonitor(BaseMonitor):
+__all__ = ["ServiceMonitor"]
+
+class ServiceMonitor(BaseAgent):
     def on_init(self):
         self.services = {}
         db = DB()
-        db.query("SELECT id_service,pid FROM nx_services WHERE host='%s'" % HOSTNAME)
-        for id_service, pid in db.fetchall(): 
+        db.query("SELECT id_service, pid FROM nx_services WHERE host=%s", [config["host"]])
+        for id_service, pid in db.fetchall():
             if pid:
                 self.kill_service(r[1])
-        db.query("UPDATE nx_services SET state = 0 WHERE host='%s'" % HOSTNAME)
+        db.query("UPDATE nx_services SET state = 0 WHERE host=%s", [config["host"]])
         db.commit()
 
-        
+
+    def on_shutdown(self):
+        services = service_monitor.services.keys()
+        for id_service in services:
+            service_monitor.kill_service(id_service=id_service)
+
+
     @property
     def running_services(self):
         result = []
@@ -26,8 +34,12 @@ class ServiceMonitor(BaseMonitor):
 
     def main(self):
         db = DB()
-        db.query("SELECT id_service, agent, title, autostart, loop_delay, settings, state, pid FROM nx_services WHERE host='%s'" % HOSTNAME)
-     
+        db.query("SELECT id_service, agent, title, autostart, loop_delay, settings, state, pid FROM nx_services WHERE host=%s", [config["host"]])
+
+        ##
+        # Start / stop service
+        ##
+
         for id_service, agent, title, autostart, loop_delay, settings, state, pid in db.fetchall():
             if state == STARTING: # Start service
                 if not id_service in self.services.keys():
@@ -37,60 +49,57 @@ class ServiceMonitor(BaseMonitor):
                 if id_service in self.services.keys():
                     self.kill_service(self.services[id_service][0].pid)
 
-        ## Starting / Stopping
-        #######################
-        ## Real state
+        ##
+        # Real service state
+        ##
 
         for id_service in self.services.keys():
             proc, title = self.services[id_service]
-            if proc.poll() == None: continue
+            if proc.poll() == None:
+                continue
             del self.services[id_service]
-            logging.warning("Service %s (%d) terminated"%(title,id_service))
-            db.query("UPDATE nx_services SET state = 0  WHERE id_service = %d"%(id_service))
+            logging.warning("Service {} ({}) terminated".format(title,id_service))
+            db.query("UPDATE nx_services SET state = 0  WHERE id_service = %s", [id_service])
             db.commit()
-          
-        ## Real state
-        ########################
-        ## Autostart
-          
-        db.query("SELECT id_service, title, state, autostart FROM nx_services WHERE host = '%s' AND state=0 AND autostart=1" % HOSTNAME)
+
+        ##
+        # Autostart
+        ##
+
+        db.query("SELECT id_service, title, state, autostart FROM nx_services WHERE host=%s AND state=0 AND autostart=1", [config["host"]])
         for id_service, title, state, autostart in db.fetchall():
             if not id_service in self.services.keys():
-                logging.debug("AutoStarting service %s (%s)"% (title, id_service))
+                logging.debug("AutoStarting service {} ({})"% (title, id_service))
                 self.start_service(id_service, title)
-            
+
+
     def start_service(self, id_service, title, db=False):
         proc_cmd = [
-            python_cmd, 
-            os.path.join(NX_ROOT, "run_service.py"), 
-            str(id_service), 
+            python_cmd,
+            os.path.join(config["nebula_root"], "run_service.py"),
+            str(id_service),
             "\"{}\"".format(title)
             ]
 
         logging.info("Starting service {} - {}".format(id_service, title))
 
         self.services[id_service] = [
-            subprocess.Popen(proc_cmd, cwd=NX_ROOT), 
+            subprocess.Popen(proc_cmd, cwd=config["nebula_root"]),
             title
             ]
-        # PID & Heartbeat should be updated by run_service py
-    
+
 
     def stop_service(self, id_service, title, db=False):
-        logging.info("Stopping service %d - %s"%(id_service, title))
-        #well... service should stop itself :-/
+        logging.info("Stopping service {} ({})".format(id_service, title))
 
 
-    def kill_service(self, pid=False, id_service=False):    
+    def kill_service(self, pid=False, id_service=False):
         if id_service in self.services:
             pid = self.services[id_service][0].pid
-        if pid == os.getpid() or pid == 0: 
+        if pid == os.getpid() or pid == 0:
             return
         logging.info("Attempting to kill PID {}".format(pid))
-        if PLATFORM == "linux":
-            os.system (os.path.join(NX_ROOT,"killgroup.sh {}".format(pid)))
-        elif PLATFORM == "windows":
-            os.system ("taskkill /F /PID %s" % pid)
+        os.system(os.path.join(config["nebula_root"], "killgroup.sh {}".format(pid)))
 
 
 

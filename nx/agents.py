@@ -3,7 +3,9 @@ import thread
 
 from .core import *
 
-class BaseMonitor():
+__all__ == ["BaseAgent"]
+
+class BaseAgent():
     def __init__(self, once=False):
         self.on_init()
         self.is_running = self.should_run = False
@@ -17,6 +19,9 @@ class BaseMonitor():
     def on_init(self):
         pass
 
+    def on_shutdown(self):
+        pass
+
     def shutdown(self):
         self.should_run = False
 
@@ -27,5 +32,6 @@ class BaseMonitor():
             except:
                 log_traceback()
             time.sleep(1)
+        self.on_shutdown()
         self.is_running = False
 

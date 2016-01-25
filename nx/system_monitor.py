@@ -1,6 +1,9 @@
-from core import *
-from .db import *
+from .core import *
+from .connection import *
+from .agents import BaseAgent
 
-class SystemMonitor():
+__all__ = ["SystemMonitor"]
+
+class SystemMonitor(BaseAgent):
     pass
 
