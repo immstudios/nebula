@@ -3,7 +3,7 @@ import thread
 
 from .core import *
 
-__all__ == ["BaseAgent"]
+__all__ = ["BaseAgent"]
 
 class BaseAgent():
     def __init__(self, once=False):
