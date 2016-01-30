@@ -4,3 +4,7 @@ dramatica.log
 tool.py
 vendor/
 plugins
+
+
+_resources/materialize.zip
+_resources/materialize-src
