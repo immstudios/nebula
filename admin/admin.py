@@ -41,3 +41,19 @@ class NebulaAdmin():
     ##
     # Views
     ##
+
+    @cherrypy.expose
+    def browser(self):
+        pass
+
+    @cherrypy.expose
+    def jobs(self):
+        pass
+
+    @cherrypy.expose
+    def services(self):
+        pass
+
+    @cherrypy.expose
+    def config(self):
+        pass

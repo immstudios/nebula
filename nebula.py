@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     agents = []
 
-    for agent in [Admin]:#, StorageMonitor, ServiceMonitor, SystemMonitor]:
+    for agent in [Admin, StorageMonitor, ServiceMonitor, SystemMonitor]:
         try:
             agents.append(agent())
         except:
@@ -72,8 +72,14 @@ if __name__ == "__main__":
         try:
             time.sleep(1)
         except KeyboardInterrupt:
-            print()
-            logging.warning("Shutting down nebula. Please wait...")
-            shutdown(agents)
-            logging.goodnews("Exiting gracefully")
-            sys.exit(0)
+            break
+
+    print()
+    try:
+        logging.warning("Shutting down nebula. Please wait...")
+        shutdown(agents)
+        logging.goodnews("Exiting gracefully")
+        sys.exit(0)
+    except KeyboardInterrupt:
+        logging.warning("Immediate shutdown enforced. This may cause problems")
+        sys.exit(1)

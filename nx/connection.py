@@ -4,13 +4,13 @@ from .core import *
 try:
     import psycopg2
 except ImportError:
-    log_traceback()
+    log_traceback("Import error")
     critical_error("Unable to import psycopg2")
 
 try:
     import pylibmc
 except ImportError:
-    log_traceback()
+    log_traceback("Import error")
     critical_error("Unable to import pylibmc")
 
 __all__ = ["DB", "cache", "Cache"]
@@ -20,8 +20,12 @@ __all__ = ["DB", "cache", "Cache"]
 ##
 
 class BaseDB(object):
+    pmap = {}
+
     def __init__(self, **kwargs):
-        self.kwargs = kwargs
+        self.settings = {
+            self.pmap[key] : kwargs.get(key, config[key]) for key in self.pmap
+            }
         self._connect()
 
     def _connect(self):
@@ -45,24 +49,26 @@ class BaseDB(object):
     def __len__(self):
         return True
 
+
 class DB(BaseDB):
+    pmap = {
+        "host" : "db_host",
+        "user" : "db_user",
+        "password" : "db_pass"
+        "database" : "db_name",
+        }
+
     def _connect(self):
         i = 0
         while i < 3:
             try:
-                self.conn = psycopg2.connect(
-                    database = self.kwargs.get('db_name', False) or config['db_name'],
-                    host     = self.kwargs.get('db_host', False) or config['db_host'],
-                    user     = self.kwargs.get('db_user', False) or config['db_user'],
-                    password = self.kwargs.get('db_pass', False) or config['db_pass']
-                    )
+                self.conn = psycopg2.connect(**self.settings)
             except psycopg2.OperationalError:
                 time.sleep(1)
                 i+=1
                 continue
             else:
                 break
-
         self.cur = self.conn.cursor()
 
     def sanit(self, instr):
@@ -74,6 +80,7 @@ class DB(BaseDB):
     def lastid (self):
         self.query("select lastval()")
         return self.fetchall()[0][0]
+
 ##
 # Cache
 ##
@@ -87,7 +94,7 @@ class Cache():
         self.site = config["site_name"]
         self.host = config["cache_host"]
         self.port = config["cache_port"]
-        self.cstring = '%s:%s'%(self.host,self.port)
+        self.cstring = "{}:{}".format(self.host, self.port)
         self.pool = False
         self.connect()
 
@@ -97,9 +104,9 @@ class Cache():
 
     def load(self, key):
         if config.get("mc_thread_safe", False):
-            return self.tload(key)
+            return self.threaded_load(key)
 
-        key = "{}_{}".format(self.site,key)
+        key = "{}_{}".format(self.site, key)
         try:
             result = self.conn.get(key)
         except pylibmc.ConnectionError:
@@ -109,7 +116,7 @@ class Cache():
 
     def save(self, key, value):
         if config.get("mc_thread_safe", False):
-            return self.tsave(key, value)
+            return self.threaded_save(key, value)
 
         key = "{}_{}".format(self.site, key)
         for i in range(10):
@@ -127,7 +134,7 @@ class Cache():
 
     def delete(self,key):
         if config.get("mc_thread_safe", False):
-            return self.tdelete(key)
+            return self.threaded_delete(key)
         key = "{}_{}".format(self.site, key)
         for i in range(10):
             try:
@@ -142,8 +149,7 @@ class Cache():
             sys.exit(-1)
         return True
 
-
-    def tload(self, key):
+    def threaded_load(self, key):
         if not self.pool:
             self.pool = pylibmc.ThreadMappedPool(self.conn)
         key = "{}_{}".format(self.site, key)
@@ -157,7 +163,7 @@ class Cache():
         self.pool.relinquish()
         return result
 
-    def tsave(self, key, value):
+    def threaded_save(self, key, value):
         if not self.pool:
             self.pool = pylibmc.ThreadMappedPool(self.conn)
         key = "{}_{}".format(self.site, key)
@@ -176,7 +182,7 @@ class Cache():
         self.pool.relinquish()
         return True
 
-    def tdelete(self,key):
+    def threaded_delete(self,key):
         if not self.pool:
             self.pool = pylibmc.ThreadMappedPool(self.conn)
         key = "{}_{}".format(self.site, key)
@@ -194,6 +200,5 @@ class Cache():
                 sys.exit(-1)
         self.pool.relinquish()
         return True
-
 
 cache = Cache()
