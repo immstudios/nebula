@@ -46,9 +46,15 @@ class Config(dict):
         self["site_name"] = "Unnamed"
         self["user"] = "Nebula"              # Service identifier. Should be overwritten by service/script.
         self["host"] = socket.gethostname()  # Machine hostname
+        if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
+            local_settings_path = sys.argv[1]
+        else:
+            local_settings_path = "local_settings.json"
         try:
-            local_settings = json.loads(open("local_settings.json").read())
+            local_settings = json.loads(open(local_settings_path).read())
         except:
+            print (local_settings_path)
+            log_traceback(handlers=False)
             critical_error("Unable to open site_settings file.")
         self.update(local_settings)
 
@@ -60,15 +66,18 @@ config = Config()
 
 class Messaging():
     def __init__(self):
-        self.configure()
+        self.configured = False
 
     def configure(self):
         self.addr = config.get("seismic_addr", "224.168.2.8")
         self.port = int(config.get("seismic_port", 42112))
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 255)
+        self.configured = True
 
     def send(self, method, **data):
+        if not self.configured:
+            return
         try:
             self.sock.sendto(
                     json.dumps([
