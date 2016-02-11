@@ -2,6 +2,8 @@ from .core import *
 from .connection import *
 from .agents import BaseAgent
 
+import subprocess
+
 __all__ = ["ServiceMonitor"]
 
 class ServiceMonitor(BaseAgent):
@@ -17,9 +19,9 @@ class ServiceMonitor(BaseAgent):
 
 
     def on_shutdown(self):
-        services = service_monitor.services.keys()
+        services = self.services.keys()
         for id_service in services:
-            service_monitor.kill_service(id_service=id_service)
+            self.kill_service(id_service=id_service)
 
 
     @property
@@ -69,7 +71,7 @@ class ServiceMonitor(BaseAgent):
         db.query("SELECT id_service, title, state, autostart FROM nx_services WHERE host=%s AND state=0 AND autostart=1", [config["host"]])
         for id_service, title, state, autostart in db.fetchall():
             if not id_service in self.services.keys():
-                logging.debug("AutoStarting service {} ({})"% (title, id_service))
+                logging.debug("AutoStarting service {} ({})".format(title, id_service))
                 self.start_service(id_service, title)
 
 
@@ -99,7 +101,7 @@ class ServiceMonitor(BaseAgent):
         if pid == os.getpid() or pid == 0:
             return
         logging.info("Attempting to kill PID {}".format(pid))
-        os.system(os.path.join(config["nebula_root"], "killgroup.sh {}".format(pid)))
+        os.system(os.path.join(config["nebula_root"], "killtree.sh {}".format(pid)))
 
 
 

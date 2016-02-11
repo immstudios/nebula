@@ -66,7 +66,7 @@ def interleave(fname):
 class Ffmpeg(Encoder):
     def configure(self):
         self.ffparams = ["ffmpeg", "-y"]
-        self.ffparams.extend(["-i", self.asset.get_file_path()])
+        self.ffparams.extend(["-i", self.asset.file_path])
         asset = self.asset
 
         id_storage = int(self.task.find("storage").text)
@@ -136,7 +136,6 @@ class Ffmpeg(Encoder):
     def get_progress(self):
         if not self.proc:
             return 0, "Starting"
-
         if self.proc.poll() == 0:
             return COMPLETED, "Encoding completed"
         elif self.proc.poll() > 0:

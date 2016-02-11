@@ -27,7 +27,7 @@ class Service(BaseService):
 
     def on_main(self):
         db = DB()
-        db.query("SELECT id_object FROM nx_assets WHERE status = '{}'".format(ONLINE))
+        db.query("SELECT id_object FROM nx_assets WHERE status=%s", [ONLINE])
         for id_asset, in db.fetchall():
             self._proc(id_asset, db)
 

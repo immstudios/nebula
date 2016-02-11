@@ -24,7 +24,7 @@ class BaseDB(object):
 
     def __init__(self, **kwargs):
         self.settings = {
-            self.pmap[key] : kwargs.get(key, config[key]) for key in self.pmap
+            key : kwargs.get(self.pmap[key], config[self.pmap[key]]) for key in self.pmap
             }
         self._connect()
 
@@ -54,7 +54,7 @@ class DB(BaseDB):
     pmap = {
         "host" : "db_host",
         "user" : "db_user",
-        "password" : "db_pass"
+        "password" : "db_pass",
         "database" : "db_name",
         }
 

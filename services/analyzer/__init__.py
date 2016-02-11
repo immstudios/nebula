@@ -23,51 +23,13 @@ class BaseAnalyzer():
 class Analyzer_AV(BaseAnalyzer):
     condition = "asset['content_type'] in [AUDIO, VIDEO]"
     proc_name = "av"
-    version   = 1.0
+    version   = 1.2
 
     def proc(self):
         fname = self.asset.file_path
-        tags = [
-                ("mean_volume:", "audio/gain/mean"),
-                ("max_volume:",  "audio/gain/peak"),
-                ("I:",           "audio/r128/i"),
-                ("Threshold:",   "audio/r128/t"),
-                ("LRA:",         "audio/r128/lra"),
-                ("Threshold:",   "audio/r128/lra/t"),
-                ("LRA low:",     "audio/r128/lra/l"),
-                ("LRA high:",    "audio/r128/lra/r"),
-            ]
-        exp_tag = tags.pop(0)
-        s = shell("ffmpeg -i \"{}\" -vn -filter_complex silencedetect=n=-20dB:d=5,ebur128,volumedetect -f null -".format(fname))
-        silences = []
-        for line in s.stderr().readlines():
-            line = line.strip()
-
-            if line.find("silence_end") > -1:
-                e, d = line.split("|")
-                e = e.split(":")[1].strip()
-                d = d.split(":")[1].strip()
-
-                try:
-                    e = float(e)
-                    s = max(0, e - float(d))
-                except:
-                    pass
-                else:
-                    silences.append([s, e])
-
-
-            if line.find(exp_tag[0]) > -1:
-                value = float(line.split()[-2])
-                self.update(exp_tag[1], value)
-                try:
-                    exp_tag = tags.pop(0)
-                except:
-                    break
-
-        if silences:
-            self.update("qc/silence", silences)
-
+        res = ffanalyse(fname)
+        for key in res:
+            self.update(key, res[key])
         return True
 
 
@@ -129,7 +91,7 @@ class Service(BaseService):
                 result = -1 if not a.status else analyzer.version
 
                 qinfo = asset["qc/analyses"] or {}
-                if type(qinfo) == str:
+                if type(qinfo) in [str, unicode]:
                     qinfo = json.loads(qinfo)
                 qinfo[analyzer.proc_name] = result
                 asset["qc/analyses"] = qinfo

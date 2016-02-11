@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from nebula import *
 from nx.objects import *
 
 print "\nCreate new nebula user\n"

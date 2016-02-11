@@ -35,3 +35,5 @@ class BaseAgent():
         self.on_shutdown()
         self.is_running = False
 
+    def main(self):
+        pass

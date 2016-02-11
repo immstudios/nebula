@@ -41,15 +41,13 @@ class StorageMonitor(BaseAgent):
     def mount(self, protocol, source, destination, username="", password=""):
         if protocol == CIFS:
             if username and password:
-                credentials = ",username="+username+",password="+password
+                credentials = "user="+username+",pass="+password
             else:
                 credentials = ""
             host = source.split("/")[2]
-            cmd = "mount -t cifs %s %s -o 'rw, iocharset=utf8, file_mode=0666, dir_mode=0777%s'" % (source,destination,credentials)
+            cmd = "mount.cifs {} {} -o '{}'".format(source, destination, credentials)
         elif protocol == NFS:
-            cmd = "mount -t nfs %s %s"%(source,destination)
-        elif protocol == FTP:
-            cmd = "curlftpfs -o umask=0777,allow_other,direct_io %s:%s@%s %s"%(username,password,source,destination)
+            cmd = "mount.nfs {} {}".format(source, destination)
         else:
             return
 

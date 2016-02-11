@@ -14,7 +14,7 @@ if sys.version_info[:2] < (3, 0):
     reload(sys)
     sys.setdefaultencoding('utf-8')
 
-nebula_root = os.path.abspath(os.path.split(sys.argv[0])[0])
+nebula_root = os.path.abspath(os.getcwd())
 
 ##
 # Vendor imports
@@ -29,7 +29,6 @@ if os.path.exists(vendor_dir):
             sys.path.insert(0, pname)
 
 from nx import *
-
 config["nebula_root"] = nebula_root
 
 ##
