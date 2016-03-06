@@ -80,14 +80,17 @@ class Messaging():
             return
         try:
             self.sock.sendto(
+                encode_if_py3(
                     json.dumps([
                         time.time(),
                         config["site_name"],
                         config["host"],
                         method,
                         data
-                        ]),
-                    (self.addr, self.port))
+                        ])
+                    ),
+                (self.addr, self.port)
+                )
         except:
             log_traceback(handlers=False)
 
