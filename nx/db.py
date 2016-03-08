@@ -78,7 +78,7 @@ class DB(BaseDB):
             return instr.replace("''","'").replace("'","''")
 
     def lastid (self):
-        self.query("select lastval()")
+        self.query("SELECT LASTVAL()")
         return self.fetchall()[0][0]
 
 ##

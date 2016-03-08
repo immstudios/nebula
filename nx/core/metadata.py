@@ -3,14 +3,13 @@ from .constants import *
 
 class MetaType(object):
     def __init__(self, title):
-        self.title      = title
-        self.namespace  = "site"
-        self.editable   = False
-        self.searchable = False
-        self.class_     = TEXT
-        self.default    = False
-        self.settings   = False
-        self.aliases    = {}
+        self.title = title
+        self.ns = "site"
+        self.ft = False
+        self.class_ = TEXT
+        self.default = False
+        self.settings = False
+        self.aliases = {}
 
     def alias(self, lang='en-US'):
         if not lang in self.aliases:
@@ -48,12 +47,6 @@ class MetaTypes(dict):
 
     def _default(self):
         meta_type = MetaType("Unknown")
-        meta_type.namespace  = "site"
-        meta_type.editable   = 0
-        meta_type.searchable = 0
-        meta_type.class_     = TEXT
-        meta_type.default    = ""
-        meta_type.settings   = False
         return meta_type
 
     def ns_tags(self, ns):
@@ -106,17 +99,7 @@ class MetaTypes(dict):
         elif mtype.class_ == CS_SELECT:   return value
         elif mtype.class_ == ENUM:        return int(value)
         elif mtype.class_ == CS_ENUM:     return int(value)
-        elif mtype.class_ == SELECT:      return value
-        elif mtype.class_ == CS_SELECT:   return value
 
-        return value
-
-    def unformat(self, key, value):
-        mtype = self[key]
-        if type(value) in (list, dict):
-            return json.dumps(value)
-        elif mtype.class_ == REGIONS or key.startswith("can/"):
-            return json.dumps(value)
         return value
 
 
