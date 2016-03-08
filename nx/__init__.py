@@ -84,7 +84,6 @@ def load_all():
     load_site_settings(db)
 #    load_meta_types(db)
     load_storages(db)
-
     messaging.configure()
 
 load_all()
