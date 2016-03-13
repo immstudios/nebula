@@ -1,6 +1,7 @@
 from .core import *
-from .objects import *
 from .db import *
+from .objects import *
+from .helpers import *
 
 
 def load_site_settings(db):
@@ -52,16 +53,21 @@ def load_site_settings(db):
 
 def load_meta_types(db):
     global meta_types
-    db.query("SELECT key, ns, ft, class, default_value, settings FROM meta_types")
-    for key, ns, ft, class_, default, settings in db.fetchall():
-        meta_type = MetaType(key)
-        meta_type.ns = ns
-        meta_type.ft = bool(searchable)
-        meta_type.class_ = class_
-        meta_type.default = default
-        meta_type.settings = settings
+    db.query("SELECT key, ns, editable, searchable, class, settings FROM meta_types")
+    for key, ns, editable, searchable, class_, settings in db.fetchall():
+        meta_type = MetaType(tag)
+        meta_type.namespace  = ns
+        meta_type.editable   = bool(editable)
+        meta_type.searchable = bool(searchable)
+        meta_type.class_     = class_
+        meta_type.default    = default
+        meta_type.settings   = json.loads(settings)
+        db.query("SELECT lang, alias, col_header FROM meta_aliases WHERE key=%s", [key])
+        for lang, alias, col_header in db.fetchall():
+            meta_type.aliases[lang] = alias, col_header
         meta_types[tag] = meta_type
     return True
+
 
 
 def load_storages(db):
@@ -82,7 +88,7 @@ def load_storages(db):
 def load_all():
     db = DB()
     load_site_settings(db)
-#    load_meta_types(db)
+    load_meta_types(db)
     load_storages(db)
     messaging.configure()
 
