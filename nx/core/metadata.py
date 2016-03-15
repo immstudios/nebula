@@ -1,15 +1,18 @@
 from .common import *
 from .constants import *
+from .common import *
+from .constants import *
 
 class MetaType(object):
     def __init__(self, title):
-        self.title = title
-        self.ns = "site"
-        self.ft = False
-        self.class_ = TEXT
-        self.default = False
-        self.settings = False
-        self.aliases = {}
+        self.title      = title
+        self.namespace  = "site"
+        self.editable   = False
+        self.searchable = False
+        self.class_     = TEXT
+        self.default    = False
+        self.settings   = False
+        self.aliases    = {}
 
     def alias(self, lang='en-US'):
         if not lang in self.aliases:
@@ -46,8 +49,7 @@ class MetaTypes(dict):
         return self.get(key, self._default())
 
     def _default(self):
-        meta_type = MetaType("Unknown")
-        return meta_type
+        return MetaType("Unknown")
 
     def ns_tags(self, ns):
         if not ns in self.nstagdict:
@@ -102,6 +104,12 @@ class MetaTypes(dict):
 
         return value
 
+    def unformat(self, key, value):
+        mtype = self[key]
+        if type(value) in (list, dict):
+            return json.dumps(value)
+        elif mtype.class_ == REGIONS or key.startswith("can/"):
+            return json.dumps(value)
+        return value
 
 meta_types = MetaTypes()
-
