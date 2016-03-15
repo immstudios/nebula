@@ -1,8 +1,7 @@
 from .core import *
 from .db import *
 
-__all__ = ["Asset"]
-
+__all__ = ["Asset", "Item", "Bin", "Event", "User"]
 
 def create_ft_index(meta):
     idx = set()
@@ -20,30 +19,18 @@ def create_ft_index(meta):
 
 class NebulaObject(object):
     def __init__(self, id=False, **kwargs):
-        self.meta = kwargs.get("meta", {})
-        self._db = kwargs.get("db", False)
-
-    @property
-    def id(self):
-        return self.meta.get("id", False)
-
-    def __getitem__(self, key):
-        return self.meta[key]
-
-    def __setitem__(self, key, value):
-        self.meta[key] = value
-
-    @property
-    def ft_index(self):
-        return create_ft_index(self.meta)
+        super(NebulaObject).__init__(id, **kwargs)
 
     @property
     def db(self):
         if not self._db:
+            logging.debug("{} is opening DB connection.".format(self.__repr__().capitalize()))
             self._db = DB()
         return self._db
 
-    def save(self):
+    def save(self, **kwargs):
+        if kwargs.get("set_mtime", True):
+            self["mtime"] = int(time.time())
         if self.id:
             self._update()
         else:
@@ -51,6 +38,7 @@ class NebulaObject(object):
 
     def _insert(self):
         db_map = self.db_map
+        db_map["metadata"] = self.meta
         columns = []
         values = []
         for key in db_map:
@@ -64,6 +52,8 @@ class NebulaObject(object):
         self.db.commit()
 
     def _update(self):
+        db_map = self.db_map
+        db_map["metadata"] = self.meta
         elms = []
         for key in db_map:
             elms.append("{}=%s".format(key))
@@ -89,7 +79,56 @@ class Asset(NebulaObject):
                 "id_folder" : self["id_folder"],
                 "id_origin" : self["id_origin"],
                 "status" : self["status"],
-                "metadata" : json.dumps(self.meta),
-                "ft_index" : self.ft_index
+                "ft_index" : create_ft_index(self.meta)
+            }
+
+
+class Item(NebulaObject):
+    @property
+    def db_table(self):
+        return "items"
+
+    @property
+    def db_map(self):
+        return {
+            }
+
+class Bin(NebulaObject):
+    @property
+    def db_table(self):
+        return "bins"
+
+    @property
+    def db_map(self):
+        return {
+            }
+
+
+class Event(NebulaObject):
+    @property
+    def db_table(self):
+        return "events"
+
+    @property
+    def db_map(self):
+        return {
+                "event_type" : self["event_type"],
+                "start_time" : self["start_time"],
+                "end_time" : self["end_time"],
+                "id_magic" : self["id_magic"],
+            }
+
+
+
+class User(NebulaObject):
+    @property
+    def db_table(self):
+        return "users"
+
+    @property
+    def db_map(self):
+        return {
+                "login" : self["login"],
+                "password" : self["password"],
             }
 

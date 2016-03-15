@@ -5,53 +5,24 @@ from .metadata import meta_types
 __all__ = ["BaseObject", "BaseAsset", "BaseItem", "BaseBin", "BaseEvent"]
 
 class BaseObject(object):
-    object_type = "asset"
-
-    def __init__(self, *args, **kwargs):
-        self.id = int(args[0]) if args else False
-
-        self.ns_prefix = self.object_type[0]
-        self.ns_tags   = meta_types.ns_tags(self.ns_prefix)
-        self.meta = {}
-
-        self._loaded = False
+    def __init__(self, id=False, **kwargs):
+        self.meta = kwargs.get("meta", {})
         self._db = kwargs.get("db", False)
-        self._cache = kwargs.get("cache", False)
-
-        if "from_data" in kwargs:
-            assert hasattr(kwargs["from_data"], "keys")
-            self.meta = kwargs["from_data"]
-            self.id = self.meta.get("id_object", False)
+        if self.meta:
             self._loaded = True
         else:
-            if self.id:
-                if self._load():
-                    self._loaded = True
+            self._loaded = False
+            if id:
+                self.load(id)
             else:
-                self._new()
+                self.new()
+
+    @property
+    def id(self):
+        return self.meta.get("id", False)
 
     def keys(self):
         return self.meta.keys()
-
-    def id_object_type(self):
-        return OBJECT_TYPES[self.object_type]
-
-    def _new(self):
-        self.meta = {}
-
-    def _load(self):
-        pass
-
-    def _save(self,**kwargs):
-        pass
-
-    def save(self, **kwargs):
-        if kwargs.get("set_mtime", True):
-            self["mtime"] = int(time.time())
-        return self._save(**kwargs)
-
-    def delete(self):
-        pass
 
     def __getitem__(self, key):
         key = key.lower().strip()
@@ -66,6 +37,21 @@ class BaseObject(object):
         else:
             del self[key] # empty strings
         return True
+
+
+
+    def load(self, id):
+
+    def new(self):
+        self.meta = {}
+
+
+    def save(self, **kwargs):
+        pass
+
+    def delete(self):
+        pass
+
 
     def __delitem__(self, key):
         key = key.lower().strip()
@@ -99,11 +85,6 @@ class BaseObject(object):
 
 
 class BaseAsset(BaseObject):
-    object_type = "asset"
-
-    def _new(self):
-        self.meta = {
-        }
 
     def mark_in(self, new_val=False):
         if new_val:
