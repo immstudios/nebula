@@ -63,6 +63,8 @@ class DB(BaseDB):
                 continue
             else:
                 break
+        else:
+            raise psycopg2.OperationalError
         self.cur = self.conn.cursor()
 
     def sanit(self, instr):

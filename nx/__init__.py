@@ -86,7 +86,14 @@ def load_storages(db):
 
 
 def load_all():
-    db = DB()
+    logging.debug("Loading site configuration from DB", handlers=False)
+    try:
+        # This is the first time we are connecting DB so error handling should be here
+        db = DB()
+    except:
+        log_traceback(handlers=False)
+        critical_error("Unable to connect database", handlers=False)
+
     load_site_settings(db)
     load_meta_types(db)
     load_storages(db)
