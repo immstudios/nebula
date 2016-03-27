@@ -21,22 +21,6 @@ else:
     from posixpath import ismount
 
 ##
-# Utilities
-##
-
-def success(ret_code):
-    return ret_code < 400
-
-def failed(ret_code):
-    return not success(ret_code)
-
-def get_hash(string):
-    return hashlib.sha256(string).hexdigest()
-
-def xml(text):
-    return ET.XML(text)
-
-##
 # Config
 ##
 
@@ -70,6 +54,23 @@ class Config(dict):
         self.update(settings)
 
 config = Config()
+
+##
+# Utilities
+##
+
+def success(ret_code):
+    return ret_code < 400
+
+def failed(ret_code):
+    return not success(ret_code)
+
+def get_hash(string):
+    string = string + config.get("hash_salt", "")
+    return hashlib.sha256(string).hexdigest()
+
+def xml(text):
+    return ET.XML(text)
 
 ##
 # Messaging
