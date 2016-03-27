@@ -1,4 +1,5 @@
 from .core import *
+from .core.base_objects import *
 from .db import *
 
 __all__ = ["Asset", "Item", "Bin", "Event", "User"]
@@ -18,8 +19,6 @@ def create_ft_index(meta):
 
 
 class NebulaObject(object):
-    def __init__(self, id=False, **kwargs):
-        super(NebulaObject).__init__(id, **kwargs)
 
     @property
     def db(self):
@@ -31,14 +30,16 @@ class NebulaObject(object):
     def save(self, **kwargs):
         if kwargs.get("set_mtime", True):
             self["mtime"] = int(time.time())
-        if self.id:
-            self._update()
-        else:
+        if self.is_new:
             self._insert()
+        else:
+            self._update()
 
     def _insert(self):
         db_map = self.db_map
         db_map["metadata"] = self.meta
+        if self.id:
+            db_map["id"] = self.id # For object migration
         columns = []
         values = []
         for key in db_map:
@@ -68,7 +69,7 @@ class NebulaObject(object):
 
 
 
-class Asset(NebulaObject):
+class Asset(NebulaObject, BaseAsset):
     @property
     def db_table(self):
         return "assets"
@@ -83,7 +84,7 @@ class Asset(NebulaObject):
             }
 
 
-class Item(NebulaObject):
+class Item(NebulaObject, BaseItem):
     @property
     def db_table(self):
         return "items"
@@ -93,7 +94,7 @@ class Item(NebulaObject):
         return {
             }
 
-class Bin(NebulaObject):
+class Bin(NebulaObject, BaseBin):
     @property
     def db_table(self):
         return "bins"
@@ -104,7 +105,7 @@ class Bin(NebulaObject):
             }
 
 
-class Event(NebulaObject):
+class Event(NebulaObject, BaseEvent):
     @property
     def db_table(self):
         return "events"
@@ -118,9 +119,7 @@ class Event(NebulaObject):
                 "id_magic" : self["id_magic"],
             }
 
-
-
-class User(NebulaObject):
+class User(NebulaObject, BaseUser):
     @property
     def db_table(self):
         return "users"

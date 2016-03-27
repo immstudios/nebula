@@ -2,16 +2,16 @@ from .common import *
 from .constants import *
 from .metadata import meta_types
 
-__all__ = ["BaseObject", "BaseAsset", "BaseItem", "BaseBin", "BaseEvent"]
+__all__ = ["BaseObject", "BaseAsset", "BaseItem", "BaseBin", "BaseEvent", "BaseUser"]
 
 class BaseObject(object):
     def __init__(self, id=False, **kwargs):
+        self.is_new = True
         self.meta = kwargs.get("meta", {})
         self._db = kwargs.get("db", False)
         if self.meta:
-            self._loaded = True
+            self.is_new = False
         else:
-            self._loaded = False
             if id:
                 self.load(id)
             else:
@@ -38,13 +38,12 @@ class BaseObject(object):
             del self[key] # empty strings
         return True
 
-
-
     def load(self, id):
+        self.is_new = False
 
     def new(self):
         self.meta = {}
-
+        self.is_new = True
 
     def save(self, **kwargs):
         pass
@@ -62,20 +61,18 @@ class BaseObject(object):
         del self.meta[key]
 
     def __repr__(self):
+        object_type = self.__class__.__name__.lower()
         if self.id:
-            iid = "{} ID:{}".format(self.object_type, self.id)
+            result = "{} ID:{}".format(object_type, self.id)
         else:
-            iid = "new {}".format(self.object_type)
-        try:
-            title = self["title"] or ""
-            if title:
-                title = " ({})".format(title)
-            return "{}{}".format(iid, title)
-        except:
-            return iid
+            result = "new {}".format(object_type)
+        title =  self.meta.get("title", "")
+        if title:
+            result += " ({})".format(title)
+        return result
 
     def __len__(self):
-        return self._loaded
+        return bool(self.meta)
 
 
 
@@ -85,6 +82,7 @@ class BaseObject(object):
 
 
 class BaseAsset(BaseObject):
+    object_type = "asset"
 
     def mark_in(self, new_val=False):
         if new_val:
@@ -195,3 +193,6 @@ class BaseEvent(BaseObject):
         self["stop"]       = 0
         self["id_channel"] = 0
         self["id_magic"]   = 0
+
+class BaseUser(BaseObject):
+    pass
