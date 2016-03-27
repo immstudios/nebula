@@ -37,6 +37,15 @@ def api_browse(user, **kwargs):
     return 200, {"result": db.fetchall(), "asset_data":[]}
 
 
+def api_get_objects(user, **kwargs):
+    ids = kwargs.get("ids")
+    object_type = kwargs.get("object_type", 0)
+    modify_time = kwargs.get("modify_time", 0)
+    db = DB()
+
+
+
+
 def api_get_assets(user, **kwargs):
     asset_ids = kwargs.get("asset_ids", [])
     db = DB()
