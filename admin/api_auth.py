@@ -1,7 +1,6 @@
 import time
 
 from nx import *
-from nx.objects import get_user, User
 
 #TODO: sessions caching
 class APIAuth():

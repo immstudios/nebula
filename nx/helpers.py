@@ -3,15 +3,44 @@ from .db import *
 from .objects import *
 
 __all__ = [
+        "browse",
         "get_user",
         "asset_by_path",
         "asset_by_full_path",
     ]
 
+
+def browse(fulltext="", **kwargs):
+    db = DB()
+    conds = []
+    if fulltext:
+        ft = slugify(fulltext, make_set=True)
+        conds.extend(["ft_index LIKE '%{}%'".format(elm) for elm in ft])
+
+    for key in kwargs:
+        value = kwargs[key]
+        if type(value) == list:
+            operator = "IN"
+            value = "({})".format(", ".join("'{}'".format(value) for value in value))
+        else:
+            operator = "="
+            value = "'{}'".format(value)
+        conds.append("metadata->>'{}' {} {}".format(key, operator, value))
+
+    conds = " AND ".join(conds)
+    if conds:
+        conds = "WHERE " + conds
+    q = "SELECT metadata FROM assets {}".format(conds)
+    logging.debug("Executing browse query:", q)
+    db.query(q)
+    for meta, in db.fetchall():
+        yield Asset(meta=meta)
+
+
 def get_user(login, password, db=False):
     if not db:
         db = DB()
-    db.query("SELECT metadata FROM users WHERE login=%s and password=%s", [login, get_hash(password)])
+    db.query("SELECT metadata FROM users WHERE login=%s AND password=%s", [login, get_hash(password)])
     res = db.fetchall()
     if not res:
         return False
@@ -47,16 +76,10 @@ def asset_by_full_path(path, db=False):
 ##
 
 
-def meta_exists(tag, value, db=False):
+def meta_exists(key, value, db=False):
     if not db:
         db = DB()
-    db.query("""SELECT a.id_asset FROM nx_meta as m, nx_assets as a
-                WHERE a.status <> 'TRASHED'
-                AND a.id_asset = m.id_object
-                AND m.object_type = 0
-                AND m.tag='%s'
-                AND m.value='%s'
-                """ % (tag, value))
+    db.query("SELECT id, meta FROM assets WHERE metadata->>%s = %s", [key, value])
     try:
         return res[0][0]
     except:

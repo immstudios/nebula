@@ -7,7 +7,10 @@ __all__ = ["BaseObject", "BaseAsset", "BaseItem", "BaseBin", "BaseEvent", "BaseU
 class BaseObject(object):
     def __init__(self, id=False, **kwargs):
         self.is_new = True
-        self.meta = kwargs.get("meta", {})
+        self.meta = {}
+        meta = kwargs.get("meta", {})
+        for key in meta:
+            self.meta[key] = meta[key]
         self._db = kwargs.get("db", False)
         if self.meta:
             self.is_new = False
@@ -25,17 +28,12 @@ class BaseObject(object):
         return self.meta.keys()
 
     def __getitem__(self, key):
-        key = key.lower().strip()
-        if not key in self.meta:
-            return meta_types.format_default(key)
-        return self.meta[key]
+        if key in self.meta:
+            return meta_types.ensure_format(key, self.meta[key])
+        return meta_types[key].default
 
     def __setitem__(self, key, value):
-        key = key.lower().strip()
-        if value or type(value) in [float, int, bool]:
-            self.meta[key] = meta_types.format(key,value)
-        else:
-            del self[key] # empty strings
+        self.meta[key] = meta_types.ensure_format(key, value)
         return True
 
     def load(self, id):
@@ -51,10 +49,8 @@ class BaseObject(object):
     def delete(self):
         pass
 
-
     def __delitem__(self, key):
-        key = key.lower().strip()
-        if key in meta_types and meta_types[key].namespace == self.object_type[0]:
+        if key in self.db_map:
             return
         if not key in self.meta:
             return
@@ -74,7 +70,8 @@ class BaseObject(object):
     def __len__(self):
         return bool(self.meta)
 
-
+    def show(self, key):
+        return meta_types.humanize(key, self[key])
 
 
 
@@ -88,8 +85,6 @@ class BaseAsset(BaseObject):
         if new_val:
             self["mark_in"] = new_val
         return self["mark_in"]
-
-    def mark_out(self, new_val=False):
         if new_val:
             self["mark_out"] = new_val
         return self["mark_out"]
@@ -114,10 +109,10 @@ class BaseAsset(BaseObject):
 
 
 class BaseItem(BaseObject):
-    object_type = "item"
     _asset = False
 
-    def _new(self):
+    def new(self):
+        super(BaseItem, self).new()
         self["id_bin"]    = False
         self["id_asset"]  = False
         self["position"]  = 0
@@ -175,20 +170,14 @@ class BaseItem(BaseObject):
 
 
 class BaseBin(BaseObject):
-    object_type = "bin"
-    items = []
-
-    def _new(self):
-        self.meta = {}
+    def new(self):
+        super(BaseBin, self).new()
         self.items = []
 
 
 class BaseEvent(BaseObject):
-    object_type = "event"
-    _bin        = False
-    _asset      = False
-
-    def _new(self):
+    def new(self):
+        super(BaseBin, self).new()
         self["start"]      = 0
         self["stop"]       = 0
         self["id_channel"] = 0

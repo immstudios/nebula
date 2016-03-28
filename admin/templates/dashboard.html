@@ -1,0 +1,17 @@
+<h1>dashboard</h1>
+
+<table>
+    <tr>
+        {% for column in columns %}
+            <th>{{ column }}</th>
+        {% endfor %}
+    </tr>
+
+{% for asset in assets %}
+    <tr>
+        {% for column in columns %}
+            <td>{{ asset.show(column) }}</td>
+        {% endfor %}
+    </tr>
+{% endfor %}
+</table>

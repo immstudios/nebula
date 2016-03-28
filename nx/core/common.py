@@ -45,7 +45,7 @@ class Config(dict):
             if os.path.exists(settings_file):
                 try:
                     settings.update(json.load(open(settings_file)))
-                    logging.debug("Parsing {}".format(local_settings_path), handlers=False)
+                    logging.debug("Parsing {}".format(settings_file), handlers=False)
                 except:
                     log_traceback(handlers=False)
 

@@ -3,7 +3,6 @@ import cherrypy
 import jinja2
 
 from nx import *
-from nx.objects import User, get_user
 
 
 class NebulaAdmin():
@@ -15,20 +14,27 @@ class NebulaAdmin():
 
     @cherrypy.expose
     def index(self):
+        print cherrypy.session
         id_user = cherrypy.session.get("id_user", 0)
+        logging.debug("Index requested by {}".format(id_user))
+        context={}
         if not id_user:
             tpl = self.jinja.get_template("login.html")
         else:
             tpl = self.jinja.get_template("dashboard.html")
-        context={}
+            context["columns"] = "title", "duration", "genre"
+            context["assets"] = list(browse(genre="Horror"))
         return tpl.render(**context)
 
     @cherrypy.expose
     def login(self, login, password, **kwargs):
         user = get_user(login, password)
+        print ">>>", user.meta
         if user:
             cherrypy.session["id_user"] = user.id
+            logging.goodnews("{} is logged in : ID {}".format(login, user.id))
         else:
+            logging.error("{} login failed".format(login))
             cherrypy.session["id_user"] = 0
         raise cherrypy.HTTPRedirect(kwargs.get("from_page", "/"))
 

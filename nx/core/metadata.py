@@ -1,4 +1,7 @@
+import time
+
 from nxtools import *
+
 from .common import *
 from .constants import *
 
@@ -20,21 +23,22 @@ def validate_fract(string):
 
 
 format_ops = {
-        -1        : [object,    lambda x: x],
-        TEXT      : [str_type,  to_unicode],
-        BLOB      : [str_type,  to_unicode],
-        INTEGER   : [int,       None],
-        NUMERIC   : [float,     None],
-        BOOLEAN   : [bool,      None],
-        DATETIME  : [float,     None],
-        TIMECODE  : [float,     None],
-        REGIONS   : [list,      None],
-        FRACTION  : [str_type,  validate_fract],
-        SELECT    : [str_type,  None],
-        CS_SELECT : [str_type,  None],
-        ENUM      : [int,       None],
-        CS_ENUM   : [int,       None],
-        LIST      : [list,      None],
+#       CLASS       TYPE        VALIDATOR          DEFAULT   HUMANIZER
+        -1        : [object,    lambda x: x,       None,     None],
+        TEXT      : [str_type,  to_unicode,        "",       None],
+        BLOB      : [str_type,  to_unicode,        "",       None],
+        INTEGER   : [int,       None,              0,        None],
+        NUMERIC   : [float,     None,              0,        lambda key, x: "{:03d}".format(x)],
+        BOOLEAN   : [bool,      None,              False,    lambda key, x: str(bool(x))],
+        DATETIME  : [float,     None,              0,        lambda key, x: time.strfitme("%Y-%m-%d %H:%M", time.localtime(x))],
+        TIMECODE  : [float,     None,              0,        lambda key, x: s2time(x)],
+        REGIONS   : [list,      None,              [],       lambda key, x: "{} regions".format(len(x))],
+        FRACTION  : [str_type,  validate_fract,    "1/1",    None],
+        SELECT    : [str_type,  None,              "",       None],
+        CS_SELECT : [str_type,  None,              "",       None],
+        ENUM      : [int,       None,              0,        None],
+        CS_ENUM   : [int,       None,              0,        None],
+        LIST      : [list,      None,              [],       lambda key, x: ", ".join(x)],
     }
 
 
@@ -45,9 +49,12 @@ class MetaType():
         self.editable   = False
         self.searchable = False
         self.meta_class = -1
-        self.default    = False
         self.settings   = False
         self.aliases    = {}
+
+    @property
+    def default(self):
+        return format_ops[self.meta_class][2]
 
     @property
     def dump(self):
@@ -57,7 +64,6 @@ class MetaType():
                 "editable"   : self.editable,
                 "searchable" : self.searchable,
                 "class"      : self.meta_class,
-                "default"    : self.default,
                 "settings"   : self.settings,
                 "aliases"    : self.aliases
             }
@@ -86,7 +92,10 @@ class MetaTypes():
         self.data = {}
 
     def __getitem__(self, key):
-        self.data.get(key, MetaType())
+        return self.data.get(key, MetaType(key))
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
 
     def __iter__(self):
         return self.data.__iter__()
@@ -96,14 +105,21 @@ class MetaTypes():
         return [meta_type.dump for meta_type in self]
 
     def ensure_format(self, key, value):
-        target_class = self[key].target_class
-        target_type, validator = format_ops[target_class]
+        target_class = self[key].meta_class
+        target_type, validator, default, humanizer = format_ops[target_class]
         if validator:
             return validator(value)
         elif target_type == type(value):
             return value
         else:
             return target_type(value)
+
+    def humanize(self, key, value, **kwargs):
+        target_class = self[key].meta_class
+        humanizer = format_ops[target_class][3]
+        if not humanizer:
+            return value
+        return humanizer(key, value)
 
 
 

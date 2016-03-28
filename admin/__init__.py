@@ -29,7 +29,7 @@ class Admin():
 
         cherrypy.config.update({
             'server.socket_host': config.get("admin_host", "0.0.0.0"),
-            'server.socket_port': config.get("admin_port", 8080),
+            'server.socket_port': config.get("admin_port", 80),
 #            'log.screen' : False
             })
 

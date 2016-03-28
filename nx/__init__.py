@@ -24,14 +24,14 @@ def load_site_settings(db):
 
     db.query("SELECT id, settings FROM views")
     for id, settings in db.fetchall():
-        settings = XML(settings)
+        settings = xml(settings)
         view = {}
         for elm in ["query", "folders", "origins", "media_types", "content_types", "statuses"]:
             try:
                 view[elm] = settings.find(elm).text.strip()
             except:
                 continue
-        config["views"][id_view] = view
+        config["views"][id] = view
 
     #
     # Channels
@@ -54,18 +54,17 @@ def load_site_settings(db):
 def load_meta_types(db):
     global meta_types
     db.query("SELECT key, ns, editable, searchable, class, settings FROM meta_types")
-    for key, ns, editable, searchable, class_, settings in db.fetchall():
-        meta_type = MetaType(tag)
-        meta_type.namespace  = ns
-        meta_type.editable   = bool(editable)
-        meta_type.searchable = bool(searchable)
-        meta_type.class_     = class_
-        meta_type.default    = default
-        meta_type.settings   = json.loads(settings)
+    for key, ns, editable, searchable, meta_class, settings in db.fetchall():
+        meta_type = MetaType(key)
+        meta_type.namespace   = ns
+        meta_type.editable    = bool(editable)
+        meta_type.searchable  = bool(searchable)
+        meta_type.meta_class  = meta_class
+        meta_type.settings    = settings
         db.query("SELECT lang, alias, col_header FROM meta_aliases WHERE key=%s", [key])
         for lang, alias, col_header in db.fetchall():
             meta_type.aliases[lang] = alias, col_header
-        meta_types[tag] = meta_type
+        meta_types[key] = meta_type
     return True
 
 

@@ -22,9 +22,9 @@ from __future__ import print_function
 import os
 import sys
 
-##
+#
 # Env setup
-##
+#
 
 if sys.version_info[:2] < (3, 0):
     reload(sys)
@@ -32,9 +32,9 @@ if sys.version_info[:2] < (3, 0):
 
 nebula_root = os.path.abspath(os.getcwd())
 
-##
+#
 # Vendor imports
-##
+#
 
 vendor_dir = os.path.join(nebula_root, "vendor")
 if os.path.exists(vendor_dir):
@@ -47,9 +47,9 @@ if os.path.exists(vendor_dir):
 from nx import *
 config["nebula_root"] = nebula_root
 
-##
+#
 # Start agents only if this script is executed (not imported)
-##
+#
 
 if __name__ == "__main__":
 
