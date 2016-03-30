@@ -3,14 +3,14 @@ from .db import *
 from .objects import *
 
 __all__ = [
-        "browse",
+        "get_assets",
         "get_user",
         "asset_by_path",
         "asset_by_full_path",
     ]
 
 
-def browse(fulltext="", **kwargs):
+def get_assets(fulltext="", **kwargs):
     db = DB()
     conds = []
     if fulltext:
@@ -79,7 +79,7 @@ def asset_by_full_path(path, db=False):
 def meta_exists(key, value, db=False):
     if not db:
         db = DB()
-    db.query("SELECT id, meta FROM assets WHERE metadata->>%s = %s", [key, value])
+    db.query("SELECT id, metadata FROM assets WHERE metadata->>%s = %s", [key, value])
     try:
         return res[0][0]
     except:

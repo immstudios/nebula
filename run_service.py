@@ -47,11 +47,11 @@ if __name__ == "__main__":
         critical_error("You must provide service id as first parameter")
 
     db = DB()
-    db.query("SELECT agent, title, host, loop_delay, settings FROM nx_services WHERE id_service=%d" % id_service)
+    db.query("SELECT agent, title, host, loop_delay, settings FROM services WHERE id=%s", [id_service])
     try:
         agent, title, host, loop_delay, settings = db.fetchall()[0]
     except:
-        critical_error("Unable to start service %s. No such service" % id_service)
+        critical_error("Unable to start non-existing service {}".format(service))
 
     config["user"] = logging.user = title
 
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         try:
             settings = ET.XML(settings)
         except:
-            db.query("UPDATE nx_services SET autostart=0 WHERE id_service=%d" % id_service)
+            db.query("UPDATE services SET autostart=0 WHERE id=%s", [id_service])
             db.commit()
             critical_error("Malformed settings XML")
 

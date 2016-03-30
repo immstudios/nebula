@@ -5,10 +5,11 @@ from nebula import *
 
 def the_toy():
     dur = 0
-    for asset in browse(id_folder=[1,3,4], genre="Horror"):
-        print asset
+    count = 0
+    for asset in get_assets(id_folder=[1,2,3]):
         dur += asset.duration
-    logging.info("total duration is", s2words(dur))
+        count += 1
+    logging.info("total duration of {} assets is".format(count), s2words(dur))
 
 
 if __name__ == "__main__":
