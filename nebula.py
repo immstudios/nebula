@@ -53,7 +53,6 @@ config["nebula_root"] = nebula_root
 
 if __name__ == "__main__":
 
-    from admin import Admin
     from nx.storage_monitor import StorageMonitor
     from nx.service_monitor import ServiceMonitor
     from nx.system_monitor import SystemMonitor
@@ -75,7 +74,7 @@ if __name__ == "__main__":
 
     agents = []
 
-    for Agent in [Admin, StorageMonitor, ServiceMonitor, SystemMonitor]:
+    for Agent in [StorageMonitor, ServiceMonitor, SystemMonitor]:
         try:
             agents.append(Agent())
         except:
