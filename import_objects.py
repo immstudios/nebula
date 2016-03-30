@@ -20,7 +20,6 @@ def asset_transform(meta):
 
     if meta["origin"] != "Production":
         return None
-    meta["origin"] = 1
 
     # Key rename
 
@@ -32,7 +31,6 @@ def asset_transform(meta):
                 ["meta_probed", None],
                 ["has_thumbnail", None],
                 ["id_playout/1", None],
-                ["origin", "id_origin"]
             ]:
 
         if old_key in meta:

@@ -22,7 +22,7 @@ class NebulaAdmin():
             tpl = self.jinja.get_template("login.html")
         else:
             tpl = self.jinja.get_template("dashboard.html")
-            context["columns"] = "title", "duration", "genre"
+            context["columns"] = "title", "duration", "genre", "id_folder"
             context["assets"] = list(browse(genre="Horror"))
         return tpl.render(**context)
 

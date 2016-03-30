@@ -25,12 +25,12 @@ def get_assets(fulltext="", **kwargs):
         else:
             operator = "="
             value = "'{}'".format(value)
-        conds.append("metadata->>'{}' {} {}".format(key, operator, value))
+        conds.append("meta->>'{}' {} {}".format(key, operator, value))
 
     conds = " AND ".join(conds)
     if conds:
         conds = "WHERE " + conds
-    q = "SELECT metadata FROM assets {}".format(conds)
+    q = "SELECT meta FROM assets {}".format(conds)
     logging.debug("Executing browse query:", q)
     db.query(q)
     for meta, in db.fetchall():
@@ -40,7 +40,7 @@ def get_assets(fulltext="", **kwargs):
 def get_user(login, password, db=False):
     if not db:
         db = DB()
-    db.query("SELECT metadata FROM users WHERE login=%s AND password=%s", [login, get_hash(password)])
+    db.query("SELECT meta FROM users WHERE login=%s AND password=%s", [login, get_hash(password)])
     res = db.fetchall()
     if not res:
         return False
@@ -53,8 +53,8 @@ def asset_by_path(id_storage, path, db=False):
         db = DB()
     db.query("""
             SELECT id FROM assets
-                WHERE metadata->>'id_storage' = %s
-                AND metadata->>'path' = %s
+                WHERE meta->>'id_storage' = %s
+                AND meta->>'path' = %s
         """, [id_storage, path])
     try:
         return db.fetchall()[0][0]
@@ -79,7 +79,7 @@ def asset_by_full_path(path, db=False):
 def meta_exists(key, value, db=False):
     if not db:
         db = DB()
-    db.query("SELECT id, metadata FROM assets WHERE metadata->>%s = %s", [key, value])
+    db.query("SELECT id, meta FROM assets WHERE meta->>%s = %s", [key, value])
     try:
         return res[0][0]
     except:

@@ -3,7 +3,6 @@ from .db import *
 from .objects import *
 from .helpers import *
 
-
 def load_site_settings(db):
     global config
     config["playout_channels"] = {}
@@ -39,11 +38,6 @@ def load_site_settings(db):
 
     db.query("SELECT id, channel_type, title, settings FROM channels")
     for id_channel, channel_type, title, ch_config in db.fetchall():
-        try:
-            ch_config = json.loads(ch_config)
-        except:
-            print ("Unable to parse channel {}:{} config.".format(id_channel, title))
-            continue
         ch_config.update({"title":title})
         if channel_type == PLAYOUT:
             config["playout_channels"][id_channel] = ch_config
@@ -68,13 +62,12 @@ def load_meta_types(db):
     return True
 
 
-
 def load_storages(db):
     global storages
     db.query("SELECT id, title, protocol, path, login, password FROM storages")
-    for id_storage, title, protocol, path, login, password in db.fetchall():
+    for id, title, protocol, path, login, password in db.fetchall():
         storage = Storage(
-            id=id_storage,
+            id=id,
             title=title,
             protocol=protocol,
             path=path,
@@ -87,8 +80,7 @@ def load_storages(db):
 def load_all():
     logging.debug("Loading site configuration from DB", handlers=False)
     try:
-        # This is the first time we are connecting DB so error handling should be here
-        db = DB()
+        db = DB() # This is the first time we are connecting DB so error handling should be here
     except:
         log_traceback(handlers=False)
         critical_error("Unable to connect database", handlers=False)

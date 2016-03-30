@@ -218,10 +218,10 @@ class Service(BaseService):
         if count < self.max_articles:
             return Asset(db=db)
 
-        db.query("""SELECT metadata FROM assets
+        db.query("""SELECT meta FROM assets
                 WHERE id_folder = 6
                 AND content_type = 0
-                ORDER BY metadata->>'mtime' ASC LIMIT 1
+                ORDER BY meta->>'mtime' ASC LIMIT 1
                 """)
         return Asset(meta=db.fetchall()[0][0])
 
@@ -230,9 +230,9 @@ class Service(BaseService):
     def push_item(self, item, db=False):
         db = db or DB()
         # Check for duplicities
-        db.query("""SELECT metadata FROM assets
-            WHERE metadata->>'identifier/guid' = %s
-            AND metadata->>'news_group' = %s
+        db.query("""SELECT meta FROM assets
+            WHERE meta->>'identifier/guid' = %s
+            AND meta->>'news_group' = %s
             """, [
                 item["identifier/guid"],
                 item["news_group"]

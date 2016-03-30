@@ -35,7 +35,7 @@ class NebulaObject(object):
 
     def _insert(self):
         db_map = self.db_map
-        db_map["metadata"] = json.dumps(self.meta)
+        db_map["meta"] = json.dumps(self.meta)
         if self.id:
             db_map["id"] = self.id # For object migration
         columns = []
@@ -49,11 +49,11 @@ class NebulaObject(object):
         self.db.query(query, values)
         if not self.id: # this is not very effective, but we need to have id in meta json
             self["id"] = self.db.lastid()
-            self.db.query("UPDATE {} SET metadata=%s WHERE id=%s".format(self.db_table), [json.dumps(self.meta), self.id])
+            self.db.query("UPDATE {} SET meta=%s WHERE id=%s".format(self.db_table), [json.dumps(self.meta), self.id])
 
     def _update(self):
         db_map = self.db_map
-        db_map["metadata"] = json.dumps(self.meta)
+        db_map["meta"] = json.dumps(self.meta)
         elms = []
         for key in db_map:
             elms.append("{}=%s".format(key))
@@ -82,7 +82,7 @@ class Asset(NebulaObject, BaseAsset):
                 "content_type" : self["content_type"],
                 "media_type" : self["media_type"],
                 "id_folder" : self["id_folder"],
-                "id_origin" : self["id_origin"],
+                "origin" : self["origin"],
                 "status" : self["status"],
                 "ft_index" : self.ft_index
             }

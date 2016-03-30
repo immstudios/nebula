@@ -36,7 +36,7 @@ class Service(BaseService):
             return
 
         db = DB()
-        db.query("SELECT metadata FROM assets WHERE status=1 AND media_type=0 AND metadata->>'has_thumbnail' NOT IN (1,2)")
+        db.query("SELECT meta FROM assets WHERE status=1 AND media_type=0 AND meta->>'has_thumbnail' NOT IN (1,2)")
         for meta, in db.fetchall():
             asset = Asset(meta=meta, db=db)
             spath = asset.file_path
