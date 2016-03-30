@@ -6,7 +6,6 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 from nx import *
 from nx.services import BaseService
-from nx.objects import *
 from nx.plugins import plugin_path
 
 from caspar import Caspar

@@ -1,7 +1,6 @@
 from nx import *
 from nx.services import BaseService
 from nx.jobs import Job
-from nx.objects import Asset
 
 from encoders import Ffmpeg, Ftp
 
@@ -20,12 +19,12 @@ class Service(BaseService):
         id_service = self.id_service
         self.allowed_actions = {}
         db = DB()
-        db.query("UPDATE nx_jobs set id_service=0, progress=-1, retries=0, stime=0, etime=0, message='Restart requested after service crash.' WHERE id_service=%s AND progress > -1", [id_service])
+        db.query("UPDATE jobs SET id_service=0, progress=-1, retries=0, stime=0, etime=0, message='Restart requested after service crash.' WHERE id_service=%s AND progress > -1", [id_service])
         db.commit()
-        db.query("SELECT id_action, title, config FROM nx_actions ORDER BY id_action")
+        db.query("SELECT id, title, settings FROM actions ORDER BY id")
         for id_action, title, config in db.fetchall():
             try:
-                config = ET.XML(config)
+                config = xml(config)
             except:
                 logging.error("Unable to parse '{}' action configuration".format(title))
                 continue
@@ -54,7 +53,7 @@ class Service(BaseService):
         if not job:
             return
 
-        id_asset = job.id_object
+        id_asset = job.id_asset
         asset = Asset(id_asset)
 
         try:

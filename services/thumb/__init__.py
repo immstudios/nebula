@@ -36,11 +36,11 @@ class Service(BaseService):
             return
 
         db = DB()
-        db.query("SELECT id_object FROM nx_assets WHERE status=1 AND media_type=0 AND id_object NOT IN (SELECT id_object FROM nx_meta WHERE object_type=0 AND tag='has_thumbnail') ORDER BY mtime DESC")
-        for id_asset, in db.fetchall():
-            asset = Asset(id_asset, db=db)
+        db.query("SELECT metadata FROM assets WHERE status=1 AND media_type=0 AND metadata->>'has_thumbnail' NOT IN (1,2)")
+        for meta, in db.fetchall():
+            asset = Asset(meta=meta, db=db)
             spath = asset.file_path
-            tpath = os.path.join(self.thumb_root, "{:04d}".format(int(id_asset/1000)), "{:d}".format(id_asset))
+            tpath = os.path.join(self.thumb_root, "{:04d}".format(int(asset.id/1000)), "{:d}".format(asset.id))
 
             if not os.path.exists(tpath):
                 try:
@@ -50,7 +50,7 @@ class Service(BaseService):
                     continue
 
             for resolution, suffix in THUMBS:
-                tbase = "{}{}".format(id_asset, suffix)
+                tbase = "{}{}".format(asset.id, suffix)
                 if create_video_thumbnail(spath, os.path.join(tpath, tbase), resolution):
                     asset["has_thumbnail"] = 1
                 else:

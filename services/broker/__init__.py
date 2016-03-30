@@ -7,7 +7,7 @@ class Service(BaseService):
     def on_init(self):
         self.conditions = {}
         db = DB()
-        db.query("SELECT id_action, title, config FROM nx_actions")
+        db.query("SELECT id, title, settings FROM actions")
         for id_action, title, aconfig in db.fetchall():
             try:
                 start_cond = ET.XML(aconfig).find("start_if")
@@ -27,7 +27,7 @@ class Service(BaseService):
 
     def on_main(self):
         db = DB()
-        db.query("SELECT id_object FROM nx_assets WHERE status=%s", [ONLINE])
+        db.query("SELECT id FROM assets WHERE status=%s", [ONLINE])
         for id_asset, in db.fetchall():
             self._proc(id_asset, db)
 

@@ -172,10 +172,17 @@ class Service(BaseService):
 
     def get_article(self, channel, groups):
         db = DB()
-        db.query("""SELECT id_object FROM nx_assets WHERE id_folder = 6 AND origin='News' AND mtime > {}
-            AND id_object IN (SELECT id_object FROM nx_meta WHERE tag='news_group' AND value IN ({}))
-            AND id_object IN (SELECT id_object FROM nx_meta WHERE tag='qc/state' AND value='4')
-            """.format(time.time() - 86400,   ", ".join(["'{}'".format(group) for group in groups])))
+        db.query("""SELECT id, meta FROM assets
+            WHERE id_folder=6
+            AND origin=1
+            AND meta->>'mtime' > {}
+            AND meta->>'news_group' IN ({})
+            AND meta->>'qc/state' = 4
+            """.format(
+                time.time() - 86400,
+                ", ".join(["'{}'".format(group) for group in groups])
+                )
+            )
 
         articles = [r[0] for r in db.fetchall()]
         if not articles:
@@ -184,12 +191,15 @@ class Service(BaseService):
         if channel not in self.history:
             self.history[channel] = {}
 
-        id_asset = sorted(articles, key=lambda id_asset: self.history[channel].get(id_asset, 0))[0]
+        asset = Asset(
+            meta = sorted(
+                articles,
+                key=lambda id_asset: self.history[channel].get(id_asset, 0)
+                )[0]
+            )
 
-        self.history[channel][id_asset] = time.time()
-
-        article = Asset(id_asset)
-        return article
+        self.history[channel][asset.id] = time.time()
+        return asset
 
 
 
@@ -199,24 +209,39 @@ class Service(BaseService):
         if not db:
             db=DB()
 
-        db.query("SELECT COUNT(id_object) from nx_assets WHERE id_folder=6 AND origin='News'")
+        db.query("""SELECT COUNT(id) FROM assets
+                WHERE id_folder = 6
+                AND content_type = 0
+                """)
+
         count = db.fetchall()[0][0]
         if count < self.max_articles:
             return Asset(db=db)
 
-        db.query("SELECT id_object FROM nx_assets WHERE id_folder=6 and origin='News' ORDER BY mtime ASC LIMIT 1")
-        return Asset(db.fetchall()[0][0], db=db)
+        db.query("""SELECT metadata FROM assets
+                WHERE id_folder = 6
+                AND content_type = 0
+                ORDER BY metadata->>'mtime' ASC LIMIT 1
+                """)
+        return Asset(meta=db.fetchall()[0][0])
 
 
 
     def push_item(self, item, db=False):
         db = db or DB()
-        db.query("SELECT id_object FROM nx_meta WHERE tag='identifier/guid' AND value = %s AND id_object IN (SELECT id_object FROM nx_meta WHERE tag='news_group' AND value=%s )",
-                [item["identifier/guid"], item["news_group"] ]
+        # Check for duplicities
+        db.query("""SELECT metadata FROM assets
+            WHERE metadata->>'identifier/guid' = %s
+            AND metadata->>'news_group' = %s
+            """, [
+                item["identifier/guid"],
+                item["news_group"]
+                ]
             )
-
         if db.fetchall():
             return
+
+        # Save item
         try:
             logging.debug("Saving news item {}".format(item["title"]))
         except:
@@ -225,7 +250,7 @@ class Service(BaseService):
         asset = self.get_free_asset(db=db)
         asset.meta = {}
         asset["id_folder"] = 6
-        asset["origin"] = "News"
+        asset["origin"] = 1
         asset["status"] = ONLINE
         asset["ctime"] = time.time()
         asset["qc/state"] = 4
@@ -243,6 +268,3 @@ class Service(BaseService):
                 for item in feed.items:
                     item["news_group"] = group
                     self.push_item(item, db=db)
-
-
-

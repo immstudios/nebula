@@ -1,19 +1,17 @@
 from nx import *
 from nx.services import BaseService
-from nx.objects import Asset
-from nx.core.metadata import meta_types
 
-from probes import probes
+from .probes import probes
 
 
 class Service(BaseService):
     def on_init(self):
         filters = [] # Ignore archived and trashed
-        #filters.append("status=%d"%CREATING)
         if filters:
             self.filters = "AND " + " AND ".join(filters)
         else:
             self.filters = ""
+
 
     def on_main(self):
         self.mounted_storages = []
@@ -23,12 +21,12 @@ class Service(BaseService):
                 self.mounted_storages.append(id_storage)
 
         db = DB()
-        db.query("SELECT id_object FROM nx_assets WHERE media_type = 0 {} AND status NOT IN (3,4)".format(self.filters))
-        for id_asset, in db.fetchall():
-            self._proc(id_asset, db)
+        db.query("SELECT metadata FROM assets WHERE media_type = 0 {} AND status NOT IN (3,4)".format(self.filters))
+        for meta in db.fetchall():
+            self._proc(Asset(meta=meta, db=db))
 
-    def _proc(self, id_asset, db):
-        asset = Asset(id_asset, db = db)
+
+    def _proc(self, asset):
         fname = asset.file_path
 
         if asset["id_storage"] not in self.mounted_storages:
@@ -116,9 +114,19 @@ class Service(BaseService):
             asset.save()
 
             db = DB()
-            db.query("""UPDATE nx_jobs SET progress=-1, id_service=0, ctime=%s, stime=0, etime=0, id_user=0, message='Restarting after source update'
-                    WHERE id_object=%s AND id_action > 0 and progress IN (-2, -3)""",
-                    [time.time(), id_asset]
+            db.query("""UPDATE jobs SET
+                    progress=-1,
+                    id_service=0,
+                    ctime=%s,
+                    stime=0,
+                    etime=0,
+                    id_user=0,
+                    message='Restarting after source update'
+                WHERE
+                    id_asset=%s
+                    AND id_action > 0
+                    AND progress IN (-2, -3)
+                    """, [time.time(), id_asset]
                     )
 
             db.commit()

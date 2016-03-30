@@ -61,17 +61,14 @@ class Service(BaseService):
 
     def on_main(self):
         db = DB()
-        db.query("SELECT id_object, mtime FROM nx_assets WHERE status = '{}' and mtime > {} ORDER BY mtime DESC".format(ONLINE, self.max_mtime))
-        res = db.fetchall()
-        if res:
-            logging.debug("{} assets will be analyzed".format(len(res)))
+        db.query("SELECT id, metadata FROM assets WHERE status=%s and metadata->>'file/mtime'>%s ORDER BY metadata->>'file/mtime' DESC".format(ONLINE, self.max_mtime))
 
-            for id_asset, mtime in res:
-                self.max_mtime = max(self.max_mtime, mtime)
-                self._proc(id_asset, db)
+        for id, meta in db.fetchall():
+            asset = Asset(meta=meta, db=db)
+            self.max_mtime = max(self.max_mtime, asset["file/mtime"])
+            self._proc(asset)
 
-    def _proc(self, id_asset, db):
-        asset = Asset(id_asset, db = db)
+    def _proc(self, asset):
         for analyzer in self.analyzers:
 
             qinfo = asset["qc/analyses"] or {}
