@@ -12,13 +12,15 @@ class BaseObject(object):
         for key in meta:
             self.meta[key] = meta[key]
         self._db = kwargs.get("db", False)
-        if self.meta:
+        if "id" in self.meta:
             self.is_new = False
         else:
             if id:
                 self.load(id)
+                self.is_new = False
             else:
                 self.new()
+                self.is_new = True
 
     @property
     def id(self):
@@ -37,17 +39,22 @@ class BaseObject(object):
         return True
 
     def load(self, id):
-        self.is_new = False
+        pass
 
     def new(self):
-        self.meta = {}
-        self.is_new = True
+        # Default metadata here
+        pass
 
     def save(self, **kwargs):
-        pass
+        #assert self["id_folder"] in config["folders"] # Uncomment when fixed :-D
+        assert self["origin"]
+        if kwargs.get("set_mtime", True):
+            self["mtime"] = int(time.time())
+        self._save(**kwargs)
 
-    def delete(self):
-        pass
+    def delete(self, **kwargs):
+        assert self.id > 0
+        self._delete(**kwargs)
 
     def __delitem__(self, key):
         if key in self.db_map:

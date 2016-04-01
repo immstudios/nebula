@@ -24,9 +24,7 @@ class NebulaObject(object):
             self._db = DB()
         return self._db
 
-    def save(self, **kwargs):
-        if kwargs.get("set_mtime", True):
-            self["mtime"] = int(time.time())
+    def _save(self, **kwargs):
         if self.is_new:
             self._insert()
         else:
@@ -34,6 +32,7 @@ class NebulaObject(object):
         self.db.commit()
 
     def _insert(self):
+        self["ctime"] = self["ctime"] or time.time()
         db_map = self.db_map
         db_map["meta"] = json.dumps(self.meta)
         if self.id:
@@ -52,15 +51,18 @@ class NebulaObject(object):
             self.db.query("UPDATE {} SET meta=%s WHERE id=%s".format(self.db_table), [json.dumps(self.meta), self.id])
 
     def _update(self):
+        assert id > 0
         db_map = self.db_map
         db_map["meta"] = json.dumps(self.meta)
         elms = []
+        values = []
         for key in db_map:
             elms.append("{}=%s".format(key))
             values.append(db_map[key])
         elms = ", ".join(elms)
         values.append(self.id)
         query = "UPDATE {} SET {} WHERE id=%s".format(self.db_table, elms)
+        self.db.query(query, values)
 
 
 
