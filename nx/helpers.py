@@ -13,9 +13,6 @@ __all__ = [
 def get_assets(fulltext="", **kwargs):
     db = DB()
     conds = []
-    if fulltext:
-        ft = slugify(fulltext, make_set=True)
-        conds.extend(["ft_index LIKE '%{}%'".format(elm) for elm in ft])
 
     for key in kwargs:
         value = kwargs[key]
@@ -26,6 +23,10 @@ def get_assets(fulltext="", **kwargs):
             operator = "="
             value = "'{}'".format(value)
         conds.append("meta->>'{}' {} {}".format(key, operator, value))
+
+    if fulltext:
+        ft = slugify(fulltext, make_set=True)
+        conds.extend(["ft_index LIKE '%{}%'".format(elm) for elm in ft])
 
     conds = " AND ".join(conds)
     if conds:
