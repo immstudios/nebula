@@ -81,11 +81,7 @@ class Asset(NebulaObject, BaseAsset):
     @property
     def db_map(self):
         return {
-                "content_type" : self["content_type"],
-                "media_type" : self["media_type"],
-                "id_folder" : self["id_folder"],
-                "origin" : self["origin"],
-                "status" : self["status"],
+                "version_of" : self["id_folder"],
                 "ft_index" : self.ft_index
             }
 
