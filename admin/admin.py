@@ -4,13 +4,24 @@ import jinja2
 
 from nx import *
 
-
 class NebulaAdmin():
     def __init__(self):
         template_root = os.path.join(config["nebula_root"], "admin", "templates")
         self.jinja = jinja2.Environment(
             loader=jinja2.FileSystemLoader(template_root)
             )
+
+    def context(self, **kwargs):
+        context = {
+                "site" : {}
+                "user" : {}
+                "nebula" : {}
+            }
+        context.update(kwargs)
+        return context
+
+    def render(self, template, **kwargs):
+        return template.render(template, context(**kwargs))
 
     @cherrypy.expose
     def index(self):
@@ -24,7 +35,7 @@ class NebulaAdmin():
             tpl = self.jinja.get_template("dashboard.html")
             context["columns"] = "title", "duration", "genre", "id_folder"
             context["assets"] = list(browse(genre="Horror"))
-        return tpl.render(**context)
+        return self.render(tpl, **context)
 
     @cherrypy.expose
     def login(self, login, password, **kwargs):
