@@ -1,7 +1,10 @@
 #!/usr/bin/env python
+#
+# Nebula commandline administration tool
+#
 
 from nebula import *
-from nx.objects import *
+
 
 print "\nCreate new nebula user\n"
 
