@@ -26,34 +26,34 @@ class BaseObject(object):
     def id(self):
         return self.meta.get("id", False)
 
+    @property
+    def object_type(self):
+        return self.__class__.__name__.lower()
+
     def keys(self):
         return self.meta.keys()
 
     def __getitem__(self, key):
-        if key in self.meta:
-            return meta_types.ensure_format(key, self.meta[key])
-        return meta_types[key].default
+        return self.meta.get(key. meta_types[key].default)
 
     def __setitem__(self, key, value):
-        self.meta[key] = meta_types.ensure_format(key, value)
+        self.meta[key] = meta_types[key].validate(value)
         return True
 
     def load(self, id):
         pass
 
     def new(self):
-        # Default metadata here
+        #TODO: Default metadata here. At least origin and asset_type must be specified by user
         pass
 
     def save(self, **kwargs):
-        #assert self["id_folder"] in config["folders"] # Uncomment when fixed :-D
-        assert self["origin"]
         if kwargs.get("set_mtime", True):
             self["mtime"] = int(time.time())
         self._save(**kwargs)
 
     def delete(self, **kwargs):
-        assert self.id > 0
+        assert self.id > 0, "Unable to delete unsaved asset"
         self._delete(**kwargs)
 
     def __delitem__(self, key):
@@ -64,7 +64,6 @@ class BaseObject(object):
         del self.meta[key]
 
     def __repr__(self):
-        object_type = self.__class__.__name__.lower()
         if self.id:
             result = "{} ID:{}".format(object_type, self.id)
         else:
@@ -86,8 +85,6 @@ class BaseObject(object):
 
 
 class BaseAsset(BaseObject):
-    object_type = "asset"
-
     def mark_in(self, new_val=False):
         if new_val:
             self["mark_in"] = new_val
@@ -101,7 +98,7 @@ class BaseAsset(BaseObject):
         try:
             return os.path.join(storages[self["id_storage"]].local_path, self["path"])
         except:
-            return "" # Yes. empty string. keep it this way!!! (because of os.path.exists and so on)
+            return "/dev/null/non_existent_file"
 
     @property
     def duration(self):

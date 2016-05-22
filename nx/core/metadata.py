@@ -5,8 +5,7 @@ from nxtools import *
 from .common import *
 from .constants import *
 
-
-__all__ = ["meta_types", "MetaType"]
+__all__ = ["meta_types", "MetaType", "cs"]
 
 
 if PYTHON_VERSION < 3:
@@ -14,76 +13,178 @@ if PYTHON_VERSION < 3:
 else:
     str_type = str
 
+#
+# Classification sheets
+#
 
-def validate_fract(string):
-    string = string.replace(":", "/")
+class ClassificationSheet():
+    def __init__(self):
+        pass
+#TODO: Big TODO
+
+
+class CS():
+    def __init__(self):
+        self.sheets = {}
+
+    def __getitem__(self, key
+        return self.sheets[key
+
+#
+# Validators
+#
+
+class NebulaInvalidValueError(Exception):
+    pass
+
+
+def validate_string(meta_type, value):
+    return to_unicode(value)
+
+def validate_text(meta_type, value):
+    return to_unicode(value)
+
+def validate_integer(meta_type, value):
+    try:
+        value = int(value)
+    except ValueError:
+        raise NebulaInvalidValueError #TODO: be more or less specific
+    return value
+
+def validate_numeric(meta_type, value):
+    #TODO
+    return value
+
+def validate_boolean(meta_type, value):
+    #TODO
+    return value
+
+def validate_datetime(meta_type, value):
+    #TODO
+    return value
+
+def validate_timecode(meta_type, value):
+    #TODO
+    return value
+
+def validate_regions(meta_type, value):
+    #TODO
+    return value
+
+def validate_fract(meta_type, value):
+    string = value.replace(":", "/")
     split = string.split("/")
     assert len(split) == 2 and split[0].is_digit() and split[1].is_digit()
     return string
 
+def validate_select(meta_type, value):
+    #TODO
+    return value
 
-format_ops = {
-#       CLASS       TYPE        VALIDATOR          DEFAULT   HUMANIZER
-        -1        : [object,    lambda x: x,       None,     None],
-        TEXT      : [str_type,  to_unicode,        "",       None],
-        BLOB      : [str_type,  to_unicode,        "",       None],
-        INTEGER   : [int,       None,              0,        None],
-        NUMERIC   : [float,     None,              0,        lambda key, x: "{:03d}".format(x)],
-        BOOLEAN   : [bool,      None,              False,    lambda key, x: str(bool(x))],
-        DATETIME  : [float,     None,              0,        lambda key, x: time.strfitme("%Y-%m-%d %H:%M", time.localtime(x))],
-        TIMECODE  : [float,     None,              0,        lambda key, x: s2time(x)],
-        REGIONS   : [list,      None,              [],       lambda key, x: "{} regions".format(len(x))],
-        FRACTION  : [str_type,  validate_fract,    "1/1",    None],
-        SELECT    : [str_type,  None,              "",       None],
-        CS_SELECT : [str_type,  None,              "",       None],
-        ENUM      : [int,       None,              0,        None],
-        CS_ENUM   : [int,       None,              0,        None],
-        LIST      : [list,      None,              [],       lambda key, x: ", ".join(x)],
-    }
+def validate_list(meta_type, value):
+    #TODO
+    return value
 
+
+
+#
+# Humanizers
+# functions returning a human readable representation of the meta value
+# since it may be used anywhere (admin, front end) additional rendering params can be passed
+#
+
+def humanize_numeric(meta_type, value, **kwargs):
+    return "{:.03d}".format(value)
+
+def humanize_boolean(meta_type, value, **kwargs):
+    #TODO: web version, qt version etc
+    return ["no", "yes"][bool(value)]
+
+def humanize_datetime(meta_type, value, **kwargs):
+    time_format = kwargs.get("time_format", "%Y-%m-%d %H:%M")
+    return time.strfitme(time_format, time.localtime(value))
+
+def humanize_timecode(meta_type, value, **kwargs):
+    return s2time(value)
+
+def humanize_regions(meta_type, value, **kwargs):
+    return "{} regions".format(len(value))
+
+def humanize_select(meta_type, value, **kwargs):
+    return value # TODO
+
+def humanize_list(meta_type, value, **kwargs):
+    return value # TODO
+
+#
+# Puting it all together
+#
 
 class MetaType():
-    def __init__(self, key):
-        self.key        = key
-        self.namespace  = "site"
-        self.editable   = False
-        self.searchable = False
-        self.meta_class = -1
-        self.settings   = False
-        self.aliases    = {}
+    def __init__(self, key, **kwargs):
+        self.key = key
+        self.settings = {
+                "fulltext" : False,
+                "editable" : False,
+                "class" : STRING
+            }
+        self.settings.update(kwargs)
+        self.humanizer = {
+                STRING : None,
+                TEXT : None,
+                INTEGER : None,
+                NUMERIC : humanize_numeric,
+                BOOLEAN : humanize_boolean,
+                DATETIME : humanize_datetime,
+                TIMECODE : humanize_timecode,
+                REGIONS : humanize_regions,
+                FRACTION : None,
+                SELECT : humanize_select,
+                LIST : humanize_list,
+            }[self["class"]]
+
+        self.validator = {
+                STRING : validate_string,
+                TEXT : validate_text,
+                INTEGER : validate_integer,
+                NUMERIC : validate_numeric,
+                BOOLEAN : validate_boolean,
+                DATETIME : validate_datetime,
+                TIMECODE : validate_timecode,
+                REGIONS : validate_regions,
+                FRACTION : validate_fraction,
+                SELECT : validate_select,
+                LIST : validate_list,
+            }[self["class"]]
+
+    def __getitem__(self, key):
+        return self.settings[key]
 
     @property
     def default(self):
-        return format_ops[self.meta_class][2]
-
-    @property
-    def dump(self):
-        return {
-                "key"        : self.key,
-                "namespace"  : self.namespace,
-                "editable"   : self.editable,
-                "searchable" : self.searchable,
-                "class"      : self.meta_class,
-                "settings"   : self.settings,
-                "aliases"    : self.aliases
-            }
+        # TODO
+        return None
 
     @property
     def default_alias(self):
-            return self.key.replace("_"," ").capitalize()
+        return self.key.replace("_"," ").capitalize()
 
-    def alias(self, lang="en-US"):
-        if not lang in self.aliases:
-            return self.default_alias
-        return self.aliases[lang][0]
+    def alias(self, lang="en"):
+        #TODO
+        return self.default_alias
 
-    def col_header(self, lang="en-US"):
-        if not lang in self.aliases:
-            return self.default_alias
-        a, h = self.aliases[lang]
-        if h is None:
-            return a
-        return h
+    def header(self, lang="en"):
+        #TODO
+        return self.default_alias
+
+    def validate(self, value):
+        if self.validator:
+            return self.validator(self, value)
+        return value
+
+    def humanize(self, value, **kwargs):
+        if not self.humanizer:
+            return self.humanizer(self, value, **kwargs)
 
 
 
@@ -102,25 +203,16 @@ class MetaTypes():
 
     @property
     def dump(self):
-        return [meta_type.dump for meta_type in self]
+        return {key : self[key].settings for key in self.data.keys()}
 
-    def ensure_format(self, key, value):
-        target_class = self[key].meta_class
-        target_type, validator, default, humanizer = format_ops[target_class]
-        if validator:
-            return validator(value)
-        elif target_type == type(value):
-            return value
-        else:
-            return target_type(value)
+    def load_from_dump(self, dump):
+        self.data = {}
+        for key in dump:
+            self.data[key] = MetaType(key, dump[key])
 
-    def humanize(self, key, value, **kwargs):
-        target_class = self[key].meta_class
-        humanizer = format_ops[target_class][3]
-        if not humanizer:
-            return value
-        return humanizer(key, value)
-
-
+#
+#
+#
 
 meta_types = MetaTypes()
+cs = CS()

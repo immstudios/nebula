@@ -9,7 +9,7 @@ def create_ft_index(meta):
     for key in meta:
         if not key in meta_types:
             continue
-        if not meta_types[key].searchable:
+        if not meta_types[key]["searchable"]:
             continue
         slug_set = slugify(meta[key], make_set=True, min_length=3)
         idx |= slug_set

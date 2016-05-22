@@ -1,93 +1,104 @@
 from .core import *
 from .db import *
+from .cache import *
 from .objects import *
 from .helpers import *
 
+#
+# Load system configuration
+#
+
 def load_site_settings(db):
     global config
-    config["playout_channels"] = {}
-    config["ingest_channels"] = {}
-    config["views"] = {}
+    site_settings = {
+               "playout_channels" : {},
+               "ingest_channels" : {},
+               "views" : {},
+               "asset_types" : {}
+            }
 
-    #
-    # Site settings
-    #
+    # Settings
 
     db.query("SELECT key, value FROM settings")
     for key, value in db.fetchall():
-        config[key] = value
+        site_settings[key] = value
 
-    #
     # Views
-    #
 
     db.query("SELECT id, settings FROM views")
     for id, settings in db.fetchall():
         settings = xml(settings)
         view = {}
-        for elm in ["query", "folders", "origins", "media_types", "content_types", "statuses"]:
+        for elm in ["query", "asset_type", "origin", "media_type", "content_type", "status"]:
             try:
                 view[elm] = settings.find(elm).text.strip()
             except:
                 continue
-        config["views"][id] = view
+        site_settings["views"][id] = view
 
-    #
     # Channels
-    #
 
-    db.query("SELECT id, channel_type, title, settings FROM channels")
-    for id_channel, channel_type, title, ch_config in db.fetchall():
-        ch_config.update({"title":title})
+    db.query("SELECT id, title, channel_type, settings FROM channels")
+    for id, title, channel_type, settings in db.fetchall():
+        settings["title"] = title
         if channel_type == PLAYOUT:
-            config["playout_channels"][id_channel] = ch_config
+            site_settings["playout_channels"][id] = settings
         elif channel_type == INGEST:
-            config["ingest_channels"][id_channel] = ch_config
+            site_settings["ingest_channels"][id] = settings
 
-
-def load_meta_types(db):
-    global meta_types
-    db.query("SELECT key, ns, editable, searchable, class, settings FROM meta_types")
-    for key, ns, editable, searchable, meta_class, settings in db.fetchall():
-        meta_type = MetaType(key)
-        meta_type.namespace   = ns
-        meta_type.editable    = bool(editable)
-        meta_type.searchable  = bool(searchable)
-        meta_type.meta_class  = meta_class
-        meta_type.settings    = settings
-        db.query("SELECT lang, alias, col_header FROM meta_aliases WHERE key=%s", [key])
-        for lang, alias, col_header in db.fetchall():
-            meta_type.aliases[lang] = alias, col_header
-        meta_types[key] = meta_type
     return True
 
 
-def load_storages(db):
+def load_storages(db, force=False):
     global storages
-    db.query("SELECT id, title, protocol, path, login, password FROM storages")
-    for id, title, protocol, path, login, password in db.fetchall():
-        storage = Storage(
-            id=id,
-            title=title,
-            protocol=protocol,
-            path=path,
-            login=login,
-            password=password
-            )
+#TODO: load from cache
+    db.query("SELECT id, title, settings FROM storages")
+    for id, title, settings in db.fetchall():
+        storage = Storage(id, title, **settings)
         storages.add(storage)
+#TODO: save to cache
+    return True
+
+#
+# Load metadata model
+#
+
+def load_meta_types(db, force=False):
+    global meta_types
+#TODO: load from cache
+    db.query("SELECT key, settings FROM meta_types")
+    for key, settings in db.fetchall():
+        meta_type = MetaType(key, **settings)
+        meta_types[key] = meta_type
+#TODO: load aliases
+#TODO: save to cache
+    return True
 
 
-def load_all():
+def load_cs(db, force=False):
+    global cs
+
+
+
+
+
+
+#
+# Do it! Do it! Do it!
+#
+
+
+def load_all_settings(force=False):
     logging.debug("Loading site configuration from DB", handlers=False)
     try:
         db = DB() # This is the first time we are connecting DB so error handling should be here
     except:
         log_traceback(handlers=False)
         critical_error("Unable to connect database", handlers=False)
-
-    load_site_settings(db)
-    load_meta_types(db)
-    load_storages(db)
+    load_site_settings(db, force)
+    load_storages(db, force)
+    load_meta_types(db, force)
+    load_cs(db, force)
     messaging.configure()
 
 load_all()
