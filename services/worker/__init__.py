@@ -2,8 +2,6 @@ import os
 import imp
 
 from nx import *
-from nx.services import BaseService
-from nx.plugins import plugin_path
 
 class Service(BaseService):
     def on_init(self):
@@ -56,7 +54,6 @@ class Service(BaseService):
             exec (self.exec_init)
 
         return True
-
 
 
     def on_main(self):
