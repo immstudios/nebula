@@ -4,7 +4,7 @@ import sys
 
 from nebula import *
 
-dump_path = "../dump.json"
+dump_path = "support/demo_data.json"
 dump_data = json.load(open(dump_path))
 
 
@@ -75,15 +75,18 @@ def asset_transform(meta):
 
 
 
-
-
 def import_objects(data):
     groups = {
             "assets" : [Asset, asset_transform],
         }
 
+
     for group in groups:
         obj_class, transform = groups[group]
+
+        print (set(data[group]))
+
+
         for meta in data[group]:
             meta = transform(meta)
             if not meta:
