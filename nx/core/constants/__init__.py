@@ -1,34 +1,42 @@
-from .content_types import *
-from .response_codes import *
+from asset_states import *
+from channel_types import *
+from job_states import *
+from media_types import *
+from response_codes import *
+from run_modes import *
+from service_states import *
+from storage_types import *
 
-#
-# service states
-#
+# ContentTypeCS
+# urn:tva:metadata-cs:ContentTypeCS
+# versionDate="2013-01-07"
+# This is a set of terms used to indicate what kinds of content are
+# used as main Program or used in Package
+# Content can be classified by either the type of content or the subject of content
 
-STOPPED  = 0           # Service is stopped. Surprisingly.
-STARTED  = 1           # Service is started and running
-STARTING = 2           # Service start requested.
-STOPPING = 3           # Service graceful stop requested. It should shutdown itself after current iteration
-KILL     = 4           # Service force stop requested. Dispatch is about to kill -9 it
+AUDIO = 1
+VIDEO = 2
+IMAGE = 3
+TEXT = 4
+DATABROADCASTING = 5
+INTERSTITIAL = 6
+EDUCATION = 7
+APPLICATION = 8
+GAME = 9
+PACKAGE = 10
 
-#
-# media types
-#
-
-VIRTUAL = 0
-FILE = 1
-URL = 2
-
-#
-# asset status
-#
-
-OFFLINE  = 0           # Associated file does not exist
-ONLINE   = 1           # File exists and is ready to use
-CREATING = 2           # File exists, but was changed recently. It is no safe (or possible) to use it yet
-TRASHED  = 3           # File has been moved to trash location.
-ARCHIVED = 4           # File has been moved to archive location.
-RESET    = 5           # Reset metadata action has been invoked. Meta service will update/refresh auto-generated asset information.
+CONTENT_TYPES = {
+    "audio" : AUDIO,
+    "video" : VIDEO,
+    "stillimage" : IMAGE,
+    "text"  : TEXT,
+    "databroadcasting" : DATABROADCASTING,
+    "interstitial" : INTERSTITIAL,
+    "education" : EDUCATION,
+    "application" : APPLICATION,
+    "game" : GAME,
+    "package" : PACKAGE
+}
 
 #
 # meta_classes
@@ -46,28 +54,3 @@ FRACTION     = 8       # 16/9 etc...
 SELECT       = 9
 LIST         = 10
 
-#
-# Job status (stored in nx_jobs/progress)
-#
-
-PENDING   = -1
-COMPLETED = -2
-FAILED    = -3
-ABORTED   = -4
-
-#
-# Channel types
-#
-
-PLAYOUT   = 0
-INGEST    = 1
-CAMPAIGN  = 2
-
-#
-# Block playback modes
-#
-
-RUN_AUTO    = 0    # First item of this block is cued right after last item of previous block
-RUN_MANUAL  = 1    # Playback stops at the end of the last item of previous block
-RUN_SOFT    = 2    # First item of this block is cued if previous block is running and current_time >= scheduled_time
-RUN_HARD    = 3    # First item of this block starts immediately if previous block is running and current_time >= scheduled_time

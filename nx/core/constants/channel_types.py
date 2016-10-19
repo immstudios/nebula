@@ -1,0 +1,3 @@
+PLAYOUT   = 0
+INGEST    = 1
+CAMPAIGN  = 2
