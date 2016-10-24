@@ -1,11 +1,11 @@
-from asset_states import *
-from channel_types import *
-from job_states import *
-from media_types import *
-from response_codes import *
-from run_modes import *
-from service_states import *
-from storage_types import *
+from .asset_states import *
+from .channel_types import *
+from .job_states import *
+from .media_types import *
+from .response_codes import *
+from .run_modes import *
+from .service_states import *
+from .storage_types import *
 
 # ContentTypeCS
 # urn:tva:metadata-cs:ContentTypeCS

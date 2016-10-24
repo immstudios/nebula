@@ -5,30 +5,12 @@ from nxtools import *
 from .common import *
 from .constants import *
 
-__all__ = ["meta_types", "MetaType", "cs"]
-
+__all__ = ["meta_types", "MetaType"]
 
 if PYTHON_VERSION < 3:
     str_type = unicode
 else:
     str_type = str
-
-#
-# Classification sheets
-#
-
-class ClassificationSheet():
-    def __init__(self):
-        pass
-#TODO: Big TODO
-
-
-class CS():
-    def __init__(self):
-        self.sheets = {}
-
-    def __getitem__(self, key
-        return self.sheets[key
 
 #
 # Validators
@@ -48,24 +30,27 @@ def validate_integer(meta_type, value):
     try:
         value = int(value)
     except ValueError:
-        raise NebulaInvalidValueError #TODO: be more or less specific
+        raise NebulaInvalidValueError
     return value
 
 def validate_numeric(meta_type, value):
-    #TODO
-    return value
+    if type(value) in [int, float]:
+        return value
+    try:
+        return float(value)
+    except:
+        raise NebulaInvalidValueError
 
 def validate_boolean(meta_type, value):
-    #TODO
-    return value
+    if value:
+        return True
+    return False
 
 def validate_datetime(meta_type, value):
-    #TODO
-    return value
+    return validate_numeric(meta_type, value)
 
 def validate_timecode(meta_type, value):
-    #TODO
-    return value
+    return validate_numeric(meta_type, value)
 
 def validate_regions(meta_type, value):
     #TODO
@@ -84,8 +69,6 @@ def validate_select(meta_type, value):
 def validate_list(meta_type, value):
     #TODO
     return value
-
-
 
 #
 # Humanizers
@@ -120,13 +103,15 @@ def humanize_list(meta_type, value, **kwargs):
 # Puting it all together
 #
 
-class MetaType():
+class MetaType(object):
     def __init__(self, key, **kwargs):
         self.key = key
         self.settings = {
-                "fulltext" : False,
+                "searchable" : False,
                 "editable" : False,
-                "class" : STRING
+                "class" : STRING,
+                "default" : "",
+                "aliases" : {}
             }
         self.settings.update(kwargs)
         self.humanizer = {
@@ -152,7 +137,7 @@ class MetaType():
                 DATETIME : validate_datetime,
                 TIMECODE : validate_timecode,
                 REGIONS : validate_regions,
-                FRACTION : validate_fraction,
+                FRACTION : validate_fract,
                 SELECT : validate_select,
                 LIST : validate_list,
             }[self["class"]]
@@ -160,9 +145,26 @@ class MetaType():
     def __getitem__(self, key):
         return self.settings[key]
 
+    def __setitem__(self, key, value):
+        self.settings[key] = value
+
+    def update(self, data):
+        if not data:
+            return
+        self.settings.update(data)
+
     @property
     def default(self):
-        # TODO
+        if self["default"]:
+            return self["default"]
+        elif self["class"] in [TEXT, BLOB, SELECT, CS_SELECT]:
+            return ""
+        elif self["class"] in [INTEGER, NUMERIC, BOOLEAN, DATETIME, TIMECODE, ENUM, CS_ENUM]:
+            return 0
+        elif self["class"] == REGIONS:
+            return {}
+        elif self["class"] == FRACTION:
+            return "1/1"
         return None
 
     @property
@@ -170,11 +172,13 @@ class MetaType():
         return self.key.replace("_"," ").capitalize()
 
     def alias(self, lang="en"):
-        #TODO
+        if lang in self.settings["aliases"]:
+            return self.settings["aliases"][0]
         return self.default_alias
 
     def header(self, lang="en"):
-        #TODO
+        if lang in self.settings["aliases"]:
+            return self.settings["aliases"][1]
         return self.default_alias
 
     def validate(self, value):
@@ -215,4 +219,3 @@ class MetaTypes():
 #
 
 meta_types = MetaTypes()
-cs = CS()

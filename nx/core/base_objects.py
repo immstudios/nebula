@@ -2,19 +2,19 @@ from .common import *
 from .constants import *
 from .metadata import meta_types
 
-__all__ = ["BaseObject", "BaseAsset", "BaseItem", "BaseBin", "BaseEvent", "BaseUser"]
+__all__ = ["BaseObject", "AssetMixIn", "ItemMixIn", "BinMixIn", "EventMixIn", "UserMixIn"]
 
 class BaseObject(object):
     def __init__(self, id=False, **kwargs):
         self.is_new = True
         self.meta = {}
         meta = kwargs.get("meta", {})
+        assert hasattr(meta, "keys")
         for key in meta:
             self.meta[key] = meta[key]
-        self._db = kwargs.get("db", False)
-        if "id" in self.meta:
+        if "id_object" in self.meta or "id" in self.meta:
             self.is_new = False
-        else:
+        elif not self.meta:
             if id:
                 self.load(id)
                 self.is_new = False
@@ -34,27 +34,36 @@ class BaseObject(object):
         return self.meta.keys()
 
     def __getitem__(self, key):
-        return self.meta.get(key. meta_types[key].default)
+        key = key.lower().strip()
+        if key == "_duration":
+            return self.duration
+        return self.meta.get(key, meta_types[key].default)
 
     def __setitem__(self, key, value):
-        self.meta[key] = meta_types[key].validate(value)
+        key = key.lower().strip()
+        value = meta_types[key].validate(value)
+        if not value:
+            del self[key]
+        else:
+            self.meta[key] = value
         return True
 
-    def load(self, id):
-        pass
+    def update(self, data):
+        for key in data.keys():
+            self[key] = data[key]
 
     def new(self):
-        #TODO: Default metadata here. At least origin and asset_type must be specified by user
+        pass
+
+    def load(self, id):
         pass
 
     def save(self, **kwargs):
         if kwargs.get("set_mtime", True):
             self["mtime"] = int(time.time())
-        self._save(**kwargs)
 
     def delete(self, **kwargs):
         assert self.id > 0, "Unable to delete unsaved asset"
-        self._delete(**kwargs)
 
     def __delitem__(self, key):
         if key in self.db_map:
@@ -65,30 +74,32 @@ class BaseObject(object):
 
     def __repr__(self):
         if self.id:
-            result = "{} ID:{}".format(object_type, self.id)
+            result = "{} ID:{}".format(self.object_type, self.id)
         else:
-            result = "new {}".format(object_type)
-        title =  self.meta.get("title", "")
+            result = "new {}".format(self.object_type)
+        title = self.meta.get("title", "").encode("utf8", "replace")
         if title:
             result += " ({})".format(title)
         return result
 
     def __len__(self):
-        return bool(self.meta)
+        return not self.is_new
 
-    def show(self, key):
-        return meta_types.humanize(key, self[key])
-
-
+    def show(self, key, **kwargs):
+        return meta_types[key.lstrip("_")].humanize(self[key], **kwargs)
 
 
 
 
-class BaseAsset(BaseObject):
+
+
+class AssetMixIn():
     def mark_in(self, new_val=False):
         if new_val:
             self["mark_in"] = new_val
         return self["mark_in"]
+
+    def mark_out(self, new_val=False):
         if new_val:
             self["mark_out"] = new_val
         return self["mark_out"]
@@ -98,7 +109,9 @@ class BaseAsset(BaseObject):
         try:
             return os.path.join(storages[self["id_storage"]].local_path, self["path"])
         except:
-            return "/dev/null/non_existent_file"
+            # Yes. empty string. keep it this way!!! (because of os.path.exists and so on)
+            # Also: it evals as false
+            return ""
 
     @property
     def duration(self):
@@ -111,12 +124,10 @@ class BaseAsset(BaseObject):
         return dur
 
 
-
-class BaseItem(BaseObject):
+class ItemMixIn():
     _asset = False
 
     def new(self):
-        super(BaseItem, self).new()
         self["id_bin"]    = False
         self["id_asset"]  = False
         self["position"]  = 0
@@ -172,20 +183,39 @@ class BaseItem(BaseObject):
         return dur
 
 
-
-class BaseBin(BaseObject):
+class BinMixIn():
     def new(self):
-        super(BaseBin, self).new()
         self.items = []
 
+    @property
+    def duration(self):
+        dur = 0
+        for item in self.items:
+            dur += item.duration
+        return dur
 
-class BaseEvent(BaseObject):
+
+class EventMixIn():
     def new(self):
-        super(BaseBin, self).new()
         self["start"]      = 0
         self["stop"]       = 0
         self["id_channel"] = 0
         self["id_magic"]   = 0
 
-class BaseUser(BaseObject):
-    pass
+
+class UserMixIn():
+    def set_password(self, password):
+        self["password"] = get_hash(password)
+
+    def __repr__(self):
+        if self.id:
+            iid = "{} ID:{}".format(self.object_type, self.id)
+        else:
+            iid = "new {}".format(self.object_type)
+        try:
+            title = self["login"] or ""
+            if title:
+                title = " ({})".format(title)
+            return "{}{}".format(iid, title)
+        except:
+            return iid

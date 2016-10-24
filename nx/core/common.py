@@ -20,9 +20,9 @@ else:
     python_cmd = "python"
     from posixpath import ismount
 
-##
+#
 # Config
-##
+#
 
 class Config(dict):
     def __init__(self):
@@ -46,7 +46,7 @@ class Config(dict):
                 try:
                     settings.update(json.load(open(settings_file)))
                     logging.debug("Parsing {}".format(settings_file), handlers=False)
-                except:
+                except Exception:
                     log_traceback(handlers=False)
 
         if not settings:
@@ -55,9 +55,9 @@ class Config(dict):
 
 config = Config()
 
-##
+#
 # Utilities
-##
+#
 
 def success(ret_code):
     return ret_code < 400
@@ -72,9 +72,9 @@ def get_hash(string):
 def xml(text):
     return ET.XML(text)
 
-##
+#
 # Messaging
-##
+#
 
 class Messaging():
     def __init__(self):
@@ -103,14 +103,14 @@ class Messaging():
                     ),
                 (self.addr, self.port)
                 )
-        except:
+        except Exception:
             log_traceback(handlers=False)
 
 messaging = Messaging()
 
-##
+#
 # Logging
-##
+#
 
 def seismic_log(**kwargs):
     messaging.send("log", **kwargs)
@@ -118,9 +118,9 @@ def seismic_log(**kwargs):
 logging.user = config["user"]
 logging.add_handler(seismic_log)
 
-##
+#
 # Filesystem
-##
+#
 
 class Storage():
     def __init__(self,  **kwargs):
