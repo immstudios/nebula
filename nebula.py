@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 #    This file is part of Nebula media asset management.
 #
@@ -14,7 +13,7 @@
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+#    along with Nebula. If not, see <http://www.gnu.org/licenses/>.
 #
 
 from __future__ import print_function
@@ -52,7 +51,6 @@ config["nebula_root"] = nebula_root
 #
 
 if __name__ == "__main__":
-
     from nx.storage_monitor import StorageMonitor
     from nx.service_monitor import ServiceMonitor
     from nx.system_monitor import SystemMonitor
@@ -95,5 +93,6 @@ if __name__ == "__main__":
         logging.goodnews("Exiting gracefully")
         sys.exit(0)
     except KeyboardInterrupt:
+        print()
         logging.warning("Immediate shutdown enforced. This may cause problems")
         sys.exit(1)
