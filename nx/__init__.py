@@ -1,6 +1,5 @@
 from .core import *
-from .db import *
-from .cache import *
+from .connection import *
 from .objects import *
 from .helpers import *
 
@@ -45,18 +44,17 @@ def load_site_settings(db):
             site_settings["playout_channels"][id] = settings
         elif channel_type == INGEST:
             site_settings["ingest_channels"][id] = settings
-
+    config.update(site_settings)
     return True
+
 
 
 def load_storages(db, force=False):
     global storages
-#TODO: load from cache
     db.query("SELECT id, title, settings FROM storages")
     for id, title, settings in db.fetchall():
         storage = Storage(id, title, **settings)
         storages.add(storage)
-#TODO: save to cache
     return True
 
 #
@@ -76,22 +74,17 @@ def load_meta_types(db, force=False):
 
 
 def load_cs(db, force=False):
-    global cs
-
-
-
-
-
+    pass
 
 #
 # Do it! Do it! Do it!
 #
 
-
 def load_all_settings(force=False):
     logging.debug("Loading site configuration from DB", handlers=False)
     try:
-        db = DB() # This is the first time we are connecting DB so error handling should be here
+        # This is the first time we are connecting DB so error handling should be here
+        db = DB() 
     except:
         log_traceback(handlers=False)
         critical_error("Unable to connect database", handlers=False)
@@ -101,4 +94,4 @@ def load_all_settings(force=False):
     load_cs(db, force)
     messaging.configure()
 
-load_all()
+load_all_settings()
