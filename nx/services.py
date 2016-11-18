@@ -1,5 +1,5 @@
 from .core import *
-from .db import *
+from .connection import *
 
 __all__ = ["BaseService"]
 
@@ -16,6 +16,10 @@ class BaseService(object):
         except:
             log_traceback("Unable to initialize service")
             self.shutdown()
+        else:
+            db = DB()
+            db.query("UPDATE services SET last_seen = %d, state=1 WHERE id_service=%d" % (time.time(), self.id_service))
+            db.commit()
         logging.goodnews("Service started")
 
     def on_init(self):
