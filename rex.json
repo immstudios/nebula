@@ -1,0 +1,8 @@
+{
+    "https://github.com/martastain/nxtools" : {"python-path" : true},
+    "https://github.com/martastain/themis" : {"python-path" : true},
+    "https://github.com/martastain/nxcg" : {"python-path" : true},
+    "https://github.com/martastain/aura" : {"python-path" : true},
+    "https://github.com/martastain/dramatica" : {"python-path" : true},
+    "https://github.com/martastain/unidecode" : {"python-path" : true}
+}
