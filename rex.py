@@ -101,12 +101,15 @@ class Repository():
     def __getitem__(self, key):
         return self.settings[key]
 
+    def __repr__(self):
+        return "vendor module '{}'".format(self.base_name)
+
 
 
 
 class Rex(object):
     def __init__(self):
-        self.app_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
+        self.app_dir = os.path.abspath(os.getcwd())
         self.vendor_dir =os.path.join(self.app_dir, "vendor")
         self.manifest_path = os.path.join(self.app_dir, "rex.json")
         self.self_update()
@@ -150,7 +153,7 @@ class Rex(object):
         new_rex = response.read()
         old_rex = open("rex.py").read()
         if new_rex != old_rex:
-            logging.info("Updating REX")
+            logging.info("Updating REX core")
         else:
             logging.info("REX is up to date")
 
@@ -162,6 +165,9 @@ class Rex(object):
             except Exception:
                 log_traceback()
         self.chdir(self.app_dir)
+        if self.force_update:
+            logging.goodnews("Vendor modules updated")
+            sys.exit(0)
 
     def update(self, repo):
         if not os.path.exists(self.vendor_dir):
@@ -169,18 +175,21 @@ class Rex(object):
 
         if os.path.exists(repo.path):
             if self.force_update:
+                logging.info("Updating {}".format(repo))
                 self.chdir(repo.path)
                 cmd = ["git", "pull"]
             else:
                 return True
         else:
+            logging.info("Downloading {}".format(repo))
             self.chdir(self.vendor_dir)
             cmd = ["git", "clone", repo.url]
 
         p = subprocess.Popen(cmd)
         while p.poll() == None:
             time.sleep(.1)
-        print ("ret_code", p.returncode)
+        if p.returncode:
+            critical_error("Unable to update {}".format(repo))
 
         return True
 
@@ -188,7 +197,4 @@ class Rex(object):
         if repo.get("python-path") and not repo.path in sys.path:
             sys.path.insert(0, repo.path)
 
-
-
 rex = Rex()
-

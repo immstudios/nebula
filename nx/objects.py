@@ -1,138 +1,168 @@
 from .core import *
 from .core.base_objects import *
-from .db import *
+from .connection import *
 
 __all__ = ["Asset", "Item", "Bin", "Event", "User"]
 
 def create_ft_index(meta):
-    idx = set()
+    ft = {}
     for key in meta:
         if not key in meta_types:
             continue
-        if not meta_types[key]["searchable"]:
+        weight = meta_types[key]["fulltext"]
+        if not weight:
             continue
-        slug_set = slugify(meta[key], make_set=True, min_length=3)
-        idx |= slug_set
-    return " ".join(idx)
+        for word in slugify(meta[key], make_set=True, min_length=3):
+            if not word in ft:
+                ft[word] = weight
+            else:
+                ft[word] = max(ft[word], weight)
+    return ft
 
 
-class NebulaObject(object):
+class ServerObject(BaseObject):
     @property
     def db(self):
-        if not self._db:
+        if not hasattr(self, "_db"):
             logging.debug("{} is opening DB connection.".format(self.__repr__().capitalize()))
             self._db = DB()
         return self._db
 
-    def _save(self, **kwargs):
+    def load(self, id):
+        pass
+
+    def save(self, **kwargs):
         if self.is_new:
-            self._insert()
+            self._insert(**kwargs)
         else:
-            self._update()
+            self._update(**kwargs)
+            self.invalidate()
+        if self.text_changed:
+            self.update_ft_index()
         self.db.commit()
+        self.cache()
+        self.text_changed = self.meta_changed = False
 
     def _insert(self):
-        self["ctime"] = self["ctime"] or time.time()
-        db_map = self.db_map
-        db_map["meta"] = json.dumps(self.meta)
-        if self.id:
-            db_map["id"] = self.id # For object migration
-        columns = []
-        values = []
-        for key in db_map:
-            columns.append(key)
-            values.append(db_map[key])
-        val_placeholder = ", ".join(["%s"]*len(db_map))
-        columns = ", ".join(columns)
-        query = "INSERT INTO {} ({}) VALUES ({})".format(self.db_table, columns, val_placeholder)
-        self.db.query(query, values)
-        if not self.id: # this is not very effective, but we need to have id in meta json
-            self["id"] = self.db.lastid()
-            self.db.query("UPDATE {} SET meta=%s WHERE id=%s".format(self.db_table), [json.dumps(self.meta), self.id])
+        meta = json.dumps(self.meta)
+        query = "INSERT INTO objects (object_type, meta) VALUES (%s, %s) RETURNING id"
+        self.db.query(query, [self.object_type_id, meta])
+        if not self.id:
+            self["id"] = self.db.fetchall()[0][0]
+            self.db.query("UPDATE objects SET meta=%s WHERE id=%s", [json.dumps(self.meta), self.id])
 
     def _update(self):
         assert id > 0
-        db_map = self.db_map
-        db_map["meta"] = json.dumps(self.meta)
-        elms = []
-        values = []
-        for key in db_map:
-            elms.append("{}=%s".format(key))
-            values.append(db_map[key])
-        elms = ", ".join(elms)
-        values.append(self.id)
-        query = "UPDATE {} SET {} WHERE id=%s".format(self.db_table, elms)
-        self.db.query(query, values)
+        meta = json.dumps(self.meta)
+        query = "UPDATE objects SET meta=%s WHERE id=%s"
+        self.db.query(query, [meta, self.id])
+
+    def update_ft_index(self):
+        self.db.query("DELETE FROM ft WHERE id=%s", [self.id])
+        args = [(self.id, ft[word], word) for word in ft]
+        tpls = ','.join(['%s'] * len(args))
+        db.query("INSERT INTO ft (id, weight, value) VALUES {}".format(tpl), args)
+
+    def cache(self):
+        """Save object to cache"""
+        #TODO
+
+    def invalidate(self):
+        """Invalidate all cache objects which references this one"""
+        pass
+
+
+
+
+class ObjectHelper(object):
+    def __init__(self):
+        self.classes = {}
+
+    def __setitem__(self, key, value):
+        self.classes[key] = value
+
+    def invalidate(self, object_type, meta):
+        obj = self.classes[object_type](meta=meta)
+        obj.invalidate()
+
+object_helper = ObjectHelper()
 
 
 
 
 
 
-class Asset(NebulaObject, BaseAsset):
+
+class Asset(AssetMixIn, ServerObject):
+    pass
+
+
+class Item(ItemMixIn, ServerObject):
     @property
-    def ft_index(self):
-        return create_ft_index(self.meta)
-
-    @property
-    def db_table(self):
-        return "assets"
-
-    @property
-    def db_map(self):
-        return {
-                "version_of" : self["id_folder"],
-                "ft_index" : self.ft_index
-            }
-
-
-class Item(NebulaObject, BaseItem):
-    @property
-    def db_table(self):
-        return "items"
-
-    @property
-    def db_map(self):
-        return {
-            }
-
-class Bin(NebulaObject, BaseBin):
-    @property
-    def db_table(self):
-        return "bins"
-
-    @property
-    def db_map(self):
-        return {
-            }
-
-
-class Event(NebulaObject, BaseEvent):
-    @property
-    def db_table(self):
-        return "events"
+    def asset(self):
+        if not hasattr(self, "_asset"):
+            if not self["id_asset"]:
+                self._bin = False # Virtual items
+            #TODO
+        return self._asset
 
     @property
-    def db_map(self):
-        return {
-                "event_type" : self["event_type"],
-                "start_time" : self["start_time"],
-                "end_time" : self["end_time"],
-                "id_magic" : self["id_magic"],
-            }
-
-class User(NebulaObject, BaseUser):
-    @property
-    def db_table(self):
-        return "users"
+    def bin(self):
+        if not hasattr(self, "_bin"):
+            self._bin = Bin(self["id_bin"], db=self.db)
 
     @property
-    def db_map(self):
-        return {
-                "login" : self["login"],
-                "password" : self["password"],
-            }
+    def event(self):
+        _bin = self.bin
+        if not _bin:
+            return False
+        return _bin.event
 
-    def set_password(self, password):
-        self["password"] = get_hash(password)
+    def invalidate(self):
+        pass
+
+
+class Bin(BinMixIn, ServerObject):
+
+    def load_all(self):
+        """Force load all items and their assets data"""
+        db = self.db
+        db.query("")
+        for imeta, ameta in db.fetchall():
+            pass #TODO
+
+    def invalidate(self):
+        pass
+
+    @property
+    def items(self):
+        if not hasattr(self, "_items"):
+            #TODO: load
+            pass
+        return self._items
+
+    @property
+    def event(self):
+        pass
+
+
+class Event(EventMixIn, ServerObject):
+    @property
+    def bin(self):
+        if not hasattr(self, "_bin"):
+            if not self["id_bin"]: # non-playout events
+                self._bin = False
+            #TODO
+        return self._bin
+
+
+class User(UserMixIn, ServerObject):
+    pass
+
+
+object_helper[ASSET] = Asset
+object_helper[ITEM]  = Item
+object_helper[BIN]   = Bin
+object_helper[EVENT] = Event
+object_helper[USER]  = User
 

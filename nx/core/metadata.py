@@ -1,146 +1,42 @@
-import time
-
-from nxtools import *
-
 from .common import *
 from .constants import *
+from .meta_validate import validators
+from .meta_format import humanizers
 
 __all__ = ["meta_types", "MetaType"]
 
-if PYTHON_VERSION < 3:
-    str_type = unicode
-else:
-    str_type = str
 
-#
-# Validators
-#
-
-class NebulaInvalidValueError(Exception):
-    pass
+default_meta_type = {
+        "ns"       : "m",
+        "class"    : -1,
+        "fulltext" : 0,
+        "editable" : 0,
+        "aliases"  : {}
+    }
 
 
-def validate_string(meta_type, value):
-    return to_unicode(value)
+defaults = {
+        -1       : None,
+        STRING   : "",
+        TEXT     : "",
+        INTEGER  : 0,
+        NUMERIC  : 0,
+        BOOLEAN  : False,
+        DATETIME : 0,
+        TIMECODE : 0,
+        REGIONS  : [],
+        FRACTION : "1/1",
+        SELECT   : "",
+        LIST     : []
+    }
 
-def validate_text(meta_type, value):
-    return to_unicode(value)
-
-def validate_integer(meta_type, value):
-    try:
-        value = int(value)
-    except ValueError:
-        raise NebulaInvalidValueError
-    return value
-
-def validate_numeric(meta_type, value):
-    if type(value) in [int, float]:
-        return value
-    try:
-        return float(value)
-    except:
-        raise NebulaInvalidValueError
-
-def validate_boolean(meta_type, value):
-    if value:
-        return True
-    return False
-
-def validate_datetime(meta_type, value):
-    return validate_numeric(meta_type, value)
-
-def validate_timecode(meta_type, value):
-    return validate_numeric(meta_type, value)
-
-def validate_regions(meta_type, value):
-    #TODO
-    return value
-
-def validate_fract(meta_type, value):
-    string = value.replace(":", "/")
-    split = string.split("/")
-    assert len(split) == 2 and split[0].is_digit() and split[1].is_digit()
-    return string
-
-def validate_select(meta_type, value):
-    #TODO
-    return value
-
-def validate_list(meta_type, value):
-    #TODO
-    return value
-
-#
-# Humanizers
-# functions returning a human readable representation of the meta value
-# since it may be used anywhere (admin, front end) additional rendering params can be passed
-#
-
-def humanize_numeric(meta_type, value, **kwargs):
-    return "{:.03d}".format(value)
-
-def humanize_boolean(meta_type, value, **kwargs):
-    #TODO: web version, qt version etc
-    return ["no", "yes"][bool(value)]
-
-def humanize_datetime(meta_type, value, **kwargs):
-    time_format = kwargs.get("time_format", "%Y-%m-%d %H:%M")
-    return time.strfitme(time_format, time.localtime(value))
-
-def humanize_timecode(meta_type, value, **kwargs):
-    return s2time(value)
-
-def humanize_regions(meta_type, value, **kwargs):
-    return "{} regions".format(len(value))
-
-def humanize_select(meta_type, value, **kwargs):
-    return value # TODO
-
-def humanize_list(meta_type, value, **kwargs):
-    return value # TODO
-
-#
-# Puting it all together
-#
 
 class MetaType(object):
-    def __init__(self, key, **kwargs):
+    def __init__(self, key, settings):
         self.key = key
-        self.settings = {
-                "searchable" : False,
-                "editable" : False,
-                "class" : STRING,
-                "default" : "",
-                "aliases" : {}
-            }
-        self.settings.update(kwargs)
-        self.humanizer = {
-                STRING : None,
-                TEXT : None,
-                INTEGER : None,
-                NUMERIC : humanize_numeric,
-                BOOLEAN : humanize_boolean,
-                DATETIME : humanize_datetime,
-                TIMECODE : humanize_timecode,
-                REGIONS : humanize_regions,
-                FRACTION : None,
-                SELECT : humanize_select,
-                LIST : humanize_list,
-            }[self["class"]]
-
-        self.validator = {
-                STRING : validate_string,
-                TEXT : validate_text,
-                INTEGER : validate_integer,
-                NUMERIC : validate_numeric,
-                BOOLEAN : validate_boolean,
-                DATETIME : validate_datetime,
-                TIMECODE : validate_timecode,
-                REGIONS : validate_regions,
-                FRACTION : validate_fract,
-                SELECT : validate_select,
-                LIST : validate_list,
-            }[self["class"]]
+        self.settings = settings or default_meta_type
+        self.validator = validators[self["class"]]
+        self.humanizer = humanizers[self["class"]]
 
     def __getitem__(self, key):
         return self.settings[key]
@@ -148,28 +44,13 @@ class MetaType(object):
     def __setitem__(self, key, value):
         self.settings[key] = value
 
-    def update(self, data):
-        if not data:
-            return
-        self.settings.update(data)
-
     @property
     def default(self):
-        if self["default"]:
-            return self["default"]
-        elif self["class"] in [TEXT, BLOB, SELECT, CS_SELECT]:
-            return ""
-        elif self["class"] in [INTEGER, NUMERIC, BOOLEAN, DATETIME, TIMECODE, ENUM, CS_ENUM]:
-            return 0
-        elif self["class"] == REGIONS:
-            return {}
-        elif self["class"] == FRACTION:
-            return "1/1"
-        return None
+        return defaults[self["class"]]
 
     @property
     def default_alias(self):
-        return self.key.replace("_"," ").capitalize()
+        return self.key.split("/")[-1].replace("_"," ").capitalize()
 
     def alias(self, lang="en"):
         if lang in self.settings["aliases"]:
@@ -186,36 +67,27 @@ class MetaType(object):
             return self.validator(self, value)
         return value
 
-    def humanize(self, value, **kwargs):
+    def show(self, value, **kwargs):
         if not self.humanizer:
-            return self.humanizer(self, value, **kwargs)
+            return value
+        return self.humanizer(self, value, **kwargs)
 
 
-
-class MetaTypes():
-    def __init__(self):
-        self.data = {}
-
+class MetaTypes(object):
     def __getitem__(self, key):
-        return self.data.get(key, MetaType(key))
+        return MetaType(key, config["meta_types"].get(key, None))
 
     def __setitem__(self, key, value):
-        self.data[key] = value
+        if type(value) == MetaType:
+            data = value.settings
+        elif type(value) == dict:
+            data = value
+        else:
+            return
+        config["meta_types"][key] = data
 
     def __iter__(self):
-        return self.data.__iter__()
+        return config["meta_types"].__iter__()
 
-    @property
-    def dump(self):
-        return {key : self[key].settings for key in self.data.keys()}
-
-    def load_from_dump(self, dump):
-        self.data = {}
-        for key in dump:
-            self.data[key] = MetaType(key, dump[key])
-
-#
-#
-#
 
 meta_types = MetaTypes()

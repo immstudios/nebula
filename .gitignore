@@ -1,6 +1,2 @@
 *.pyc
-local_settings.json
-dramatica.log
-tool.py
 vendor/
-plugins

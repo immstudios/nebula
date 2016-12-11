@@ -19,20 +19,31 @@ __all__ = ["DB", "cache", "Cache"]
 # Database
 #
 
-class BaseDB(object):
-    pmap = {}
-
+class DB(object):
     def __init__(self, **kwargs):
-        self.settings = {
-            key : kwargs.get(self.pmap[key], config[self.pmap[key]]) for key in self.pmap
+        self.pmap = {
+                "host" : "db_host",
+                "user" : "db_user",
+                "password" : "db_pass",
+                "database" : "db_name",
             }
-        self._connect()
 
-    def _connect(self):
-        pass
+        self.settings = {
+                key : kwargs.get(self.pmap[key], config[self.pmap[key]]) for key in self.pmap
+            }
 
-    def query(self, q, *args):
-        self.cur.execute(q,*args)
+        self.conn = psycopg2.connect(**self.settings)
+        self.cur = self.conn.cursor()
+
+    def lastid(self):
+        self.query("SELECT LASTVAL()")
+        return self.fetchall()[0][0]
+
+    def query(self, query, *args):
+        self.cur.execute(query, *args)
+
+    def fetchone(self):
+        return self.cur.fetchone()
 
     def fetchall(self):
         return self.cur.fetchall()
@@ -49,40 +60,6 @@ class BaseDB(object):
     def __len__(self):
         return True
 
-
-class DB(BaseDB):
-    pmap = {
-        "host" : "db_host",
-        "user" : "db_user",
-        "password" : "db_pass",
-        "database" : "db_name",
-        }
-
-    def _connect(self):
-        i = 0
-        while i < 3:
-            try:
-                self.conn = psycopg2.connect(**self.settings)
-            except psycopg2.OperationalError:
-                time.sleep(1)
-                i+=1
-                continue
-            else:
-                break
-        else:
-            raise psycopg2.OperationalError
-        self.cur = self.conn.cursor()
-
-    def sanit(self, instr):
-        try:
-            return str(instr).replace("''","'").replace("'","''").decode("utf-8")
-        except:
-            return instr.replace("''","'").replace("'","''")
-
-    def lastid (self):
-        self.query("SELECT LASTVAL()")
-        return self.fetchall()[0][0]
-
 #
 # Cache
 #
@@ -94,8 +71,8 @@ class Cache():
 
     def configure(self):
         self.site = config["site_name"]
-        self.host = config["cache_host"]
-        self.port = config["cache_port"]
+        self.host = config.get("cache_host", "localhost")
+        self.port = config.get("cache_port", 11211)
         self.cstring = "{}:{}".format(self.host, self.port)
         self.pool = False
         self.connect()
@@ -125,7 +102,7 @@ class Cache():
             try:
                 self.conn.set(key, str(value))
                 break
-            except:
+            except Exception:
                 log_traceback("Cache save failed ({})".format(key))
                 time.sleep(.1)
                 self.connect()
@@ -142,7 +119,7 @@ class Cache():
             try:
                 self.conn.delete(key)
                 break
-            except:
+            except Exception:
                 log_traceback("Cache delete failed ({})".format(key))
                 time.sleep(.3)
                 self.connect()
@@ -174,7 +151,7 @@ class Cache():
                 try:
                     mc.set(key, str(value))
                     break
-                except:
+                except Exception:
                     log_traceback("Cache save failed ({})".format(key))
                     time.sleep(.3)
                     self.connect()
@@ -193,7 +170,7 @@ class Cache():
                 try:
                     mc.delete(key)
                     break
-                except:
+                except Exception:
                     log_traceback("Cache delete failed ({})".format(key))
                     time.sleep(.3)
                     self.connect()

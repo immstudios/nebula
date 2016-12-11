@@ -4,8 +4,11 @@ from .agents import BaseAgent
 __all__ = ["StorageMonitor"]
 
 class StorageMonitor(BaseAgent):
-    def _main(self):
+    def main(self):
+        storages_conf = config.get("storages", "all")
         for id_storage in storages:
+            if type(storages_conf) == list and id_storage not in storages_conf:
+                continue
             storage = storages[id_storage]
             if ismount(storage.local_path):
                 storage_string = "{}:{}".format(config["site_name"], storage.id)
@@ -53,6 +56,4 @@ class StorageMonitor(BaseAgent):
         c = Shell(cmd)
         if c.retcode:
             logging.error(c.stderr().read())
-
-
 

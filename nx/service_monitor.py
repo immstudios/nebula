@@ -1,5 +1,5 @@
 from .core import *
-from .db import *
+from .connection import *
 from .agents import BaseAgent
 
 import subprocess
@@ -38,22 +38,22 @@ class ServiceMonitor(BaseAgent):
         db = DB()
         db.query("SELECT id, agent, title, autostart, loop_delay, settings, state, pid FROM services WHERE host=%s", [config["host"]])
 
-        ##
+        #
         # Start / stop service
-        ##
+        #
 
-        for id_service, agent, title, autostart, loop_delay, settings, state, pid in db.fetchall():
+        for id, agent, title, autostart, loop_delay, settings, state, pid in db.fetchall():
             if state == STARTING: # Start service
-                if not id_service in self.services.keys():
-                    self.start_service(id_service, title, db = db)
+                if not id in self.services.keys():
+                    self.start_service(id, title, db = db)
 
             elif state == KILL: # Kill service
-                if id_service in self.services.keys():
-                    self.kill_service(self.services[id_service][0].pid)
+                if id in self.services.keys():
+                    self.kill_service(self.services[id][0].pid)
 
-        ##
+        #
         # Real service state
-        ##
+        #
 
         for id_service in self.services.keys():
             proc, title = self.services[id_service]
@@ -61,18 +61,18 @@ class ServiceMonitor(BaseAgent):
                 continue
             del self.services[id_service]
             logging.warning("Service {} ({}) terminated".format(title,id_service))
-            db.query("UPDATE services SET state = 0  WHERE id = %s", [id_service])
+            db.query("UPDATE services SET state = 0  WHERE id_service = %s", [id_service])
             db.commit()
 
-        ##
+        #
         # Autostart
-        ##
+        #
 
         db.query("SELECT id, title, state, autostart FROM services WHERE host=%s AND state=0 AND autostart=1", [config["host"]])
-        for id_service, title, state, autostart in db.fetchall():
-            if not id_service in self.services.keys():
-                logging.debug("AutoStarting service {} ({})".format(title, id_service))
-                self.start_service(id_service, title)
+        for id, title, state, autostart in db.fetchall():
+            if not id in self.services.keys():
+                logging.debug("AutoStarting service {} ({})".format(title, id))
+                self.start_service(id, title)
 
 
     def start_service(self, id_service, title, db=False):
@@ -102,6 +102,4 @@ class ServiceMonitor(BaseAgent):
             return
         logging.info("Attempting to kill PID {}".format(pid))
         os.system(os.path.join(config["nebula_root"], "killtree.sh {}".format(pid)))
-
-
 

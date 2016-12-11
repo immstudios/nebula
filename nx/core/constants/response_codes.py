@@ -17,7 +17,7 @@ DEFAULT_RESPONSE_MESSAGES = {
         200 : "OK",
         201 : "created",
         202 : "accepted",
-        204 : "nocontent",
+        204 : "no content",
         206 : "partial",
 
         400 : "bad request",

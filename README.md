@@ -32,34 +32,6 @@ Key features
  - [Aura](https://github.com/martastain/aura) - VOD Encoder
  - [Warp](http://weebo.cz) - Web CMS
 
-Installation
-------------
-
-### Prerequisities
-
- - Debian Jessie
- - ffmpeg (media processing nodes) - use [inst.ffmpeg.sh](https://github.com/immstudios/installers/blob/master/install.ffmpeg.sh) script
- - nginx (core node) - use [inst.nginx.sh](https://github.com/immstudios/installers/blob/master/install.nginx.sh) script
-
-### Installation
-
-```bash
-cd /opt
-git clone https://github.com/immstudios/nebula
-```
-
-### Starting
-
-Preffered way is to start Nebula in GNU Screen:
-
-```bash
-cd /opt/nebula && ./nebula.py
-```
-
-### Stopping
-
-To stop nebula press `CTRL+C` ONCE.
-
 
 Need help?
 ----------

@@ -1,3 +1,3 @@
-FILE = 0
-VIRTUAL = 1
-URL = 2
+VIRTUAL = 0
+FILE = 1
+URI = 2

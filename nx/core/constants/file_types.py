@@ -1,4 +1,4 @@
-from .constants import *
+from .content_types import *
 
 file_types = {
     "dv"   : VIDEO,
@@ -23,6 +23,8 @@ file_types = {
     "ogv"  : VIDEO,
     "divx" : VIDEO,
     "video": VIDEO,
+    "m3u8" : VIDEO,
+    "mpd"  : VIDEO,
 
     "wav"  : AUDIO,
     "aiff" : AUDIO,

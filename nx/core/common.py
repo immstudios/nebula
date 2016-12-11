@@ -34,7 +34,7 @@ class Config(dict):
         if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
             local_settings_path = sys.argv[1]
         else:
-            local_settings_path = "local_settings.json"
+            local_settings_path = "settings.json"
 
         settings_files = [
                     "/etc/nebula.json",

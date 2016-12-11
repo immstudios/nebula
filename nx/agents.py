@@ -1,5 +1,8 @@
 import time
-import thread
+try:
+    import thread
+except ImportError:
+    import _thread
 
 from .core import *
 

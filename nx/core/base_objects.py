@@ -6,10 +6,12 @@ __all__ = ["BaseObject", "AssetMixIn", "ItemMixIn", "BinMixIn", "EventMixIn", "U
 
 class BaseObject(object):
     def __init__(self, id=False, **kwargs):
+        self.text_changed = self.meta_changed = False
         self.is_new = True
         self.meta = {}
         meta = kwargs.get("meta", {})
-        assert hasattr(meta, "keys")
+        assert meta is not None, "Unable to load {}.  Meta must not be 'None'.".format(self.object_type)
+        assert hasattr(meta, "keys"), "Incorrect meta!"
         for key in meta:
             self.meta[key] = meta[key]
         if "id_object" in self.meta or "id" in self.meta:
@@ -41,7 +43,13 @@ class BaseObject(object):
 
     def __setitem__(self, key, value):
         key = key.lower().strip()
-        value = meta_types[key].validate(value)
+        meta_type = meta_types[key]
+        value = meta_type.validate(value)
+        if value == self[key]:
+            return True # No change
+        self.meta_changed = True
+        if meta_type["fulltext"]:
+            self.text_changed = True
         if not value:
             del self[key]
         else:
@@ -59,17 +67,21 @@ class BaseObject(object):
         pass
 
     def save(self, **kwargs):
+        self["ctime"] = self["ctime"] or time.time()
         if kwargs.get("set_mtime", True):
             self["mtime"] = int(time.time())
+        for key in self.required:
+            assert key in self.meta, "Unable to save {}. {} is required".format(self, key)
 
     def delete(self, **kwargs):
-        assert self.id > 0, "Unable to delete unsaved asset"
+        assert self.id > 0, "Unable to delete unsaved object"
 
     def __delitem__(self, key):
-        if key in self.db_map:
-            return
+        key = key.lower().strip()
         if not key in self.meta:
             return
+        if hasattr(self, "ns_tags") and key in self.ns_tags:
+            return #v4 only
         del self.meta[key]
 
     def __repr__(self):
@@ -86,7 +98,7 @@ class BaseObject(object):
         return not self.is_new
 
     def show(self, key, **kwargs):
-        return meta_types[key.lstrip("_")].humanize(self[key], **kwargs)
+        return meta_types[key.lstrip("_")].show(self[key], **kwargs)
 
 
 
@@ -94,6 +106,9 @@ class BaseObject(object):
 
 
 class AssetMixIn():
+    object_type_id = 0
+    required = ["media_type", "content_type", "asset_type", "status", "ctime", "mtime"]
+
     def mark_in(self, new_val=False):
         if new_val:
             self["mark_in"] = new_val
@@ -106,9 +121,11 @@ class AssetMixIn():
 
     @property
     def file_path(self):
+        if self["media_type"] != FILE:
+            return ""
         try:
-            return os.path.join(storages[self["id_storage"]].local_path, self["path"])
-        except:
+            return os.path.join(storages[int(self["id_storage"])].local_path, self["path"])
+        except (KeyError, IndexError, ValueError):
             # Yes. empty string. keep it this way!!! (because of os.path.exists and so on)
             # Also: it evals as false
             return ""
@@ -118,19 +135,18 @@ class AssetMixIn():
         dur = float(self.meta.get("duration",0))
         mki = float(self.meta.get("mark_in" ,0))
         mko = float(self.meta.get("mark_out",0))
-        if not dur: return 0
-        if mko > 0: dur -= dur - mko
-        if mki > 0: dur -= mki
+        if not dur:
+            return 0
+        if mko > 0:
+            dur -= dur - mko
+        if mki > 0:
+            dur -= mki
         return dur
 
 
 class ItemMixIn():
-    _asset = False
-
-    def new(self):
-        self["id_bin"]    = False
-        self["id_asset"]  = False
-        self["position"]  = 0
+    object_type_id = 1
+    required = ["id_bin", "id_asset", "position", "ctime", "mtime"]
 
     def __getitem__(self, key):
         key = key.lower().strip()
@@ -184,8 +200,8 @@ class ItemMixIn():
 
 
 class BinMixIn():
-    def new(self):
-        self.items = []
+    object_type_id = 2
+    required = ["bin_type", "ctime", "mtime"]
 
     @property
     def duration(self):
@@ -196,14 +212,14 @@ class BinMixIn():
 
 
 class EventMixIn():
-    def new(self):
-        self["start"]      = 0
-        self["stop"]       = 0
-        self["id_channel"] = 0
-        self["id_magic"]   = 0
+    object_type_id = 3
+    required = ["start", "id_channel", "ctime", "mtime"]
 
 
 class UserMixIn():
+    object_type_id = 4
+    required = ["login", "password"]
+
     def set_password(self, password):
         self["password"] = get_hash(password)
 
@@ -217,5 +233,5 @@ class UserMixIn():
             if title:
                 title = " ({})".format(title)
             return "{}{}".format(iid, title)
-        except:
+        except Exception:
             return iid
