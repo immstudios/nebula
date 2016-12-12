@@ -21,10 +21,10 @@ def load_settings(force=False):
     config["storages"] = {}
     config["playout_channels"] = {}
     config["ingest_channels"] = {}
-    config["views"] = {}
     config["asset_types"] = {}
     config["meta_types"] = {}
     config["cs"] = {}
+    config["views"] = {}
 
     # Load from db
 
@@ -32,21 +32,16 @@ def load_settings(force=False):
     for key, value in db.fetchall():
         config[key] = value
 
-    db.query("SELECT id, title, settings FROM storages")
+    db.query("SELECT id, settings FROM storages")
     for id, title, settings in db.fetchall():
         config["storages"][id] = settings
-        config["storages"][id]["title"] = title
 
-    db.query("SELECT id, title, channel_type, settings FROM channels")
-    for id, title, channel_type, settings in db.fetchall():
+    db.query("SELECT id, channel_type, settings FROM channels")
+    for id, channel_type, settings in db.fetchall():
         pass #TODO
 
-    db.query("SELECT id, title, settings, owner, position FROM views")
-    for id, title, settings, owner, position in db.fetchall():
-        pass #TODO
-
-    db.query("SELECT id, title, settings FROM asset_types")
-    for id, title, settings in db.fetchall():
+    db.query("SELECT id, settings FROM asset_types")
+    for id, settings in db.fetchall():
         config["meta_types"][key] = settings
 
     db.query("SELECT key, settings FROM meta_types")
@@ -55,6 +50,10 @@ def load_settings(force=False):
 
     db.query("SELECT cs, key, value, settings FROM cs")
     for cs, key, value, settings in db.fetchall():
+        pass #TODO
+
+    db.query("SELECT id, title, settings, owner, position FROM views")
+    for id, title, settings, owner, position in db.fetchall():
         pass #TODO
 
     #

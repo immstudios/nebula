@@ -1,2 +1,4 @@
 *.pyc
 vendor/
+test.py
+import_demo.py

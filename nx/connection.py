@@ -85,7 +85,7 @@ class Cache():
         if config.get("mc_thread_safe", False):
             return self.threaded_load(key)
 
-        key = "{}_{}".format(self.site, key)
+        key = self.site + "-" + key
         try:
             result = self.conn.get(key)
         except pylibmc.ConnectionError:
@@ -97,10 +97,10 @@ class Cache():
         if config.get("mc_thread_safe", False):
             return self.threaded_save(key, value)
 
-        key = "{}_{}".format(self.site, key)
+        key = self.site + "-" + key
         for i in range(2):
             try:
-                self.conn.set(key, str(value))
+                self.conn.set(str(key), str(value))
                 break
             except Exception:
                 log_traceback("Cache save failed ({})".format(key))
@@ -114,7 +114,7 @@ class Cache():
     def delete(self,key):
         if config.get("mc_thread_safe", False):
             return self.threaded_delete(key)
-        key = "{}_{}".format(self.site, key)
+        key = self.site + "-" + key
         for i in range(10):
             try:
                 self.conn.delete(key)
@@ -131,7 +131,7 @@ class Cache():
     def threaded_load(self, key):
         if not self.pool:
             self.pool = pylibmc.ThreadMappedPool(self.conn)
-        key = "{}_{}".format(self.site, key)
+        key = self.site + "-" + key
         result = False
         with self.pool.reserve() as mc:
             try:
@@ -145,11 +145,11 @@ class Cache():
     def threaded_save(self, key, value):
         if not self.pool:
             self.pool = pylibmc.ThreadMappedPool(self.conn)
-        key = "{}_{}".format(self.site, key)
+        key = self.site + "-" + key
         with self.pool.reserve() as mc:
             for i in range(10):
                 try:
-                    mc.set(key, str(value))
+                    mc.set(str(key), str(value))
                     break
                 except Exception:
                     log_traceback("Cache save failed ({})".format(key))
@@ -164,7 +164,7 @@ class Cache():
     def threaded_delete(self,key):
         if not self.pool:
             self.pool = pylibmc.ThreadMappedPool(self.conn)
-        key = "{}_{}".format(self.site, key)
+        key = self.site + "-" + key
         with self.pool.reserve() as mc:
             for i in range(10):
                 try:

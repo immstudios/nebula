@@ -1,77 +1,10 @@
 from .core import *
-from .core.base_objects import *
 from .connection import *
 
-__all__ = ["Asset", "Item", "Bin", "Event", "User"]
+from .core.base_objects import *
+from .server_object import *
 
-def create_ft_index(meta):
-    ft = {}
-    for key in meta:
-        if not key in meta_types:
-            continue
-        weight = meta_types[key]["fulltext"]
-        if not weight:
-            continue
-        for word in slugify(meta[key], make_set=True, min_length=3):
-            if not word in ft:
-                ft[word] = weight
-            else:
-                ft[word] = max(ft[word], weight)
-    return ft
-
-
-class ServerObject(BaseObject):
-    @property
-    def db(self):
-        if not hasattr(self, "_db"):
-            logging.debug("{} is opening DB connection.".format(self.__repr__().capitalize()))
-            self._db = DB()
-        return self._db
-
-    def load(self, id):
-        pass
-
-    def save(self, **kwargs):
-        if self.is_new:
-            self._insert(**kwargs)
-        else:
-            self._update(**kwargs)
-            self.invalidate()
-        if self.text_changed:
-            self.update_ft_index()
-        self.db.commit()
-        self.cache()
-        self.text_changed = self.meta_changed = False
-
-    def _insert(self):
-        meta = json.dumps(self.meta)
-        query = "INSERT INTO objects (object_type, meta) VALUES (%s, %s) RETURNING id"
-        self.db.query(query, [self.object_type_id, meta])
-        if not self.id:
-            self["id"] = self.db.fetchall()[0][0]
-            self.db.query("UPDATE objects SET meta=%s WHERE id=%s", [json.dumps(self.meta), self.id])
-
-    def _update(self):
-        assert id > 0
-        meta = json.dumps(self.meta)
-        query = "UPDATE objects SET meta=%s WHERE id=%s"
-        self.db.query(query, [meta, self.id])
-
-    def update_ft_index(self):
-        self.db.query("DELETE FROM ft WHERE id=%s", [self.id])
-        args = [(self.id, ft[word], word) for word in ft]
-        tpls = ','.join(['%s'] * len(args))
-        db.query("INSERT INTO ft (id, weight, value) VALUES {}".format(tpl), args)
-
-    def cache(self):
-        """Save object to cache"""
-        #TODO
-
-    def invalidate(self):
-        """Invalidate all cache objects which references this one"""
-        pass
-
-
+__all__ = ["Asset", "Item", "Bin", "Event", "User", "anonymous"]
 
 
 class ObjectHelper(object):
@@ -88,16 +21,20 @@ class ObjectHelper(object):
 object_helper = ObjectHelper()
 
 
-
-
-
+#
+# Helpers
+#
 
 
 class Asset(AssetMixIn, ServerObject):
-    pass
+    table_name = "assets"
+    db_cols = []
 
 
 class Item(ItemMixIn, ServerObject):
+    table_name = "items"
+    db_cols = ["id_asset", "id_bin", "position"]
+
     @property
     def asset(self):
         if not hasattr(self, "_asset"):
@@ -123,6 +60,8 @@ class Item(ItemMixIn, ServerObject):
 
 
 class Bin(BinMixIn, ServerObject):
+    table_name = "bins"
+    db_cols = ["bin_type"]
 
     def load_all(self):
         """Force load all items and their assets data"""
@@ -147,6 +86,9 @@ class Bin(BinMixIn, ServerObject):
 
 
 class Event(EventMixIn, ServerObject):
+    table_name = "events"
+    db_cols = ["id_channel", "start", "stop", "id_magic"]
+
     @property
     def bin(self):
         if not hasattr(self, "_bin"):
@@ -157,7 +99,12 @@ class Event(EventMixIn, ServerObject):
 
 
 class User(UserMixIn, ServerObject):
-    pass
+    table_name = "users"
+    db_cols = []
+
+#
+# Helpers
+#
 
 
 object_helper[ASSET] = Asset
@@ -166,3 +113,6 @@ object_helper[BIN]   = Bin
 object_helper[EVENT] = Event
 object_helper[USER]  = User
 
+anonymous = User(meta={
+        "login" : "Anonymous"
+    })
