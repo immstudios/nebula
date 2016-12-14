@@ -21,7 +21,7 @@ def load_settings(force=False):
     config["storages"] = {}
     config["playout_channels"] = {}
     config["ingest_channels"] = {}
-    config["asset_types"] = {}
+    config["folders"] = {}
     config["meta_types"] = {}
     config["cs"] = {}
     config["views"] = {}
@@ -40,9 +40,9 @@ def load_settings(force=False):
     for id, channel_type, settings in db.fetchall():
         pass #TODO
 
-    db.query("SELECT id, settings FROM asset_types")
+    db.query("SELECT id, settings FROM folders")
     for id, settings in db.fetchall():
-        config["meta_types"][key] = settings
+        config["folders"][id] = settings
 
     db.query("SELECT key, settings FROM meta_types")
     for key, settings in db.fetchall():
@@ -54,7 +54,21 @@ def load_settings(force=False):
 
     db.query("SELECT id, title, settings, owner, position FROM views")
     for id, title, settings, owner, position in db.fetchall():
-        pass #TODO
+        settings = xml(settings)
+        view = {"name" : title, "columns" : [], "position" : position}
+        columns = settings.find("columns")
+        if columns is not None:
+            for column in columns.findall("column"):
+                if column.text:
+                    view["columns"].append(column.text.strip())
+        for elm in ["folders", "media_types", "content_types", "statuses"]:
+            try:
+                d = settings.find(elm)
+                if d is not None:
+                    view[elm] = [int(x.strip()) for x in d.text.split(",")]
+            except Exception:
+                log_traceback()
+        config["views"][id] = view
 
     #
     # Init all
