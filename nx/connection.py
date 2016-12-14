@@ -85,7 +85,7 @@ class Cache():
         if config.get("mc_thread_safe", False):
             return self.threaded_load(key)
 
-        key = self.site + "-" + key
+        key = str(self.site + "-" + key)
         try:
             result = self.conn.get(key)
         except pylibmc.ConnectionError:
