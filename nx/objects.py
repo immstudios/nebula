@@ -28,7 +28,18 @@ object_helper = ObjectHelper()
 
 class Asset(AssetMixIn, ServerObject):
     table_name = "assets"
-    db_cols = []
+    db_cols = ["id_folder", "version_of"]
+
+    def invalidate(self):
+        # Invalidate view count
+        # Performance idea: invalidate only if view is affected (folder changed, inserted...)
+        for id_view in config["views"]:
+            view = config["views"][id_view]
+            for id_folder in view.get("folders"):
+                if self["id_folder"] == id_folder:
+                    logging.debug("Invalidating view count"+str(id_view))
+                    cache.delete("view-count-"+str(id_view))
+                    break
 
 
 class Item(ItemMixIn, ServerObject):
@@ -55,8 +66,6 @@ class Item(ItemMixIn, ServerObject):
             return False
         return _bin.event
 
-    def invalidate(self):
-        pass
 
 
 class Bin(BinMixIn, ServerObject):
