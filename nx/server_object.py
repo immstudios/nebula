@@ -1,5 +1,6 @@
 from .core import *
 from .core.base_objects import BaseObject
+from .connection import *
 
 __all__ = ["ServerObject"]
 
@@ -28,12 +29,18 @@ class ServerObject(BaseObject):
     @property
     def db(self):
         if not hasattr(self, "_db"):
-            logging.debug("{} is opening DB connection")
+            logging.debug("{} is opening DB connection".format(self))
             self._db = DB()
         return self._db
 
     def load(self, id):
-        pass
+        key = str(self.object_type_id) + "-" + str(id)
+        try:
+            self.meta = json.loads(cache.load(key))
+        except:
+            logging.debug("Loading {} ID:{} from DB") #TODO
+            print "Unable to load " + key + " from cache"
+            #TODO: Database failover
 
     def save(self, **kwargs):
         is_new = self.is_new
