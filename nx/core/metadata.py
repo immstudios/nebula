@@ -54,12 +54,12 @@ class MetaType(object):
 
     def alias(self, lang="en"):
         if lang in self.settings["aliases"]:
-            return self.settings["aliases"][0]
+            return self.settings["aliases"][lang][0]
         return self.default_alias
 
     def header(self, lang="en"):
         if lang in self.settings["aliases"]:
-            return self.settings["aliases"][1]
+            return self.settings["aliases"][lang][1]
         return self.default_alias
 
     def validate(self, value):
