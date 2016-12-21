@@ -28,7 +28,7 @@ object_helper = ObjectHelper()
 
 class Asset(AssetMixIn, ServerObject):
     table_name = "assets"
-    db_cols = ["id_folder", "version_of"]
+    db_cols = ["id_folder", "version_of", "ctime", "mtime"]
 
     def invalidate(self):
         # Invalidate view count
@@ -44,7 +44,7 @@ class Asset(AssetMixIn, ServerObject):
 
 class Item(ItemMixIn, ServerObject):
     table_name = "items"
-    db_cols = ["id_asset", "id_bin", "position"]
+    db_cols = ["id_asset", "id_bin", "position", "ctime", "mtime"]
 
     @property
     def asset(self):
@@ -70,7 +70,7 @@ class Item(ItemMixIn, ServerObject):
 
 class Bin(BinMixIn, ServerObject):
     table_name = "bins"
-    db_cols = ["bin_type"]
+    db_cols = ["bin_type", "ctime", "mtime"]
 
     def load_all(self):
         """Force load all items and their assets data"""
@@ -96,7 +96,7 @@ class Bin(BinMixIn, ServerObject):
 
 class Event(EventMixIn, ServerObject):
     table_name = "events"
-    db_cols = ["id_channel", "start", "stop", "id_magic"]
+    db_cols = ["id_channel", "start", "stop", "id_magic", "ctime", "mtime"]
 
     @property
     def bin(self):
@@ -109,7 +109,7 @@ class Event(EventMixIn, ServerObject):
 
 class User(UserMixIn, ServerObject):
     table_name = "users"
-    db_cols = []
+    db_cols = ["ctime", "mtime"]
 
 #
 # Helpers
