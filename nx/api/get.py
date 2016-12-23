@@ -10,26 +10,39 @@ def get_objects(ObjectType, **kwargs):
     fulltext    = kwargs.get("fulltext", False)
     result_type = kwargs.get("result", False)
     do_count    = kwargs.get("count", False)
+    view_count  = kwargs.get("view_count", 0) # pre-fulltext count, if known
     limit       = kwargs.get("limit", False)
     offset      = kwargs.get("offset", False)
+    order       = kwargs.get("order", False)
+
+    raw_conds.append("id_folder = 1")
 
     conds = []
+
+
+
     for cond in raw_conds:
         for col in ObjectType.db_cols:
-            if conds.startswith(col):
-                conds.append(raw_cond)
+            if cond.startswith(col):
+                conds.append(cond)
                 break
-        conds.append("meta->>"+cond)
+        else:
+            conds.append("meta->>"+cond)
 
     if fulltext:
+        do_count = True
         ft = slugify(fulltext, make_set=True)
         for word in ft:
             conds.append("id IN (SELECT id FROM ft WHERE object_type={} AND value LIKE '{}%')".format(ObjectType.object_type_id, word))
+    else:
+        if view_count:
+            do_count = False
 
-    conds = "WHERE " + " AND ".join(conds) if conds else ""
-    counter = ", count(*) OVER() AS full_count" if do_count else ", 0"
+    conds = " WHERE " + " AND ".join(conds) if conds else ""
+    counter = ", count(id_folder) OVER() AS full_count" if do_count else ", 0"
 
-    q = "SELECT id, meta{} FROM {} {}".format(counter, ObjectType.table_name, conds)
+    q = "SELECT id, meta{} FROM {}{}".format(counter, ObjectType.table_name, conds)
+    q += " ORDER BY {}".format(order) if order else ""
     q += " LIMIT {}".format(limit) if limit else ""
     q += " OFFSET {}".format(offset) if offset else ""
 
@@ -37,7 +50,7 @@ def get_objects(ObjectType, **kwargs):
     db.query(q)
 
     for id, meta, count in db.fetchall():
-        yield {"count": count}, ObjectType(meta=meta, db=db)
+        yield {"count": count or view_count}, ObjectType(meta=meta, db=db)
 
 
 
@@ -49,6 +62,7 @@ def api_get(**kwargs):
     result_type = kwargs.get("result", False)
     user        = kwargs.get("user", anonymous)
     db          = kwargs.get("db", DB())
+    id_view     = kwargs.get("view", 0)
 
     start_time = time.time()
 
@@ -74,6 +88,28 @@ def api_get(**kwargs):
 
     else:
         # We actually search the database
+
+        if id_view:
+            view_config = config["views"][id_view]
+            for key, col in [
+                        ["folders", "id_folder"],
+                        ["media_types", "media_type"],
+                        ["content_types", "content_type"],
+                        ["statuses", "status"],
+                        ["folders", "id_folder"],
+                    ]:
+                if key in view_config:
+                    if len(view_config[key].split(",")) == 1:
+                        kwargs["conds"].append("{}={}".format(col, view_config[key]))
+                    else:
+                        kwargs["conds"].append("{} IN ({})".format(col, view_config[key]))
+
+            try:
+                kwargs["view_count"] = int(cache.load("view-count-"+str(id_view)))
+            except:
+                pass
+
+
         if type(result_type) == list:
             result_format = []
             for i, key in enumerate(result_type):
@@ -111,6 +147,9 @@ def api_get(**kwargs):
     #
     # response
     #
+
+    if id_view and (not kwargs.get("view_count")) and result["count"]:
+        cache.save("view-count-"+str(id_view), result["count"])
 
     result["response"] = 200
     result["message"] = "{} {}s returned in {:.02}s".format(
