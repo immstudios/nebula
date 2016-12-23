@@ -37,12 +37,20 @@ class ServerObject(BaseObject):
         key = str(self.object_type_id) + "-" + str(id)
         try:
             self.meta = json.loads(cache.load(key))
-        except:
-            logging.debug("Loading {} ID:{} from DB") #TODO
-            print "Unable to load " + key + " from cache"
-            #TODO: Database failover
+            return True
+        except Exception:
+            pass
+        logging.debug("Loading {} ID:{} from DB".format(self.__class__.__name__, id))
+        db = self.db
+        db.query("SELECT meta FROM {} WHERE id = {}".format(self.table_name, id))
+        try:
+            self.meta = db.fetchall()[0][0]
+        except IndexError:
+            logging.error("Unable to load {} ID:{}. Object does not exist".format(self.__class__.__name__, id))
+            return False
 
     def save(self, **kwargs):
+        super(ServerObject, self).save(**kwargs)
         is_new = self.is_new
         if is_new:
             self._insert(**kwargs)
