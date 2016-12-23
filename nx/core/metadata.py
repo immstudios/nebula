@@ -46,6 +46,8 @@ class MetaType(object):
 
     @property
     def default(self):
+        if "default" in self.settings:
+            return self["default"]
         return defaults[self["class"]]
 
     @property
