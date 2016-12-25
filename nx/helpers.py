@@ -6,7 +6,7 @@ from .objects import *
 def get_user(login, password, db=False):
     if not db:
         db = DB()
-    db.query("SELECT meta FROM users WHERE login=%s AND password=%s", [login, get_hash(password)])
+    db.query("SELECT meta FROM users WHERE meta->>'login'=%s AND meta->>'password'=%s", [login, get_hash(password)])
     res = db.fetchall()
     if not res:
         return False
@@ -18,41 +18,32 @@ def asset_by_path(id_storage, path, db=False):
     if not db:
         db = DB()
     db.query("""
-            SELECT id FROM assets
-                WHERE meta->>'id_storage' = %s
+            SELECT id, meta FROM assets
+                WHERE meta->>'id_storage' = '%s'
                 AND meta->>'path' = %s
         """, [id_storage, path])
-    try:
-        return db.fetchall()[0][0]
-    except:
-        return False
+    res = db.fetchall()
+    for id, meta in db.fetchall():
+        return Asset(meta=meta, db=db)
+    return False
 
 
 def asset_by_full_path(path, db=False):
     if not db:
         db = DB()
-    for s in storages:
-        if path.startswith(storages[s].local_path):
-            return asset_by_path(s,path.lstrip(s.path),db=db)
+    for id_storage in storages:
+        if path.startswith(storages[id_storage].local_path):
+            return asset_by_path(id_storage, path.lstrip(storages[id_storage]["path"]), db=db)
     return False
-
-
-##
-## TO BE UPDATED
-##
 
 
 def meta_exists(key, value, db=False):
     if not db:
         db = DB()
-    db.query("SELECT id, meta FROM assets WHERE meta->>%s = %s", [key, value])
-    try:
-        return res[0][0]
-    except:
-        return False
-
-
-
+    db.query("SELECT id, meta FROM assets WHERE meta->>'%s' = '%s'", [key, value])
+    for id, meta in db.fetchall():
+        return Asset(meta=meta, db=db)
+    return False
 
 
 def bin_refresh(bins, sender=False, db=False):
@@ -62,9 +53,14 @@ def bin_refresh(bins, sender=False, db=False):
         db = DB()
     for id_bin in bins:
         cache.delete("b{}".format(id_bin))
-    bq = ", ".join([str(b) for b in bins if b])
+    bq = ", ".join([str(b) for b in bins if type(b) == int or b.isdigit()])
     changed_events = []
-    db.query("SELECT e.id_object, e.id_channel, e.start FROM nx_events as e, nx_channels as c WHERE c.channel_type = 0 AND c.id_channel = e.id_channel AND id_magic in ({})".format(bq))
+    db.query("""
+        SELECT e.id, e.id_channel, e.start FROM events AS e, channels AS c
+            WHERE c.channel_type = 0
+            AND c.id_channel = e.id_channel
+            AND id_magic in ({})
+            """.format(bq))
     for id_event, id_channel, start_time in db.fetchall():
         chg = id_event
         if not chg in changed_events:
@@ -76,36 +72,33 @@ def bin_refresh(bins, sender=False, db=False):
 
 def get_day_events(id_channel, date, num_days=1):
     start_time = datestr2ts(date, *config["playout_channels"][id_channel].get("day_start", [6,0]))
-    end_time   = start_time + (3600*24*num_days)
+    end_time = start_time + (3600*24*num_days)
     db = DB()
-    db.query("SELECT id_object FROM nx_events WHERE id_channel=%s AND start > %s AND start < %s ", (id_channel, start_time, end_time))
-    for id_event, in db.fetchall():
-        yield Event(id_event)
+    db.query("SELECT id, meta FROM events WHERE id_channel=%s AND start > %s AND start < %s ", (id_channel, start_time, end_time))
+    for id_event, meta in db.fetchall():
+        yield Event(meta=meta)
 
 
 def get_bin_first_item(id_bin, db=False):
     if not db:
         db = DB()
-    db.query("SELECT id_item FROM nx_items WHERE id_bin=%d ORDER BY position LIMIT 1" % id_bin)
-    try:
-        return db.fetchall()[0][0]
-    except:
-        return False
+    db.query("SELECT id, meta FROM items WHERE id_bin=%s ORDER BY position LIMIT 1", [id_bin])
+    for id, meta in db.fetchall():
+        return Item(meta=meta, db=db)
+    return False
 
 
 def get_item_event(id_item, **kwargs):
     db = kwargs.get("db", DB())
     lcache = kwargs.get("cahce", cache)
-
-    db.query("""SELECT e.id_object, e.start, e.id_channel from nx_items as i, nx_events as e where e.id_magic = i.id_bin and i.id_object = {} and e.id_channel in ({})""".format(
+    #TODO: Use db mogrify
+    db.query("""SELECT e.id_object, e.meta FROM items AS i, events AS e WHERE e.id_magic = i.id_bin AND i.id = {} and e.id_channel in ({})""".format(
         id_item,
         ", ".join([str(f) for f in config["playout_channels"].keys()])
         ))
-    try:
-        id_object, start, id_channel = db.fetchall()[0]
-    except:
-        return False
-    return Event(id_object, db=db, cache=lcache)
+    for id, meta in db.fetchall():
+        return Event(meta=meta, db=db)
+    return False
 
 
 def get_item_runs(id_channel, from_ts, to_ts, db=False):
@@ -117,6 +110,7 @@ def get_item_runs(id_channel, from_ts, to_ts, db=False):
     return result
 
 
+#TODO: rewrite this
 def get_next_item(id_item, **kwargs):
     if not id_item:
         return False
