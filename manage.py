@@ -84,6 +84,7 @@ def run(*args):
 #
 
 def add_user(*args):
+    print ()
     try:
         login = raw_input("Login: ").strip()
         password = raw_input("Password: ").strip()
