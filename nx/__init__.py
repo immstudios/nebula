@@ -3,6 +3,8 @@ from .connection import *
 from .objects import *
 from .helpers import *
 from .api import *
+from .base_service import *
+from .plugins import *
 
 
 def load_settings(force=False):
@@ -55,7 +57,7 @@ def load_settings(force=False):
     db.query("SELECT id, title, settings, owner, position FROM views")
     for id, title, settings, owner, position in db.fetchall():
         settings = xml(settings)
-        view = {"name" : title, "columns" : [], "position" : position}
+        view = {"title" : title, "columns" : [], "position" : position}
         columns = settings.find("columns")
         if columns is not None:
             for column in columns.findall("column"):
