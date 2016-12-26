@@ -61,7 +61,7 @@ class BaseObject(object):
             self[key] = data[key]
 
     def new(self):
-        pass
+        logging.debug("Creating empty asset")
 
     def load(self, id):
         pass
@@ -107,7 +107,7 @@ class BaseObject(object):
 
 class AssetMixIn():
     object_type_id = 0
-    required = ["media_type", "content_type", "asset_type", "status", "ctime", "mtime"]
+    required = ["media_type", "content_type", "id_folder", "ctime", "mtime"]
 
     def mark_in(self, new_val=False):
         if new_val:
