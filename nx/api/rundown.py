@@ -9,8 +9,8 @@ def api_rundown(**kwargs):
     # Configuration
     #
 
-    db         = kwargs.get("db", DB()
-    id_channel = kwargs["id_channel"])
+    db         = kwargs.get("db", DB())
+    id_channel = kwargs.get("id_channel", False)
     start_time = kwargs.get("start_time", 0)
     end_time   = start_time + (3600 * 24)
 
