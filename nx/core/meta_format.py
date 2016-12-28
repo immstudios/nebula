@@ -12,28 +12,55 @@ else:
 #
 #
 
+def format_integer(meta_type, value, **kwargs):
+    value = int(value)
+    if kwargs.get("mode", False) == "hub":
+        if meta_type.key == "id_folder":
+            fconfig = config["folders"][value]
+            return "<span class=\"badge\" style=\"background-color : #{:06x}\">{}</span>".format(fconfig["color"], fconfig["title"])
+    return value
+
+
 def format_numeric(meta_type, value, **kwargs):
-    return "{:.03d}".format(value)
+    return "{:.03f}".format(value)
+
 
 def format_boolean(meta_type, value, **kwargs):
-    #TODO: web version, qt version etc
+    value = int(value)
+    if kwargs.get("mode", False) == "hub":
+        if meta_type.key == "promoted":
+            return [
+                    "<i class=\"mdi mdi-star-outline\">",
+                    "<i class=\"mdi mdi-star\">"
+                ][value]
+        else:
+            return [
+                    "<i class=\"mdi mdi-checkbox-blank-outline\">",
+                    "<i class=\"mdi mdi-checkbox-marked-outline\">"
+                ][value]
     return ["no", "yes"][bool(value)]
+
 
 def format_datetime(meta_type, value, **kwargs):
     time_format = kwargs.get("time_format", "%Y-%m-%d %H:%M")
     return time.strftime(time_format, time.localtime(value))
 
+
 def format_timecode(meta_type, value, **kwargs):
     return s2time(value)
+
 
 def format_regions(meta_type, value, **kwargs):
     return "{} regions".format(len(value))
 
+
 def format_fract(meta_type, value, **kwargs):
     return value # TODO
 
+
 def format_select(meta_type, value, **kwargs):
     return value # TODO
+
 
 def format_list(meta_type, value, **kwargs):
     return value # TODO
@@ -43,7 +70,7 @@ humanizers = {
         -1       : None,
         STRING   : None,
         TEXT     : None,
-        INTEGER  : None,
+        INTEGER  : format_integer,
         NUMERIC  : format_numeric,
         BOOLEAN  : format_boolean,
         DATETIME : format_datetime,
