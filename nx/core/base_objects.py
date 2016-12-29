@@ -5,6 +5,8 @@ from .metadata import meta_types
 __all__ = ["BaseObject", "AssetMixIn", "ItemMixIn", "BinMixIn", "EventMixIn", "UserMixIn"]
 
 class BaseObject(object):
+    defaults = {}
+
     def __init__(self, id=False, **kwargs):
         self.text_changed = self.meta_changed = False
         self.is_new = True
@@ -14,7 +16,7 @@ class BaseObject(object):
         assert hasattr(meta, "keys"), "Incorrect meta!"
         for key in meta:
             self.meta[key] = meta[key]
-        if "id_object" in self.meta or "id" in self.meta:
+        if "id" in self.meta:
             self.is_new = False
         elif not self.meta:
             if id:
@@ -61,7 +63,8 @@ class BaseObject(object):
             self[key] = data[key]
 
     def new(self):
-        logging.debug("Creating empty asset")
+        logging.debug("Creating empty {}".format(self.object_type))
+        self.meta.update(self.defaults)
 
     def load(self, id):
         pass
@@ -108,6 +111,7 @@ class BaseObject(object):
 class AssetMixIn():
     object_type_id = 0
     required = ["media_type", "content_type", "id_folder", "ctime", "mtime"]
+    defaults = {"media_type" : VIRTUAL, "content_type" : TEXT}
 
     def mark_in(self, new_val=False):
         if new_val:
@@ -202,6 +206,7 @@ class ItemMixIn():
 class BinMixIn():
     object_type_id = 2
     required = ["bin_type", "ctime", "mtime"]
+    defaults = {"bin_type" : 0}
 
     @property
     def duration(self):

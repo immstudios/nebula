@@ -23,7 +23,7 @@ object_helper = ObjectHelper()
 
 class Asset(AssetMixIn, ServerObject):
     table_name = "assets"
-    db_cols = ["id_folder", "version_of", "ctime", "mtime"]
+    db_cols = ["id_folder", "status", "version_of", "ctime", "mtime"]
 
     def invalidate(self):
         # Invalidate view count
@@ -41,13 +41,14 @@ class Asset(AssetMixIn, ServerObject):
 class Item(ItemMixIn, ServerObject):
     table_name = "items"
     db_cols = ["id_asset", "id_bin", "position"]
+    defaults = {"id_asset" : 0, "position" : 0}
 
     @property
     def asset(self):
         if not hasattr(self, "_asset"):
             if not self["id_asset"]:
-                self._bin = False # Virtual items
-            #TODO
+                self._asset =False # Virtual items
+            #TODO: loading
         return self._asset
 
     @property
@@ -61,6 +62,11 @@ class Item(ItemMixIn, ServerObject):
         if not _bin:
             return False
         return _bin.event
+
+    def __getitem__(self, key):
+        if key in self.meta:
+            return super(Item, self).__getitem__(key)
+        return self.asset[key]
 
 
 
