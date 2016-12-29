@@ -15,11 +15,7 @@ def get_objects(ObjectType, **kwargs):
     offset      = kwargs.get("offset", False)
     order       = kwargs.get("order", False)
 
-    raw_conds.append("id_folder = 1")
-
     conds = []
-
-
 
     for cond in raw_conds:
         for col in ObjectType.db_cols:
@@ -64,6 +60,9 @@ def api_get(**kwargs):
     db          = kwargs.get("db", DB())
     id_view     = kwargs.get("view", 0)
 
+    if not "conds" in kwargs:
+        kwargs["conds"] = []
+
     start_time = time.time()
 
     ObjectType = {
@@ -99,10 +98,10 @@ def api_get(**kwargs):
                         ["folders", "id_folder"],
                     ]:
                 if key in view_config:
-                    if len(view_config[key].split(",")) == 1:
-                        kwargs["conds"].append("{}={}".format(col, view_config[key]))
+                    if len(view_config[key]) == 1:
+                        kwargs["conds"].append("{}={}".format(col, view_config[key][0]))
                     else:
-                        kwargs["conds"].append("{} IN ({})".format(col, view_config[key]))
+                        kwargs["conds"].append("{} IN ({})".format(col, ",".join([str(v) for v in view_config[key]])))
 
             try:
                 kwargs["view_count"] = int(cache.load("view-count-"+str(id_view)))
