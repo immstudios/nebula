@@ -4,7 +4,6 @@ from .objects import *
 from .helpers import *
 from .api import *
 from .base_service import *
-from .plugins import *
 
 
 def load_settings(force=False):
@@ -17,7 +16,8 @@ def load_settings(force=False):
     try:
         db = DB()
     except Exception:
-        log_traceback(handlers=False)
+        message = log_traceback("Database connection error", handlers=False)
+        critical_error("Unable to connect nebula database")
 
 
     config["storages"] = {}
@@ -40,7 +40,9 @@ def load_settings(force=False):
 
     db.query("SELECT id, channel_type, settings FROM channels")
     for id, channel_type, settings in db.fetchall():
-        pass #TODO
+        if channel_type == 0:
+            config["playout_channels"][id] = settings
+        pass #TODO: Ingest channels
 
     db.query("SELECT id, settings FROM folders")
     for id, settings in db.fetchall():
@@ -83,3 +85,5 @@ def load_settings(force=False):
 
 
 load_settings()
+
+from .plugins import *
