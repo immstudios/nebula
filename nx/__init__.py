@@ -35,7 +35,7 @@ def load_settings(force=False):
         config[key] = value
 
     db.query("SELECT id, settings FROM storages")
-    for id, title, settings in db.fetchall():
+    for id, settings in db.fetchall():
         config["storages"][id] = settings
 
     db.query("SELECT id, channel_type, settings FROM channels")
