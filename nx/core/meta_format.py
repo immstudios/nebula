@@ -1,6 +1,8 @@
 import time
 
 from nxtools import *
+
+from .common import *
 from .constants import *
 
 if PYTHON_VERSION < 3:
@@ -9,15 +11,17 @@ else:
     str_type = str
 
 #
-#
+# Formating helpers
 #
 
 def format_integer(meta_type, value, **kwargs):
     value = int(value)
     if kwargs.get("mode", False) == "hub":
+        if not value and meta_type.settings.get("hide_null", False):
+            return ""
         if meta_type.key == "id_folder":
             fconfig = config["folders"][value]
-            return "<span class=\"badge\" style=\"background-color : #{:06x}\">{}</span>".format(fconfig["color"], fconfig["title"])
+            return "<span class=\"label\" style=\"background-color : #{:06x}\">{}</span>".format(fconfig["color"], fconfig["title"])
     return value
 
 
@@ -42,7 +46,7 @@ def format_boolean(meta_type, value, **kwargs):
 
 
 def format_datetime(meta_type, value, **kwargs):
-    time_format = kwargs.get("time_format", "%Y-%m-%d %H:%M")
+    time_format = meta_type.settings.get("format", False) or kwargs.get("format", "%Y-%m-%d %H:%M")
     return time.strftime(time_format, time.localtime(value))
 
 
