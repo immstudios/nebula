@@ -4,10 +4,16 @@ from nebula import *
 
 from .view_dashboard import ViewDashboard
 from .view_mam import ViewMAM
+from .view_jobs import ViewJobs
+from .view_reports import ViewReports
+
 from .view_panel_browser import ViewPanelBrowser
 from .view_panel_detail import ViewPanelDetail
 from .view_panel_rundown import ViewPanelRundown
 from .view_panel_scheduler import ViewPanelScheduler
+
+from .view_system import *
+
 
 
 __all__ = [
@@ -39,6 +45,17 @@ class SiteContext(object):
                     ["scheduler", "Scheduler"]
                 ],
 
+            "system_pages" : [
+                    ["system_services", "Services"],
+                    ["system_views", "Views"],
+                    ["system_actions", "Actions"],
+                    ["system_folders", "Folders"],
+                    ["system_channels", "Channels"],
+                    ["system_storages", "Storages"],
+                    ["system_settings", "Settings"],
+                    ["system_users", "Users"],
+                ],
+
             "meta_types" : meta_types,
         }
 
@@ -66,10 +83,20 @@ hub_config = {
         "views" : {
                 "index" : ViewDashboard,
                 "mam" : ViewMAM,
+                "jobs" : ViewJobs,
+                "reports" : ViewReports,
                 "panel_browser" : ViewPanelBrowser,
                 "panel_detail" : ViewPanelDetail,
                 "panel_rundown" : ViewPanelRundown,
                 "panel_scheduler" : ViewPanelScheduler,
+                "system_settings" : ViewSystemSettings,
+                "system_storages" : ViewSystemStorages,
+                "system_folders" : ViewSystemFolders,
+                "system_views" : ViewSystemViews,
+                "system_channels" : ViewSystemChannels,
+                "system_actions" : ViewSystemActions,
+                "system_users" : ViewSystemUsers,
+                "system_services" : ViewSystemServices,
             },
         "api_methods" : {
                 "get" : api_get,
