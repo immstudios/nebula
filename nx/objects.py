@@ -23,7 +23,7 @@ object_helper = ObjectHelper()
 
 class Asset(AssetMixIn, ServerObject):
     table_name = "assets"
-    db_cols = ["id_folder", "status", "version_of", "ctime", "mtime"]
+    db_cols = ["id_folder", "content_type", "media_type", "status", "version_of", "ctime", "mtime"]
 
     def invalidate(self):
         # Invalidate view count
