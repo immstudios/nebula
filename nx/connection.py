@@ -3,6 +3,7 @@ from .core import *
 
 try:
     import psycopg2
+    from psycopg2 import IntegrityError, DataError
 except ImportError:
     log_traceback("Import error")
     critical_error("Unable to import psycopg2")
@@ -13,7 +14,7 @@ except ImportError:
     log_traceback("Import error")
     critical_error("Unable to import pylibmc")
 
-__all__ = ["DB", "cache", "Cache"]
+__all__ = ["DB", "cache", "Cache", "IntegrityError", "DataError"]
 
 #
 # Database
