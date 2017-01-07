@@ -1,3 +1,5 @@
+import pprint
+
 from .common import *
 from .constants import *
 from .metadata import meta_types
@@ -25,6 +27,9 @@ class BaseObject(object):
             else:
                 self.new()
                 self.is_new = True
+        for key in self.defaults:
+            if not key in self.meta:
+                self.meta[key] = self.defaults[key]
 
     @property
     def id(self):
@@ -64,7 +69,6 @@ class BaseObject(object):
 
     def new(self):
         logging.debug("Creating empty {}".format(self.object_type))
-        self.meta.update(self.defaults)
 
     def load(self, id):
         pass
@@ -102,6 +106,9 @@ class BaseObject(object):
 
     def show(self, key, **kwargs):
         return meta_types[key.lstrip("_")].show(self[key], **kwargs)
+
+    def show_meta(self):
+        return pprint.pformat(self.meta)
 
 
 
@@ -146,6 +153,11 @@ class AssetMixIn():
         if mki > 0:
             dur -= mki
         return dur
+
+    @property
+    def proxy_url(self):
+        base_url = config["proxy_base_url"]
+        return  base_url + "/{:04d}/{:d}.mp4".format(int(self.id/1000),  self.id)
 
 
 class ItemMixIn():
