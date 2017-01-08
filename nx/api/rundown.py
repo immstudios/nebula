@@ -67,6 +67,7 @@ def get_rundown(id_channel, start_time):
         item.meta["asset_mtime"] = asset["mtime"]
         item.meta["rundown_scheduled"] = ts_scheduled
         item.meta["rundown_broadcast"] = ts_broadcast
+        item.meta["rundown_difference"] = ts_broadcast - ts_scheduled
 
         ts_scheduled += item.duration
         ts_broadcast += item.duration
