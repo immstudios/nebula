@@ -35,7 +35,7 @@ def get_objects(ObjectType, **kwargs):
             do_count = False
 
     conds = " WHERE " + " AND ".join(conds) if conds else ""
-    counter = ", count(id_folder) OVER() AS full_count" if do_count else ", 0"
+    counter = ", count(id) OVER() AS full_count" if do_count else ", 0"
 
     q = "SELECT id, meta{} FROM {}{}".format(counter, ObjectType.table_name, conds)
     q += " ORDER BY {}".format(order) if order else ""
@@ -107,7 +107,6 @@ def api_get(**kwargs):
                 kwargs["view_count"] = int(cache.load("view-count-"+str(id_view)))
             except:
                 pass
-
 
         if type(result_type) == list:
             result_format = []
