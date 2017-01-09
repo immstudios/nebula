@@ -3,7 +3,31 @@ from cherryadmin import CherryAdminView
 
 class ViewPanelRundown(CherryAdminView):
     def build(self, *args, **kwargs):
-        rundown_start_time = 1482901200
-        data = get_rundown(1, rundown_start_time)
+
+        try:
+            id_channel = int(kwargs["c"])
+            if not id_channel in config["playout_channels"].keys():
+                raise Exception
+        except:
+            id_channel = min(config["playout_channels"].keys())
+
+        playout_config = config["playout_channels"][id_channel]
+        sh, sm = [6,0] #TODO
+
+        try:
+            rundown_date = kwargs["d"]
+            if not rundown_date:
+                raise Exception
+            rundown_start_time = datestr2ts(rundown_date, hh=sh, mm=sm)
+        except Exception:
+            # default today
+            rundown_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+            rundown_start_time = datestr2ts(rundown_date, hh=sh, mm=sm)
+
+
+        id_channel = 1
+
+        data = get_rundown(id_channel, rundown_start_time)
         self["columns"] = ["rundown_symbol", "title", "rundown_scheduled", "rundown_broadcast"]
         self["rundown"] = data
+        self["id_channel"] = id_channel
