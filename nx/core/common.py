@@ -122,8 +122,9 @@ logging.add_handler(seismic_log)
 # Filesystem
 #
 
-class Storage():
-    def __init__(self,  **kwargs):
+class Storage(object):
+    def __init__(self, id,  **kwargs):
+        self.id = id
         self.settings = kwargs
 
     def __getitem__(self, key):
@@ -133,40 +134,27 @@ class Storage():
         return "storage ID:{} ({})".format(self.id, self["title"])
 
     @property
-    def id(self):
-        return self["id"]
-
-    @property
     def local_path(self):
-        if self["protocol"] == LOCAL:
+        if self["protocol"] == "local":
             return self["path"]
         elif PLATFORM == "unix":
             return os.path.join("/mnt/{}_{:02d}".format(config["site_name"], self.id))
-        #lif PLATFORM == "windows":
+        #elif PLATFORM == "windows":
             #TODO
-        #   pass
-        logging.warning("Unsuported {} platform: {}".format(self, self["protocol"]))
+        logging.warning("Unsuported {} protocol '{}' on this platform.".format(self, self["protocol"]))
 
     def __len__(self):
+        if self["protocol"] == "local" and os.path.isdir(self["path"]):
+            return True
         return ismount(self.local_path) and len(os.listdir(self.local_path)) != 0
 
 
-class Storages():
-    def __init__(self):
-        self.clear()
-
-    def clear(self):
-        self.data = {}
-
-    def add(self, storage):
-        assert isinstance(storage, Storage)
-        self.data[storage.id] = storage
-
+class Storages(object):
     def __getitem__(self, key):
-        return self.data[key]
+        #TODO error_handling
+        return Storage(key, **config["storages"][key])
 
     def __iter__(self):
-        return self.data.__iter__()
+        return config["storages"].__iter__()
 
-
-storages  = Storages()
+storages = Storages()
