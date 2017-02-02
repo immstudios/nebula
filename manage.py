@@ -31,13 +31,25 @@ logging.user = "Manager"
 
 def run(*args):
     id_service = args[0]
+
+    if id_service == "hub":
+        import hub
+        try:
+            hub_instance = hub.CherryAdmin(**hub.hub_config)
+        except KeyboardInterrupt:
+            sys.exit(0)
+        except Exception:
+            log_traceback()
+            critical_error("Unhandled exception in Hub")
+        sys.exit(0)
+
     try:
         id_service = int(id_service)
     except ValueError:
         critical_error("Service ID must be integer")
 
     db = DB()
-    db.query("SELECT agent, title, host, loop_delay, settings FROM services WHERE id=%s", [id_service])
+    db.query("SELECT service_type, title, host, loop_delay, settings FROM services WHERE id=%s", [id_service])
     try:
         agent, title, host, loop_delay, settings = db.fetchall()[0]
     except IndexError:
@@ -100,6 +112,8 @@ def add_user(*args):
     u.save()
     print()
     logging.goodnews("User created")
+
+
 
 
 if __name__ == "__main__":
