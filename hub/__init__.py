@@ -16,6 +16,7 @@ from .view_system import *
 
 
 
+
 __all__ = [
         "CherryAdmin",
         "hub_config",
@@ -98,8 +99,10 @@ hub_config = {
                 "system_users" : ViewSystemUsers,
                 "system_services" : ViewSystemServices,
             },
+
         "api_methods" : {
                 "get" : api_get,
+                "settings" : api_settings
             }
     }
 
