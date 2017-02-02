@@ -6,6 +6,7 @@
     "https://github.com/martastain/aura" : {"python-path" : true},
     "https://github.com/martastain/nxcg" : {"python-path" : true},
     "https://github.com/martastain/dramatica" : {"python-path" : true},
+    "https://github.com/immstudios/nebula-core" : {"python-path" : true},
     "https://github.com/cherrypy/cherrypy" : {"python-path" : true},
     "https://github.com/pallets/jinja" : {"python-path" : true}
 }
