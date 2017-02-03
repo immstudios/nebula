@@ -1,4 +1,5 @@
-from .core import *
+from nebulacore import *
+
 from .connection import *
 from .objects import *
 from .helpers import *
@@ -8,7 +9,6 @@ from .base_service import *
 
 def load_settings(force=False):
     global config
-
     logging.debug("Loading site configuration from DB", handlers=False)
 
     # This is the first time we are connecting DB
@@ -18,7 +18,6 @@ def load_settings(force=False):
     except Exception:
         message = log_traceback("Database connection error", handlers=False)
         critical_error("Unable to connect nebula database")
-
 
     config["storages"] = {}
     config["playout_channels"] = {}
@@ -35,6 +34,7 @@ def load_settings(force=False):
         config[key] = value
 
     db.query("SELECT id, settings FROM storages")
+
     for id, settings in db.fetchall():
         config["storages"][id] = settings
 
@@ -53,8 +53,10 @@ def load_settings(force=False):
         config["meta_types"][key] = settings
 
     db.query("SELECT cs, key, value, settings FROM cs")
-    for cs, key, value, settings in db.fetchall():
-        pass #TODO
+    for cst, key, value, settings in db.fetchall():
+        if not cst in config["cs"]:
+            config["cs"][cst] = []
+        config["cs"][cst].append([key, value, settings])
 
     db.query("SELECT id, title, settings, owner, position FROM views")
     for id, title, settings, owner, position in db.fetchall():
@@ -81,8 +83,6 @@ def load_settings(force=False):
     messaging.configure()
     cache.configure()
     return True
-
-
 
 load_settings()
 
