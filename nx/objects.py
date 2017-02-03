@@ -1,7 +1,7 @@
-from .core import *
-from .connection import *
+from nebulacore import *
+from nebulacore.base_objects import *
 
-from .core.base_objects import *
+from .connection import *
 from .server_object import *
 
 __all__ = ["Asset", "Item", "Bin", "Event", "User", "anonymous"]
@@ -105,13 +105,13 @@ class Event(EventMixIn, ServerObject):
         if not hasattr(self, "_bin"):
             if not self["id_bin"]: # non-playout events
                 self._bin = False
-            #TODO
+            self._bin = Bin(self["id_bin"], db=self._db)
         return self._bin
 
 
 class User(UserMixIn, ServerObject):
     table_name = "users"
-    db_cols = []
+    db_cols = ["login", "password"]
 
 #
 # Helpers
