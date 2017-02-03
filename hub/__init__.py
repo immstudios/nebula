@@ -102,7 +102,8 @@ hub_config = {
 
         "api_methods" : {
                 "get" : api_get,
-                "settings" : api_settings
+                "settings" : api_settings,
+                "rundown" : api_rundown
             }
     }
 

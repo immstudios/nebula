@@ -91,10 +91,26 @@ def api_rundown(**kwargs):
     if not id_channel in config["playout_channels"]:
         return {"response" : 400, message : "No such playout channel"}
 
+    if not start_time:
+        # default today
+        sh, sm = config["playout_channels"][id_channel].get("day_start", [6, 0])
+        rundown_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+        rundown_start_time = datestr2ts(rundown_date, hh=sh, mm=sm)
+        rundown_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+        start_time = datestr2ts(rundown_date, hh=sh, mm=sm)
 
-    #TODO
+
+    rows = []
+    for event in get_rundown(id_channel, start_time):
+        row = event.meta
+        row["object_type"] = "event"
+        rows.append(row)
+        for item in event.items:
+            row = item.meta
+            row["object_type"] = "item"
+            rows.append(row)
 
     process_time = time.time() - process_start_time
-    return {"response" : 200, "message" : "Rundown loaded in {:.02f} seconds".format(process_time), "data" : data}
+    return {"response" : 200, "message" : "Rundown loaded in {:.02f} seconds".format(process_time), "data" : rows}
 
 
