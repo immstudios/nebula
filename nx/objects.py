@@ -46,9 +46,10 @@ class Item(ItemMixIn, ServerObject):
     @property
     def asset(self):
         if not hasattr(self, "_asset"):
-            if not self["id_asset"]:
-                self._asset =False # Virtual items
-            #TODO: loading
+            if not self.meta.get("id_asset", False):
+                self._asset = False # Virtual items
+            else:
+                self._asset = Asset(self["id_asset"], db=self._db) or False
         return self._asset
 
     @property
@@ -62,12 +63,6 @@ class Item(ItemMixIn, ServerObject):
         if not _bin:
             return False
         return _bin.event
-
-    def __getitem__(self, key):
-        if key in self.meta:
-            return super(Item, self).__getitem__(key)
-        return self.asset[key]
-
 
 
 class Bin(BinMixIn, ServerObject):

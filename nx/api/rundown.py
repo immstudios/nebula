@@ -49,6 +49,7 @@ def get_rundown(id_channel, start_time):
             event = Event(meta=emeta)
             event.items = []
             current_event_id = id_event
+            rundown_event_asset = event.meta.get("id_asset", False)
 
             if event["run_mode"]:
                 ts_broadcast = 0
@@ -68,6 +69,8 @@ def get_rundown(id_channel, start_time):
         item.meta["rundown_scheduled"] = ts_scheduled
         item.meta["rundown_broadcast"] = ts_broadcast
         item.meta["rundown_difference"] = ts_broadcast - ts_scheduled
+        if rundown_event_asset:
+            item.meta["rundown_event_asset"] = rundown_event_asset
 
         ts_scheduled += item.duration
         ts_broadcast += item.duration
@@ -101,16 +104,24 @@ def api_rundown(**kwargs):
 
 
     rows = []
+    i = 0
     for event in get_rundown(id_channel, start_time):
         row = event.meta
         row["object_type"] = "event"
+        row["rundown_row"] = i
+        row["id_bin"] = event["id_magic"]
         rows.append(row)
+        i+=1
         for item in event.items:
             row = item.meta
             row["object_type"] = "item"
+            row["rundown_row"] = i
             rows.append(row)
+            i+=1
 
     process_time = time.time() - process_start_time
-    return {"response" : 200, "message" : "Rundown loaded in {:.02f} seconds".format(process_time), "data" : rows}
-
-
+    return {
+            "response" : 200,
+            "message" : "Rundown loaded in {:.02f} seconds".format(process_time),
+            "data" : rows
+            }

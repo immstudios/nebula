@@ -1,7 +1,7 @@
 import os
 import imp
 
-from nx import *
+from nebula import *
 
 class Service(BaseService):
     def on_init(self):

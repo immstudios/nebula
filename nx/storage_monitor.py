@@ -1,4 +1,5 @@
-from .core import *
+from nebulacore import *
+
 from .agents import BaseAgent
 
 __all__ = ["StorageMonitor"]
@@ -10,7 +11,8 @@ class StorageMonitor(BaseAgent):
             if type(storages_conf) == list and id_storage not in storages_conf:
                 continue
             storage = storages[id_storage]
-            if ismount(storage.local_path):
+
+            if storage:
                 storage_string = "{}:{}".format(config["site_name"], storage.id)
                 storage_ident_path = os.path.join(storage.local_path,".nebula_root")
 
@@ -23,8 +25,8 @@ class StorageMonitor(BaseAgent):
                         pass
                 continue
 
-            logging.info ("{} is not mounted. Remounting.".format(storage))
 
+            logging.info ("{} is not mounted. Remounting.".format(storage))
             if not os.path.exists(storage.local_path):
                 try:
                     os.mkdir(storage.local_path)
@@ -41,7 +43,7 @@ class StorageMonitor(BaseAgent):
 
 
     def mount(self, protocol, source, destination, username="", password=""):
-        if protocol == CIFS:
+        if protocol == "samba":
             if username and password:
                 credentials = "user="+username+",pass="+password
             else:
@@ -53,6 +55,7 @@ class StorageMonitor(BaseAgent):
         else:
             return
 
+        logging.debug("Executing:", cmd)
         c = Shell(cmd)
         if c.retcode:
             logging.error(c.stderr().read())

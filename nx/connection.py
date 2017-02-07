@@ -1,5 +1,5 @@
 import time
-from .core import *
+from nebulacore import *
 
 try:
     import psycopg2

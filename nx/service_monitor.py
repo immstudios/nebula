@@ -1,4 +1,5 @@
-from .core import *
+from nebulacore import *
+
 from .connection import *
 from .agents import BaseAgent
 
@@ -13,7 +14,7 @@ class ServiceMonitor(BaseAgent):
         db.query("SELECT id, pid FROM services WHERE host=%s", [config["host"]])
         for id_service, pid in db.fetchall():
             if pid:
-                self.kill_service(r[1])
+                self.kill_service(pid)
         db.query("UPDATE services SET state = 0 WHERE host=%s", [config["host"]])
         db.commit()
 
@@ -36,13 +37,13 @@ class ServiceMonitor(BaseAgent):
 
     def main(self):
         db = DB()
-        db.query("SELECT id, agent, title, autostart, loop_delay, settings, state, pid FROM services WHERE host=%s", [config["host"]])
+        db.query("SELECT id, service_type, title, autostart, loop_delay, settings, state, pid FROM services WHERE host=%s", [config["host"]])
 
         #
         # Start / stop service
         #
 
-        for id, agent, title, autostart, loop_delay, settings, state, pid in db.fetchall():
+        for id, service_type, title, autostart, loop_delay, settings, state, pid in db.fetchall():
             if state == STARTING: # Start service
                 if not id in self.services.keys():
                     self.start_service(id, title, db = db)
@@ -61,14 +62,14 @@ class ServiceMonitor(BaseAgent):
                 continue
             del self.services[id_service]
             logging.warning("Service {} ({}) terminated".format(title,id_service))
-            db.query("UPDATE services SET state = 0  WHERE id_service = %s", [id_service])
+            db.query("UPDATE services SET state=0 WHERE id = %s", [id_service])
             db.commit()
 
         #
         # Autostart
         #
 
-        db.query("SELECT id, title, state, autostart FROM services WHERE host=%s AND state=0 AND autostart=1", [config["host"]])
+        db.query("SELECT id, title, state, autostart FROM services WHERE host=%s AND state=0 AND autostart=true", [config["host"]])
         for id, title, state, autostart in db.fetchall():
             if not id in self.services.keys():
                 logging.debug("AutoStarting service {} ({})".format(title, id))
@@ -78,7 +79,8 @@ class ServiceMonitor(BaseAgent):
     def start_service(self, id_service, title, db=False):
         proc_cmd = [
             python_cmd,
-            os.path.join(config["nebula_root"], "run_service.py"),
+            os.path.join(config["nebula_root"], "manage.py"),
+            "run",
             str(id_service),
             "\"{}\"".format(title)
             ]
@@ -86,8 +88,8 @@ class ServiceMonitor(BaseAgent):
         logging.info("Starting service {} - {}".format(id_service, title))
 
         self.services[id_service] = [
-            subprocess.Popen(proc_cmd, cwd=config["nebula_root"]),
-            title
+                subprocess.Popen(proc_cmd, cwd=config["nebula_root"]),
+                title
             ]
 
 
@@ -101,5 +103,5 @@ class ServiceMonitor(BaseAgent):
         if pid == os.getpid() or pid == 0:
             return
         logging.info("Attempting to kill PID {}".format(pid))
-        os.system(os.path.join(config["nebula_root"], "killtree.sh {}".format(pid)))
+        os.system(os.path.join(config["nebula_root"], "support", "kill_tree.sh {}".format(pid)))
 

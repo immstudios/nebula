@@ -1,6 +1,11 @@
-from nx import *
+from nebulacore import *
+from .connection import *
+from .objects import *
 
 MAX_RETRIES = 3
+
+
+__all__ = ["Job", "send_to"]
 
 class Job():
     def __init__(self, id_service,  actions=[], id_asset=False):

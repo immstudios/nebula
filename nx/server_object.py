@@ -1,5 +1,6 @@
-from .core import *
-from .core.base_objects import BaseObject
+from nebulacore import *
+from nebulacore.base_objects import BaseObject
+
 from .connection import *
 
 __all__ = ["ServerObject"]
@@ -99,15 +100,14 @@ class ServerObject(BaseObject):
     def _update(self, **kwargs):
         assert id > 0
         cols = ["meta"]
-        vals = [json.dumps(meta)]
+        vals = [json.dumps(self.meta)]
 
         for col in self.db_cols:
             cols.append(col)
             vals.append(self[col])
 
-        meta = json.dumps(self.meta)
         query = "UPDATE {} SET {} WHERE id=%s".format(
-                table_name,
+                self.table_name,
                 ", ".join(["{}=%s".format(key) for key in cols])
             )
         self.db.query(query, vals+[self.id])

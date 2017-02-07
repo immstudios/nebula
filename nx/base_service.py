@@ -1,4 +1,4 @@
-from .core import *
+from nebulacore import *
 from .connection import *
 
 __all__ = ["BaseService"]
@@ -18,7 +18,7 @@ class BaseService(object):
             self.shutdown()
         else:
             db = DB()
-            db.query("UPDATE services SET last_seen = %d, state=1 WHERE id_service=%d" % (time.time(), self.id_service))
+            db.query("UPDATE services SET last_seen = %d, state=1 WHERE id=%d" % (time.time(), self.id_service))
             db.commit()
         logging.goodnews("Service started")
 
@@ -47,7 +47,7 @@ class BaseService(object):
         db.query("SELECT state FROM services WHERE id=%s", [self.id_service])
         try:
             state = db.fetchall()[0][0]
-        except:
+        except IndexError:
             state = KILL
         else:
             db.query("UPDATE services SET last_seen=%s, state=1 WHERE id=%s", [time.time(), self.id_service])

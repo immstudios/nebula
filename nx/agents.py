@@ -4,13 +4,17 @@ try:
 except ImportError:
     import _thread
 
-from .core import *
+from nebulacore import *
 
 __all__ = ["BaseAgent"]
 
 class BaseAgent():
     def __init__(self, once=False):
-        self.on_init()
+        try:
+            self.on_init()
+        except:
+            log_traceback()
+            critical_error("Unable to start {}".format(self.__class__.__name__))
         self.is_running = self.should_run = False
         if once:
             self.main()

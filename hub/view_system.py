@@ -15,14 +15,10 @@ class ViewSystemStorages(CherryAdminView):
         self["name"] = "system_storages"
         self["title"] = "Storages"
         self["js"] = []
-        db = DB()
-        db.query("SELECT id, settings FROM storages ORDER BY id")
-        self["data"] = db.fetchall()
-
 
 class ViewSystemFolders(CherryAdminView):
     def build(self, *args, **kwargs):
-        self["name"] = "folders"
+        self["name"] = "system_folders"
         self["title"] = "Folders"
         self["js"] = []
 
@@ -58,3 +54,18 @@ class ViewSystemServices(CherryAdminView):
         self["name"] = "system_services"
         self["title"] = "Services"
         self["js"] = []
+        services = []
+        db = DB()
+        db.query("SELECT id, service_type, host, title, autostart, state, last_seen FROM services ORDER BY id")
+        for id, service_type, host, title, autostart, state, last_seen in db.fetchall():
+            service = {
+                    "id" : id,
+                    "service_type" : service_type,
+                    "host" : host,
+                    "title" : title,
+                    "autostart" : autostart,
+                    "state" : state,
+                    "last_seen" : last_seen
+                }
+            services.append(service)
+        self["data"]  = services

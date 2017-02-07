@@ -1,4 +1,4 @@
-from .core import *
+from nebulacore import *
 from .connection import *
 from .objects import *
 
@@ -6,7 +6,7 @@ from .objects import *
 def get_user(login, password, db=False):
     if not db:
         db = DB()
-    db.query("SELECT meta FROM users WHERE meta->>'login'=%s AND meta->>'password'=%s", [login, get_hash(password)])
+    db.query("SELECT meta FROM users WHERE login=%s AND password=%s", [login, get_hash(password)])
     res = db.fetchall()
     if not res:
         return False
@@ -19,7 +19,7 @@ def asset_by_path(id_storage, path, db=False):
         db = DB()
     db.query("""
             SELECT id, meta FROM assets
-                WHERE meta->>'id_storage' = '%s'
+                WHERE meta->>'id_storage' = %s
                 AND meta->>'path' = %s
         """, [id_storage, path])
     res = db.fetchall()
@@ -110,7 +110,6 @@ def get_item_runs(id_channel, from_ts, to_ts, db=False):
     return result
 
 
-#TODO: rewrite this
 def get_next_item(id_item, **kwargs):
     if not id_item:
         return False
