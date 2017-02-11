@@ -69,26 +69,37 @@ class Bin(BinMixIn, ServerObject):
     table_name = "bins"
     db_cols = ["bin_type"]
 
-    def load_all(self):
-        """Force load all items and their assets data"""
-        db = self.db
-        db.query("")
-        for imeta, ameta in db.fetchall():
-            pass #TODO
-
     def invalidate(self):
         pass
 
     @property
     def items(self):
         if not hasattr(self, "_items"):
-            #TODO: load
-            pass
+            self.db.query("SELECT meta FROM items WHERE id_bin=%s ORDER BY position ASC", [self.id])
+            self._items = [Item(meta=meta, db=self.db) for meta, in self.db.fetchall()]
         return self._items
 
     @property
     def event(self):
-        pass
+        if not hasattr(self, "_event"):
+            self.db.query("SELECT meta FROM events WHERE id_magic=%s", [self.id]) #TODO: playout only
+            try:
+                self._event = Event(meta=self.db.fetchall()[0][0])
+            except Exception:
+                log_traceback()
+                self._event = False
+        return self._event
+
+    def delete_children(self):
+        for item in self.items:
+            item.delete()
+
+    def save(self, **kwargs):
+        duration = 0
+        for item in self.items:
+            duration += item.duration
+        self["duration"] = duration
+        super(Bin, self).save(**kwargs)
 
 
 class Event(EventMixIn, ServerObject):
