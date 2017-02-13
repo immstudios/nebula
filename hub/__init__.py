@@ -104,7 +104,8 @@ hub_config = {
                 "get" : api_get,
                 "settings" : api_settings,
                 "rundown" : api_rundown,
-                "order" : api_order
+                "order" : api_order,
+                "schedule" : api_schedule
             }
     }
 
