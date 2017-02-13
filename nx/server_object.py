@@ -141,3 +141,15 @@ class ServerObject(BaseObject):
         """Invalidate all cache objects which references this one"""
         pass
 
+
+    def delete_children(self):
+        pass
+
+    def delete(self):
+        if not self.id:
+            return
+        cache.delete(self.cache_key)
+        self.delete_children()
+        self.db.query("DELETE FROM {} WHERE id=%s".format(self.table_name), [self.id])
+        self.db.query("DELETE FROM ft WHERE object_type=%s AND id=%s", [self.object_type_id, self.id])
+        self.db.commit()
