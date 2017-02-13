@@ -83,7 +83,8 @@ class Service(BaseService):
             if relay is None or not relay.text:
                 continue
             url = relay.text.rstrip("/")
-            url += "/msg_publist?id=" + site_name
+            logging.info("Adding message relay: {}".format(url))
+            url += "/msg_publish?id=" + config["site_name"]
             self.relays.append(url)
 
         #
@@ -156,3 +157,5 @@ class Service(BaseService):
         message = message.replace("\n", "") + "\n" # one message per line
         for relay in self.relays:
             result = requests.post(relay, message.encode("ascii"), timeout=.5)
+            if result.status_code != 200:
+                logging.warning("Error {}: Unable to relay message to {}".format(result.status_code, relay))
