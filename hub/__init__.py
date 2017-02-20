@@ -15,6 +15,7 @@ from .view_panel_scheduler import ViewPanelScheduler
 from .view_system import *
 
 
+logging.user = "hub"
 
 
 __all__ = [
