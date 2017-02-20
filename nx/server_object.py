@@ -148,6 +148,7 @@ class ServerObject(BaseObject):
     def delete(self):
         if not self.id:
             return
+        logging.info("Deleting {}".format(self))
         cache.delete(self.cache_key)
         self.delete_children()
         self.db.query("DELETE FROM {} WHERE id=%s".format(self.table_name), [self.id])
