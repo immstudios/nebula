@@ -1,6 +1,6 @@
 from nx import *
 
-__all__ = ["plugin_path","PlayoutPlugin"]
+__all__ = ["plugin_path", "PlayoutPlugin"]
 
 
 try:
@@ -10,7 +10,11 @@ except KeyError, IndexError:
     plugin_path = False
 else:
     if not os.path.exists(plugin_path) and ismount(storages[int(config["plugin_storage"])].local_path):
-        os.makedirs(plugin_path)
+        try:
+            os.makedirs(plugin_path)
+        except Exception:
+            log_traceback()
+            plugin_path = False
 
 
 class PlayoutPluginSlot(object):
