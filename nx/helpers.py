@@ -46,30 +46,6 @@ def meta_exists(key, value, db=False):
     return False
 
 
-def bin_refresh(bins, sender=False, db=False):
-    if not bins:
-        return 200, "No bin refreshed"
-    if not db:
-        db = DB()
-    for id_bin in bins:
-        cache.delete("b{}".format(id_bin))
-    bq = ", ".join([str(b) for b in bins if type(b) == int or b.isdigit()])
-    changed_events = []
-    db.query("""
-        SELECT e.id, e.id_channel, e.start FROM events AS e, channels AS c
-            WHERE c.channel_type = 0
-            AND c.id_channel = e.id_channel
-            AND id_magic in ({})
-            """.format(bq))
-    for id_event, id_channel, start_time in db.fetchall():
-        chg = id_event
-        if not chg in changed_events:
-            changed_events.append(chg)
-    if changed_events:
-        messaging.send("objects_changed", sender=sender, objects=changed_events, object_type="event")
-    return 202, "OK"
-
-
 def get_day_events(id_channel, date, num_days=1):
     start_time = datestr2ts(date, *config["playout_channels"][id_channel].get("day_start", [6,0]))
     end_time = start_time + (3600*24*num_days)

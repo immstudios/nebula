@@ -1,3 +1,7 @@
+#
+# Returns system settins
+#
+
 from nx import *
 
 __all__ = ["api_settings"]

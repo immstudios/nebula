@@ -111,7 +111,9 @@ class Event(EventMixIn, ServerObject):
         if not hasattr(self, "_bin"):
             if not self["id_bin"]: # non-playout events
                 self._bin = False
-            self._bin = Bin(self["id_bin"], db=self._db)
+            else:
+                logging.debug("Loading bin ID {} of {} from DB".format(self["id_bin"], self))
+                self._bin = Bin(self["id_bin"], db=self.db)
         return self._bin
 
 
@@ -122,7 +124,6 @@ class User(UserMixIn, ServerObject):
 #
 # Helpers
 #
-
 
 object_helper[ASSET] = Asset
 object_helper[ITEM]  = Item

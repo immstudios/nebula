@@ -1,4 +1,4 @@
-from nx import *
+from nebula import *
 from .ffprobe import FFProbe
 
 probes = [

@@ -1,3 +1,7 @@
+#
+# Changes order of items in bin/rundown, creates new items from assets
+#
+
 from nx import *
 
 __all__ = ["api_order"]
@@ -16,7 +20,7 @@ def api_order(**kwargs):
 
     if "user" in kwargs:
         user = User(meta=kwargs.get("user"))
-        if id_channel and not user.has_right("rundown_edit", id_channel):
+        if id_channel and not user.has_right("channel_edit", id_channel):
             return {"response" : 403, "message" : "You are not allowed to edit this rundown"}
     else:
         user = User(meta={"login" : "Nebula"})
@@ -70,5 +74,5 @@ def api_order(**kwargs):
             item.save()
         pos += 1
 
-    #bin_refresh(affected_bins, db)
+    messaging.send("objects_changed", objects=affected_bins, object_type="bin")
     return {"response" : 200, "message" : "OK"}

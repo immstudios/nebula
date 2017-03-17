@@ -1,3 +1,14 @@
+#
+# Returns a rundown for given day and channel
+#
+# Arguments:
+#
+# id_channel    Playout channel ID
+#               Defaults to first playout channel
+# start_time    Rundown start time (timestamp)
+#               Defaults to today's broadcast day start
+#
+
 from nx import *
 
 __all__ = ["get_rundown", "api_rundown"]
@@ -57,7 +68,7 @@ def get_rundown(id_channel, start_time):
             event.meta["rundown_broadcast"] = ts_broadcast = ts_broadcast or ts_scheduled
 
 
-        asset = Asset(meta=ameta, db=db)
+        asset = Asset(meta=ameta, db=db) if ameta else False
         item = Item(meta=imeta, db=db)
         item._asset = asset
 
@@ -65,7 +76,7 @@ def get_rundown(id_channel, start_time):
         if as_start:
             ts_broadcast = as_start
 
-        item.meta["asset_mtime"] = asset["mtime"]
+        item.meta["asset_mtime"] = asset["mtime"] if asset else 0
         item.meta["rundown_scheduled"] = ts_scheduled
         item.meta["rundown_broadcast"] = ts_broadcast
         item.meta["rundown_difference"] = ts_broadcast - ts_scheduled

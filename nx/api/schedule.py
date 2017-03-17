@@ -47,8 +47,8 @@ def api_schedule(**kwargs):
     # Create / update events
     #
 
-    for meta in events:
-        id_event = meta.get("id_object", False)
+    for event_data in events:
+        id_event = event_data.get("id", False)
 
         db.query("SELECT meta FROM events WHERE id_channel=%s and start=%s", [id_channel, event_data["start"]])
         try:
@@ -57,6 +57,7 @@ def api_schedule(**kwargs):
             event_at_pos_meta = False
 
         if id_event:
+            logging.debug("Updating event ID {}".format(id_event))
             event = Event(id_event, db=db)
             if not event:
                 logging.warning("No such event id {}".format(id_event))
@@ -66,6 +67,7 @@ def api_schedule(**kwargs):
             event = Event(event_at_pos, db=db)
             pbin = event.bin
         else:
+            logging.debug("Creating new event")
             event = Event(db=db)
             pbin = Bin(db=db)
             pbin.save()
