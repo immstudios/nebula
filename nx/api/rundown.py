@@ -14,8 +14,16 @@ from nx import *
 __all__ = ["get_rundown", "api_rundown"]
 
 
-def get_rundown(id_channel, start_time):
-    db = DB()
+def get_rundown(id_channel, start_time=False, db=False):
+    db = db or DB()
+    if not start_time:
+        # default today
+        sh, sm = config["playout_channels"][id_channel].get("day_start", [6, 0])
+        rundown_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+        rundown_start_time = datestr2ts(rundown_date, hh=sh, mm=sm)
+        rundown_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+        start_time = datestr2ts(rundown_date, hh=sh, mm=sm)
+
     end_time = start_time + (3600 * 24)
 
     #FIXME    item_runs  = get_item_runs(id_channel, start_time, end_time, db=db)
@@ -104,14 +112,6 @@ def api_rundown(**kwargs):
         return {"response" : 400, message : "Request params error"}
     if not id_channel in config["playout_channels"]:
         return {"response" : 400, message : "No such playout channel"}
-
-    if not start_time:
-        # default today
-        sh, sm = config["playout_channels"][id_channel].get("day_start", [6, 0])
-        rundown_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
-        rundown_start_time = datestr2ts(rundown_date, hh=sh, mm=sm)
-        rundown_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
-        start_time = datestr2ts(rundown_date, hh=sh, mm=sm)
 
 
     rows = []
