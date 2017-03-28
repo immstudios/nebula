@@ -2,95 +2,75 @@ from nebula import *
 
 class Service(BaseService):
     def on_init(self):
-        self.mirrors = self.settings.findall("mirror")
-        self.ignore = []
+        self.existing = []
 
     def on_main(self):
         db = DB()
-        abp_cache = {}
-        for mirror in self.mirrors:
+        start_time = time.time()
+        for wf_settings in self.settings.findall("folder"):
+            id_storage = int(wf_settings.attrib["id_storage"])
+            rel_wf_path = wf_settings.attrib["path"]
+            quarantine_time = int(wf_settings.attrib.get("quarantine_time", "10"))
+            id_folder = int(wf_settings.attrib.get("id_folder", 12))
 
-            #
-            # Mirror settings
-            #
+            storage_path = storages[id_storage].local_path
+            watchfolder_path = os.path.join(storage_path, rel_wf_path)
 
-            id_storage    = int(mirror.find("id_storage").text)
-            rel_path      = mirror.find("path").text
-            storage_path  = storages[mstorage].local_path
-            input_path    = os.path.join(storage_path, rel_path)
+            if not os.path.exists(watchfolder_path):
+                logging.warning("Skipping non-existing watchfolder", watchfolder_path)
+                continue
 
-            try:    filters = mirror.find("filters").findall("filter")
-            except: filters = []
+            for full_path in get_files(
+                        watchfolder_path,
+                        recursive=wf_settings.attrib.get("recursive", False),
+                        hidden=wf_settings.attrib.get("hidden", False),
+                        case_sensitive_exts=wf_settings.get("case_sensitive_exts", False)
+                    ):
 
-            try:    mrecursive = int(mirror.find("recursive").text)
-            except: mrecursive = 0
-
-            try:    mhidden = int(mirror.find("hidden").text)
-            except: mhidden = 0
-
-            #
-            # Browse files
-            #
-
-            now = time.time()
-            for input_path in get_files(input_path, recursive=mrecursive, hidden=mhidden):
-
-                asset_path = os.path.normpath(f.replace(storage_path ,""))
-                asset_path = apath.lstrip("/")
-                if not asset_path:
+                if full_path in self.existing:
                     continue
 
-                try:
-                    content_type = file_types[os.path.splitext(f)[1][1:].lower()]
-                except KeyError:
+                now = time.time()
+                asset_path = full_path.replace(storage_path, "", 1).lstrip("/")
+                ext = os.path.splitext(asset_path)[1].lstrip(".").lower()
+                if not ext in file_types:
                     continue
 
-                if filters:
-                    for f in filters:
-                        if CONTENT_TYPES.get(f.text.lower(), "blah blah") == content_type:
-                          break
-                    else:
-                        continue
-
-                if now - abp_cache.get("{}|{}".format(id_storage,asset_path), 0) > 600:
-                    if asset_by_path(id_storage, asset_path, db=db):
-                        continue
-
-                if (id_storage, asset_path) in self.ignore:
+                asset = asset_by_path(id_storage, asset_path, db=DB())
+                if asset:
+                    self.existing.append(full_path)
                     continue
 
-                logging.debug("Found new file '{}'".format(apath))
+                file_mtime = os.path.getmtime(full_path)
+                base_name = get_base_name(asset_path)
+
+                if quarantine_time and now - file_mtime < quarantine_time:
+                    logging.debug("{} is too young. Skipping".format(base_name))
+                    continue
 
                 asset = Asset(db=db)
-                asset["id_storage"]    = id_storage
-                asset["path"]          = asset_path
-                asset["title"]         = file_to_title(apath)
-                asset["content_type"]  = content_type
-                asset["media_type"]    = FILE
-                asset["status"]        = CREATING
+                asset["content_type"] = file_types[ext]
+                asset["media_type"]  = FILE
+                asset["id_storage"] = id_storage
+                asset["path"] = asset_path
+                asset["ctime"] = now
+                asset["mtime"] = now
+                asset["status"] = CREATING
+                asset["id_folder"] = id_folder
+                asset["title"] = base_name
 
                 asset.load_sidecar_metadata()
 
-                for mt in mirror.findall("meta"):
-                    try:
-                        if mt.attrib["type"] == "script":
-                            exec "asset[mt.attrib[\"tag\"]] = %s"% (mt.text or "")
-                        else:
-                            raise Exception
-                    except:
-                        asset[mt.attrib["tag"]] = mt.text or ""
+                #TODO
+                #or post_script in mirror.findall("post"):
+                #    try:
+                #        exec(post_script.text)
+                #    except:
+                #        log_traceback("Error executing post-script on {}".format(asset))
+                #        failed = True
 
-                failed = False
-                for post_script in mirror.findall("post"):
-                    try:
-                        exec(post_script.text)
-                    except:
-                        log_traceback("Error executing post-script on {}".format(asset))
-                        failed = True
+                asset.save(set_mtime=False)
 
-                if not failed:
-                    asset.save()
-                    logging.info("Created %s from %s"%(asset, apath))
-                else:
-                    logging.info("Post script failed. Ignoring file.")
-                    self.ignore.append((mstorage, apath))
+        duration = time.time() - start_time
+        if duration > 60:
+            logging.debug("Watchfolders scanned in {}".format(s2time(duration)))
