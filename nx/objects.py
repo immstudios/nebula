@@ -27,15 +27,18 @@ class Asset(AssetMixIn, ServerObject):
 
     def invalidate(self):
         # Invalidate view count
-        # Performance idea:
+        # TODO: Performance idea:
         #  - invalidate only if view is affected (folder changed, inserted...)
         for id_view in config["views"]:
             view = config["views"][id_view]
-            for id_folder in view.get("folders"):
+            for id_folder in view.get("folders", []):
                 if self["id_folder"] == id_folder:
                     logging.debug("Invalidating view count"+str(id_view))
                     cache.delete("view-count-"+str(id_view))
                     break
+
+    def load_sidecar_metadata(self):
+        pass #TODO
 
 
 class Item(ItemMixIn, ServerObject):

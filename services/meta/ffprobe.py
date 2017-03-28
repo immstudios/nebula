@@ -54,7 +54,6 @@ class FFProbe(Probe):
         meta = {"audio_tracks" : []}
 
         probe_result = ffprobe(asset.file_path)
-        print probe_result
         if not probe_result:
             return asset
 
