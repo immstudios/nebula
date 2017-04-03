@@ -31,9 +31,8 @@ class Asset(AssetMixIn, ServerObject):
         #  - invalidate only if view is affected (folder changed, inserted...)
         for id_view in config["views"]:
             view = config["views"][id_view]
-            for id_folder in view.get("folders", []):
+            for id_folder in view.get("folders", config["folders"].keys()):
                 if self["id_folder"] == id_folder:
-                    logging.debug("Invalidating view count"+str(id_view))
                     cache.delete("view-count-"+str(id_view))
                     break
 

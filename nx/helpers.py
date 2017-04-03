@@ -14,15 +14,16 @@ def get_user(login, password, db=False):
 
 
 def asset_by_path(id_storage, path, db=False):
+    id_storage = str(id_storage)
     path = path.replace("\\", "/")
     if not db:
         db = DB()
     db.query("""
             SELECT id, meta FROM assets
-                WHERE meta->>'id_storage' = %s
+                WHERE media_type = %s
+                AND meta->>'id_storage' = %s
                 AND meta->>'path' = %s
-        """, [id_storage, path])
-    res = db.fetchall()
+        """, [FILE, id_storage, path])
     for id, meta in db.fetchall():
         return Asset(meta=meta, db=db)
     return False

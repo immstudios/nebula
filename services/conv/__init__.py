@@ -1,7 +1,5 @@
-from nx import *
-from nx.services import BaseService
-from nx.jobs import Job
-from nx.objects import Asset
+from nebula import *
+from nx.jobs import Action
 
 from encoders import Ffmpeg, Ftp
 
@@ -16,40 +14,46 @@ encoders = {
 
 class Service(BaseService):
     def on_init(self):
-        agent_type = "conv"
-        id_service = self.id_service
-        self.allowed_actions = {}
+        self.service_type = "conv"
+        self.actions = []
+        db.query("SELECT id, title, service_type, settings FROM actions ORDER BY id_action")
+        for id_action, title, service_type, settings in db.fetchall():
+            if service_type == self.service_type:
+                logging.debug("Registering action {}".format(title))
+                self.actions.append(Action(id, title, xml(settings)))
+
+    def reset_jobs(self):
         db = DB()
-        db.query("UPDATE nx_jobs set id_service=0, progress=-1, retries=0, stime=0, etime=0, message='Restart requested after service crash.' WHERE id_service=%s AND progress > -1", [id_service])
+        db.query("""
+            UPDATE jobs SET
+                id_service=0,
+                progress=0,
+                retries=0,
+                status=0,
+                message='Restart requested after service restart',
+                start_time=0,
+                end_time=0
+            WHERE
+                id_service=%s AND STATUS IN (0,1,5)"""
+                [id_service]
+            )
         db.commit()
-        db.query("SELECT id_action, title, config FROM nx_actions ORDER BY id_action")
-        for id_action, title, config in db.fetchall():
-            try:
-                config = ET.XML(config)
-            except:
-                logging.error("Unable to parse '{}' action configuration".format(title))
-                continue
-
-            try:
-                svc_cond = config.find("on").text()
-            except:
-                match = True
-            else:
-                if not svc_cond:
-                    continue
-
-                match = False
-                if eval(svc_cond):
-                    match = True
-
-            if not match:
-                continue
-
-            logging.debug("Registering action {}".format(title))
-            self.allowed_actions[id_action] = config
 
 
     def on_main(self):
+        db = DB()
+        job = get_job(
+                self.id_service,
+                [action.id for action in self.actions],
+                db=db
+            )
+        if not job:
+            return
+
+
+
+
+    def on_main_old(self):
         job = Job(self.id_service, self.allowed_actions.keys())
         if not job:
             return
@@ -121,5 +125,3 @@ class Service(BaseService):
 
 
         job.done()
-
-

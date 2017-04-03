@@ -108,7 +108,7 @@ class FFProbe(Probe):
 
         tc = find_start_timecode(probe_result)
         if tc != "00:00:00:00":
-            meta["start_timecode"] = tc2s(tc)
+            meta["start_timecode"] = tc2s(tc) #TODO: fps
 
         #TODO: if video_index and video track is not album art, set content_type to video, else audio
         #TODO: Tags exctraction
@@ -124,10 +124,6 @@ class FFProbe(Probe):
 #
 
 class FFProbe2(Probe):
-    title = "FFProbe"
-
-    def accepts(self, asset):
-        return asset["content_type"] in [VIDEO, AUDIO, IMAGE]
 
     def __call__(self, asset):
         old_meta = asset.meta
@@ -138,7 +134,6 @@ class FFProbe2(Probe):
             logging.error("Unable to parse media metadata of {}".format(asset))
             asset["meta_probed"] = 1
             return asset
-
 
         asset["file/format"]   = format.get("format_name", "")
         asset["duration"] = format.get("duration", 0)
@@ -155,43 +150,6 @@ class FFProbe2(Probe):
                 asset["video/pixel_format"] = stream.get("pix_fmt", "")
                 asset["video/color_range"] = stream.get("color_range", "")
                 asset["video/color_space"] = stream.get("color_space", "")
-
-                #
-                # Duration (if not provided in container metadata)
-                #
-
-                if not asset["duration"]:
-                    dur = float(stream.get("duration",0))
-                    if dur:
-                        asset["duration"] = dur
-                    else:
-                        if stream.get("nb_frames", "").isnumeric():
-                            if asset["video/fps"]:
-                                asset["duration"] = int(stream["nb_frames"]) / asset[fps]
-
-                #
-                # Frame size
-                #
-
-                try:
-                    w, h = int(stream["width"]), int(stream["height"])
-                except Exception:
-                    w = h = 0
-
-                if w and h:
-                    asset["video/width"]  = w
-                    asset["video/height"] = h
-
-                    dar = stream.get("display_aspect_ratio", False)
-                    if dar:
-                        asset["video/aspect_ratio"] = guess_aspect(*[int(i) for i in dar.split(":")])
-
-                    if asset["video/aspect_ratio"] == "0":
-                        asset["video/aspect_ratio"] = guess_aspect(w, h)
-
-
-            elif stream["codec_type"] == "audio":
-                asset["audio/codec"] == stream
 
         #
         # Descriptive metadata (tags)

@@ -65,9 +65,10 @@ def run(*args):
             settings = xml(settings)
         except Exception:
             log_traceback()
-            db.query("UPDATE nx_services SET autostart=0 WHERE id_service=%s", [id_service])
+            logging.error("Malformed settings XML:\n", settings)
+            db.query("UPDATE services SET autostart=0 WHERE id=%s", [id_service])
             db.commit()
-            critical_error("Malformed settings XML")
+            critical_error("Unable to start service")
 
     _module = __import__("services." + agent, globals(), locals(), ["Service"], -1)
     Service = _module.Service
