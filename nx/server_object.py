@@ -23,9 +23,9 @@ def create_ft_index(meta):
 
 class ServerObject(BaseObject):
     def __init__(self, id=False, **kwargs):
-        super(ServerObject, self).__init__(id, **kwargs)
         if "db" in kwargs:
             self._db = kwargs["db"]
+        super(ServerObject, self).__init__(id, **kwargs)
 
     @property
     def db(self):
@@ -40,15 +40,16 @@ class ServerObject(BaseObject):
             self.meta = json.loads(cache.load(key))
             return True
         except Exception:
+            log_traceback()
             pass
         logging.debug("Loading {} ID:{} from DB".format(self.__class__.__name__, id))
-        db = self.db
-        db.query("SELECT meta FROM {} WHERE id = {}".format(self.table_name, id))
+        self.db.query("SELECT meta FROM {} WHERE id = {}".format(self.table_name, id))
         try:
-            self.meta = db.fetchall()[0][0]
+            self.meta = self.db.fetchall()[0][0]
         except IndexError:
             logging.error("Unable to load {} ID:{}. Object does not exist".format(self.__class__.__name__, id))
             return False
+        self.cache()
 
     def save(self, **kwargs):
         super(ServerObject, self).save(**kwargs)
