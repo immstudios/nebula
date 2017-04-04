@@ -9,30 +9,41 @@ __all__ = ["Job", "Action", "send_to"]
 
 
 class Action(object):
-    def __init__(self, id, title, settings):
-            self.id = id
-            self.title = title
-            try:
-                create_if = settings.findall("create_if")[0]
-            except IndexError:
-                self.create_if = False
-            else:
-                if create_if is not None:
-                    if create_if.text:
-                        self.create_if = create_if.text
-                    else:
-                        self.create_if = False
+    def __init__(self, id_action, title, settings):
+        self.id = id_action
+        self.title = title
+        try:
+            create_if = settings.findall("create_if")[0]
+        except IndexError:
+            self.create_if = False
+        else:
+            if create_if is not None:
+                if create_if.text:
+                    self.create_if = create_if.text
+                else:
+                    self.create_if = False
 
-            try:
-                start_if = settings.findall("start_if")[0]
-            except IndexError:
-                self.start_if = False
-            else:
-                if start_if is not None:
-                    if start_if.text:
-                        self.start_if = start_if.text
-                    else:
-                        self.start_if = False
+        try:
+            start_if = settings.findall("start_if")[0]
+        except IndexError:
+            self.start_if = False
+        else:
+            if start_if is not None:
+                if start_if.text:
+                    self.start_if = start_if.text
+                else:
+                    self.start_if = False
+
+        try:
+            skip_if = settings.findall("skip_if")[0]
+        except IndexError:
+            self.skip_if = False
+        else:
+            if skip_if is not None:
+                if skip_if.text:
+                    self.skip_if = skip_if.text
+                else:
+                    self.skip_if = False
 
     @property
     def created_key(self):
@@ -48,6 +59,11 @@ class Action(object):
             return eval(self.create_if)
         return False
 
+    def should_skip(self, asset):
+        if self.skip_if:
+            return eval(self.skip_if)
+        return False
+
 
 class Actions():
     def __init__(self):
@@ -56,7 +72,7 @@ class Actions():
     def load(self, id_action):
         db = DB()
         db.query("SELECT title, settings FROM actions WHERE id = %s", [id_action])
-        for title, settings in db.fetchall()
+        for title, settings in db.fetchall():
             self.data[id_action] = Action(id, title, xml(settings))
 
     def __getitem__(self, key):
@@ -72,6 +88,13 @@ class Job():
     def __init__(self, id, db=False):
         self._db = db
         self.id = id
+        self.id_service = None
+        self.id_user = 0
+        self.priority = 3
+        self.retries = 0
+        self._asset = None
+        self._settings = None
+        self._action = None
 
     @property
     def db(self):
@@ -79,11 +102,45 @@ class Job():
             self._db = DB()
         return self._db
 
+    @property
+    def asset(self):
+        if self._asset is None:
+            self.load()
+        return self._asset
+
+    @property
+    def settings(self):
+        if self._settings is None:
+            self.load()
+        return self._settings
+
+    @property
+    def action(self):
+        if self._action is None:
+            self.load()
+        return self._action
+
+    def __repr__(self):
+        return "job ID:{}".format(self.id)
+
+    def load(self):
+        self.db.query("""
+        """, [self.id])
+        for id_action, id_asset, id_service, id_user, settings, priority, retries in db.fetchall():
+            self.id_service = id_service
+            self.id_user = id_user
+            self.priority = priority
+            self.retries = retries
+            self._settings = settings
+            self._asset = Asset(id_asset, db=self.db)
+            self._action = actions[id_action]
+        logging.error("No such {}".format(self))
+
     def take(self, id_service):
-        self.db.query("UPDATE jobs SET id_service=%s WHERE id=%s AND id_service=0", [id_service, self.id])
+        self.db.query("UPDATE jobs SET id_service=%s WHERE id=%s AND id_service IS NULL", [id_service, self.id])
         self.db.commit()
         self.db.query("SELECT id FROM jobs WHERE id=%s AND id_service=%s", [self.id, id_service])
-        if self.db.fetchall()
+        if self.db.fetchall():
             return True
         return False
 
@@ -125,30 +182,39 @@ class Job():
 
 
 def get_job(id_service, action_ids, db=False):
+    assert type(action_ids) == list, "action_ids must be list of integers"
     db = db or DB()
-    db.query("""
+    q = """
         SELECT id, id_action, id_asset FROM jobs
         WHERE
-                status = 0
+            status = 0
             AND id_action IN %s
-            AND id_service = 0
+            AND id_service IS NULL
             ORDER BY priority DESC, creation_time DESC
-        """,
-            [ action_ids ]
-        )
+        """
+    db.query(q, [ tuple(action_ids) ])
 
-    for id_job, id_action, id_asset, action_title, action_settings_xml in db.fetchall()
-        action_settings = xml(action_settings_xml)
+    for id_job, id_action, id_asset in db.fetchall():
         asset = Asset(id_asset, db=db)
         action = actions[id_action]
+        job = Job(id_job, db=db)
         if not action:
+            logging.warning("Unable to get job. No such action ID {}".format(id_action))
             continue
+
+        if action.should_skip(asset):
+            db.query("UPDATE jobs SET status=6, message='Skipped' WHERE id=%s",[id_job])
+            db.commit()
+            continue
+
         if action.should_start(asset):
-            job = Job(id_job, db=db)
             if job.take(id_service):
-                return Job(id_job)
+                return job
             else:
+                logging.warning("Unable to take {}".format(job))
                 continue
+        else:
+            logging.debug("{} should not start yet".format(job))
         return False
 
 
@@ -166,7 +232,7 @@ def send_to(id_asset, id_action, settings={}, id_user=0, priority=3, restart_exi
     if res:
         if restart_existing: #TODO
             db.query(
-                    "UPDATE jobs SET id_service=0, progress=-1, message='Pending', retries=0, ctime=%s, stime=0, etime=0 WHERE id=%s",
+                    "UPDATE jobs SET id_service=NULL, progress=-1, message='Pending', retries=0, ctime=%s, stime=0, etime=0 WHERE id=%s",
                     [time.time(), res[0][0]])
             db.commit()
             messaging.send("job_progress", id=res[0][0], id_asset=id_asset, id_action=id_action, progress=0)
