@@ -98,11 +98,11 @@ class Job():
 
     @property
     def id_asset(self):
-        self.asset.id
+        return self.asset.id
 
     @property
     def id_action(self):
-        self.action.id
+        return self.action.id
 
     @property
     def db(self):
@@ -191,7 +191,7 @@ class Job():
 
     def restart(self, message="Restarted"):
         logging.warning("{} restarted".format(self))
-        self.db.query("UPDATE jobs SET id_service=NULL, start_time=NULL, end_time=NULL, status=5, progress=0, message=%s WHERE id=%s", [message, self.id])
+        self.db.query("UPDATE jobs SET id_service=NULL, start_time=NULL, end_time=NULL, status=5, retries=0, progress=0, message=%s WHERE id=%s", [message, self.id])
         self.db.commit()
         messaging.send("job_progress", id=self.id, id_asset=self.id_asset, id_action=self.id_action, status=5, progress=0, message=message)
 
@@ -237,7 +237,7 @@ def get_job(id_service, action_ids, db=False):
     assert type(action_ids) == list, "action_ids must be list of integers"
     db = db or DB()
     q = """
-        SELECT id, id_action, id_asset, id_user, settings, priority, retries FROM jobs
+        SELECT id, id_action, id_asset, id_user, settings, priority, retries, status FROM jobs
         WHERE
             status IN (0,3,5)
             AND id_action IN %s
@@ -247,7 +247,7 @@ def get_job(id_service, action_ids, db=False):
         """
     db.query(q, [ tuple(action_ids), MAX_RETRIES ])
 
-    for id_job, id_action, id_asset, id_user, settings, priority, retries in db.fetchall():
+    for id_job, id_action, id_asset, id_user, settings, priority, retries, status in db.fetchall():
         asset = Asset(id_asset, db=db)
         action = actions[id_action]
         job = Job(id_job, db=db)
@@ -266,7 +266,7 @@ def get_job(id_service, action_ids, db=False):
             logging.warning("Unable to get job. No such action ID {}".format(id_action))
             continue
 
-        if action.should_skip(asset):
+        if status != 5 and action.should_skip(asset):
             logging.info("Skipping {}".format(job))
             now = time.time()
             db.query("""
