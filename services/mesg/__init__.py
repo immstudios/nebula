@@ -102,7 +102,7 @@ class Service(BaseService):
                 except Exception:
                     log_traceback()
                     self.log_dir = None
-            if not os.path.isdir(log_dir):
+            if not os.path.isdir(self.log_dir):
                 logging.error("{} is not a directory. Logs will not be saved".format(log_dir))
                 self.log_dir = None
 
