@@ -1,6 +1,8 @@
 from nebula import *
 from cherryadmin import CherryAdminView
 
+from .view_jobs import get_jobs
+
 class ViewPanelDetail(CherryAdminView):
     def build(self, *args, **kwargs):
         self["asset"] = None
@@ -21,8 +23,10 @@ class ViewPanelDetail(CherryAdminView):
 
         db = DB()
 
-        asset = Asset(id_asset)
+        asset = Asset(id_asset, db=db)
+
         self["asset"] = asset
+        self["jobs"] = get_jobs("id_asset={}".format(id_asset))
 
         try:
             fconfig = config["folders"][asset["id_folder"]]

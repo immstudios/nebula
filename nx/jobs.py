@@ -97,6 +97,14 @@ class Job():
         self._action = None
 
     @property
+    def id_asset(self):
+        self.asset.id
+
+    @property
+    def id_action(self):
+        self.action.id
+
+    @property
     def db(self):
         if not self._db:
             self._db = DB()
@@ -125,14 +133,17 @@ class Job():
 
     def load(self):
         self.db.query("""
-            SELECT id_action, id_asset, id_service, id_user, settings, priority, retries
+            SELECT id_action, id_asset, id_service, id_user, settings, priority, retries, status, progress, message
             FROM jobs WHERE id=%s
         """, [self.id])
-        for id_action, id_asset, id_service, id_user, settings, priority, retries in self.db.fetchall():
+        for id_action, id_asset, id_service, id_user, settings, priority, retries, status, progress, message in self.db.fetchall():
             self.id_service = id_service
             self.id_user = id_user
             self.priority = priority
             self.retries = retries
+            self.status = status
+            self.progress = progress
+            self.message = message
             self._settings = settings
             self._asset = Asset(id_asset, db=self.db)
             self._action = actions[id_action]
@@ -144,6 +155,7 @@ class Job():
                     id_service=%s,
                     start_time=%s,
                     end_time=NULL,
+                    status=1,
                     progress=0
                 WHERE id=%s AND id_service IS NULL""",
                 [id_service, time.time(), self.id])
@@ -165,21 +177,23 @@ class Job():
                 WHERE id=%s""",
             [progress, message, self.id])
         db.commit()
-        #TODO:messaging.send("job_progress", id=self.id, id_asset=self.id_asset, id_action=self.id_action, progress=progress)
+        messaging.send("job_progress", id=self.id, id_asset=self.id_asset, id_action=self.id_action, status=1, progress=progress, message=message)
 
     def get_status(self):
         self.db.query("SELECT status FROM jobs WHERE id=%s", [self.id])
         return self.db.fetchall()[0][0]
 
-    def abort(self):
+    def abort(self, message="Aborted"):
         logging.warning("{} aborted".format(self))
-        self.db.query("UPDATE jobs SET id_service=NULL, end_time=%s, status=4, message='Pending' WHERE id=%s", [time.time(), self.id])
+        self.db.query("UPDATE jobs SET id_service=NULL, end_time=%s, status=4, message=%s WHERE id=%s", [time.time(), message, self.id])
         self.db.commit()
+        messaging.send("job_progress", id=self.id, id_asset=self.id_asset, id_action=self.id_action, status=4, progress=0, message=message)
 
-    def restart(self):
+    def restart(self, message="Restarted"):
         logging.warning("{} restarted".format(self))
-        self.db.query("UPDATE jobs SET id_service=NULL, start_time=NULL, end_time=NULL, status=0, progress=0, message='Pending' WHERE id=%s", [self.id])
+        self.db.query("UPDATE jobs SET id_service=NULL, start_time=NULL, end_time=NULL, status=5, progress=0, message=%s WHERE id=%s", [message, self.id])
         self.db.commit()
+        messaging.send("job_progress", id=self.id, id_asset=self.id_asset, id_action=self.id_action, status=5, progress=0, message=message)
 
     def fail(self, message="Failed", critical=False):
         if critical:
@@ -188,6 +202,7 @@ class Job():
             retries = self.retries + 1
         self.db.query(
             """UPDATE jobs SET
+                    id_service=NULL,
                     retries=%s,
                     priority=%s,
                     status=3,
@@ -198,11 +213,12 @@ class Job():
             )
         self.db.commit()
         logging.error("{}: {}".format(self, message))
-        #TODO:messaging.send("job_progress", id=self.id, id_asset=self.id_asset, id_action=self.id_action, progress=-3)
+        messaging.send("job_progress", id=self.id, id_asset=self.id_asset, id_action=self.id_action, status=3, progress=0, message=message)
 
     def done(self, message="Completed"):
         self.db.query(
             """UPDATE jobs SET
+                    id_service=NULL,
                     status=2,
                     progress=100,
                     end_time=%s,
@@ -212,7 +228,7 @@ class Job():
             )
         self.db.commit()
         logging.goodnews("{}: {}".format(self, message))
-        #TODO:messaging.send("job_progress", id=self.id, id_asset=self.asset.id, id_action=self.action.id, progress=2)
+        messaging.send("job_progress", id=self.id, id_asset=self.asset.id, id_action=self.action.id, status=2, progress=100, message=message)
 
 
 
@@ -223,12 +239,13 @@ def get_job(id_service, action_ids, db=False):
     q = """
         SELECT id, id_action, id_asset, id_user, settings, priority, retries FROM jobs
         WHERE
-            status IN (0,5)
+            status IN (0,3,5)
             AND id_action IN %s
             AND id_service IS NULL
+            AND retries < %s
             ORDER BY priority DESC, creation_time DESC
         """
-    db.query(q, [ tuple(action_ids) ])
+    db.query(q, [ tuple(action_ids), MAX_RETRIES ])
 
     for id_job, id_action, id_asset, id_user, settings, priority, retries in db.fetchall():
         asset = Asset(id_asset, db=db)
@@ -271,6 +288,8 @@ def get_job(id_service, action_ids, db=False):
                 logging.warning("Unable to take {}".format(job))
                 continue
         else:
+            db.query("UPDATE jobs SET message='Waiting' WHERE id=%s", [id_job])
+            db.query()
             logging.debug("{} should not start yet".format(job))
     return False
 
@@ -287,11 +306,11 @@ def send_to(id_asset, id_action, settings={}, id_user=None, priority=3, restart_
         [id_asset, id_action, json.dumps(settings)])
     res = db.fetchall()
     if res:
-        if restart_existing: #TODO
+        if restart_existing:
             db.query("""
                 UPDATE jobs SET
                     id_service=NULL,
-                    message='Restart required',
+                    message='Restart requested',
                     status=5,
                     retries=0,
                     creation_time=%s,

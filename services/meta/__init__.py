@@ -87,7 +87,15 @@ class Service(BaseService):
                 for probe in probes:
                     if probe.accepts(asset):
                         logging.debug("Probing {} using {}".format(asset, probe))
-                        asset = probe(asset)
+                        result = probe(asset)
+                        if result:
+                            asset = result
+                        elif asset["status"] != CREATING:
+                            asset["status"] = CREATING
+                            asset.save()
+                            return
+                        else:
+                            return
 
                 if asset["status"] == RESET:
                     asset["status"] = ONLINE
@@ -95,7 +103,6 @@ class Service(BaseService):
                 else:
                     asset["status"] = CREATING
                 asset.save()
-
 
         if asset["status"] == CREATING and asset["mtime"] + 15 > time.time():
             logging.debug("Waiting for {} completion assurance.".format(asset))
@@ -106,22 +113,24 @@ class Service(BaseService):
             asset["status"] = ONLINE
             asset.save()
 
-#TODO:
-#            db = DB()
-#            db.query("""
-#                UPDATE nx_jobs SET
-#                    progress=-1,
-#                    id_service=0,
-#                    ctime=%s,
-#                    stime=0,
-#                    etime=0,
-#                    id_user=0,
-#                    message='Restarting after source update'
-#                WHERE
-#                    id_object=%s
-#                AND
-#                    id_action > 0
-#                AND
-#                    progress IN (-2, -3)""", [time.time(), id_asset]
-#                )
-#            db.commit()
+            db = DB()
+            db.query("""
+                UPDATE jobs SET
+                    status=5,
+                    retries=0,
+                    creation_time=%s,
+                    start_time=NULL,
+                    end_time=NULL,
+                    message='Restarting after source update'
+                WHERE
+                    id_asset=%s
+                    AND status IN (1,2,3,4)
+                RETURNING id
+                """,
+                    [time.time(), asset.id]
+
+                )
+            res = db.fetchall()
+            if res:
+                logging.info("Restarting jobs: {}".format(", ".join([str(l[0]) for l in res])))
+            db.commit()

@@ -9,8 +9,6 @@ from .base_service import *
 
 def load_settings(force=False):
     global config
-    logging.debug("Loading site configuration from DB", handlers=False)
-
     # This is the first time we are connecting DB
     # so error handling should be here
     try:

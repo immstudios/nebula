@@ -55,7 +55,7 @@ class FFProbe(Probe):
 
         probe_result = ffprobe(asset.file_path)
         if not probe_result:
-            return asset
+            return False
 
         format_info = probe_result["format"]
         source_vdur = 0

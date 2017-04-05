@@ -30,6 +30,11 @@ def login_helper(login, password):
         return False
     return user.meta
 
+mam_modules = [["detail", "Assets"]]
+if config["playout_channels"]:
+    mam_modules.extend([["rundown", "Rundown"], ["scheduler", "Scheduler"]])
+
+
 
 class SiteContext(object):
     context = {
@@ -38,15 +43,8 @@ class SiteContext(object):
                     "/static/js/vendor.min.js",
                     "/static/js/main.js"
                 ],
-            "css" : [
-                    "/static/css/main.css"
-                ],
-            "mam_modules": [
-                    ["detail", "Asset"],
-                    ["rundown", "Rundown"],
-                    ["scheduler", "Scheduler"]
-                ],
-
+            "css" : ["/static/css/main.css"],
+            "mam_modules": mam_modules,
             "system_pages" : [
                     ["system_services", "Services"],
                     ["system_views", "Views"],
@@ -57,7 +55,6 @@ class SiteContext(object):
                     ["system_settings", "Settings"],
                     ["system_users", "Users"],
                 ],
-
             "meta_types" : meta_types,
         }
 

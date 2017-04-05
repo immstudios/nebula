@@ -54,6 +54,16 @@ class ViewSystemServices(CherryAdminView):
         self["name"] = "system_services"
         self["title"] = "Services"
         self["js"] = []
+
+        state_label = {
+                STOPPED  : "<span class='label label-primary'>Stopped</span>",
+                STARTED  : "<span class='label label-success'>Running</span>",
+                STARTING : "<span class='label label-warning'>Starting</span>",
+                STOPPING : "<span class='label label-warning'>Stopping</span>",
+                KILL     : "<span class='label label-danger'>Killing</span>",
+            }
+
+
         services = []
         db = DB()
         db.query("SELECT id, service_type, host, title, autostart, state, last_seen FROM services ORDER BY id")
@@ -64,8 +74,10 @@ class ViewSystemServices(CherryAdminView):
                     "host" : host,
                     "title" : title,
                     "autostart" : autostart,
-                    "state" : state,
+                    "state" : state_label[state],
                     "last_seen" : last_seen
                 }
+            if time.time() - last_seen > 120:
+                service["state"] = "<span class='label label-danger'>Not responding for {}</span>".format(s2words(time.time() - last_seen))
             services.append(service)
         self["data"]  = services

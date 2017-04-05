@@ -6,7 +6,6 @@ __all__ = ["plugin_path", "PlayoutPlugin"]
 try:
     plugin_path = os.path.join(storages[int(config["plugin_storage"])].local_path, config["plugin_root"])
 except KeyError, IndexError:
-    logging.warning("Unable to load plugin path")
     plugin_path = False
 else:
     if not os.path.exists(plugin_path) and ismount(storages[int(config["plugin_storage"])].local_path):
