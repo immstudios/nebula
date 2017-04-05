@@ -55,7 +55,3 @@ def s(*args):
         time.sleep(1)
 
     show_services(db)
-
-
-
-

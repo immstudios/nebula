@@ -1,13 +1,13 @@
 from .common import *
 
 def adduser(*args):
-    print ()
+    print
     try:
         login = raw_input("Login: ").strip()
         password = raw_input("Password: ").strip()
         is_admin = raw_input("Is it admin (yes/no): ").strip()
     except KeyboardInterrupt:
-        print()
+        print
         logging.warning("Interrupted by user")
         sys.exit(0)
     u = User()
@@ -15,6 +15,5 @@ def adduser(*args):
     u["is_admin"] = 1 if is_admin == "yes" else 0
     u.set_password(password)
     u.save()
-    print()
+    print
     logging.goodnews("User created")
-

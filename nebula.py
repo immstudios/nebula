@@ -18,7 +18,8 @@
 
 from __future__ import print_function
 
-print ()
+if __name__ == "__main__":
+    print ()
 
 import os
 import sys
