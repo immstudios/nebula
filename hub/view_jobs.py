@@ -59,9 +59,7 @@ class ViewJobs(CherryAdminView):
     def build(self, *args, **kwargs):
         self["name"] = "jobs"
         self["title"] = "Jobs"
-        self["js"] = [
-                "/static/js/jobs.js"
-            ]
+        self["js"] = []
 
         mode = "active"
         if len(args) > 1:

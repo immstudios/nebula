@@ -96,11 +96,12 @@ class Service(BaseService):
             while encoder.is_running:
                 encoder.work()
                 now = time.time()
-                if encoder.progress != old_progress:
-                    job.set_progress(encoder.progress, encoder.message)
-                    old_progress = encoder.progress
 
-                if int(now) % 3 == 0:
+                if int(now) % 2 == 0:
+                    if encoder.progress != old_progress:
+                        job.set_progress(encoder.progress, encoder.message)
+                        old_progress = encoder.progress
+
                     stat = job.get_status()
                     if stat == RESTART:
                         encoder.stop()

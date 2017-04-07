@@ -27,12 +27,12 @@ class Service(BaseService):
     def process(self, asset):
         full_path = asset.file_path
         if asset["id_storage"] not in self.mounted_storages:
-            print "skipping unmounted storage", asset["id_storage"]
+            logging.warning("Skipping unmounted storage {}".format(asset["id_storage"]))
             return
 
         if not os.path.exists(full_path):
             if asset["status"] in [ONLINE, RESET, CREATING]:
-                logging.warning("Turning offline {} (File does not exist)".format(asset))
+                logging.warning("{}: Turning offline (File does not exist)".format(asset))
                 asset["status"] = OFFLINE
                 asset.save()
             return
@@ -41,12 +41,12 @@ class Service(BaseService):
             fmtime = int(os.path.getmtime(full_path))
             fsize  = int(os.path.getsize(full_path))
         except Exception:
-            log_traceback("Unable to get file attributes {}".format(asset))
+            log_traceback("{}: Unable to get file attributes".format(asset))
             return
 
         if fsize == 0:
             if asset["status"] != OFFLINE:
-                logging.warning("Turning offline {} (empty file)".format(asset))
+                logging.warning("{}: Turning offline (empty file)".format(asset))
                 asset["status"] = OFFLINE
                 asset.save()
             return
@@ -55,7 +55,7 @@ class Service(BaseService):
             try:
                 f = open(full_path, "rb")
             except Exception:
-                logging.debug("{} is not accessible (creation in progress?)".format(asset))
+                logging.debug("{} is not accessible (file creation in progress?)".format(asset))
                 return
             else:
                 f.seek(0,2)
@@ -69,11 +69,11 @@ class Service(BaseService):
             # It sucks, but mtime only condition is.... errr doesn't work always
 
             if fsize == asset["file/size"] and asset["status"] != RESET:
-                logging.debug("{} file mtime has been changed. Updating.".format(asset))
+                logging.debug("{}: File mtime has been changed. Updating.".format(asset))
                 asset["file/mtime"] = fmtime
                 asset.save(set_mtime=False, notify=False)
             else:
-                logging.info("Updating {}".format(asset))
+                logging.info("{}: File size changed. Updating.".format(asset))
 
                 keys = list(asset.meta.keys())
                 for key in keys:
@@ -86,7 +86,7 @@ class Service(BaseService):
 
                 for probe in probes:
                     if probe.accepts(asset):
-                        logging.debug("Probing {} using {}".format(asset, probe))
+                        logging.debug("{}: probing using {}".format(asset, probe))
                         result = probe(asset)
                         if result:
                             asset = result
@@ -99,17 +99,17 @@ class Service(BaseService):
 
                 if asset["status"] == RESET:
                     asset["status"] = ONLINE
-                    logging.info("{} reset completed".format(asset))
+                    logging.info("{}: Reset completed".format(asset))
                 else:
                     asset["status"] = CREATING
                 asset.save()
 
         if asset["status"] == CREATING and asset["mtime"] + 15 > time.time():
-            logging.debug("Waiting for {} completion assurance.".format(asset))
+            logging.debug("{}: Waiting for completion assurance.".format(asset))
             asset.save(set_mtime=False, notify=False)
 
         elif asset["status"] in (CREATING, OFFLINE):
-            logging.goodnews("Turning online {}".format(asset))
+            logging.goodnews("{}: Turning online".format(asset))
             asset["status"] = ONLINE
             asset.save()
 
@@ -132,5 +132,5 @@ class Service(BaseService):
                 )
             res = db.fetchall()
             if res:
-                logging.info("Restarting jobs: {}".format(", ".join([str(l[0]) for l in res])))
+                logging.info("{}: Changed. Restarting jobs {}".format(asset, ", ".join([str(l[0]) for l in res])))
             db.commit()

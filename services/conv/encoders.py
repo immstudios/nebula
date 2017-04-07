@@ -53,7 +53,6 @@ class NebulaFFMPEG(BaseEncoder):
 
                 temp_ext = os.path.splitext(target_path)[1].lstrip(".")
                 temp_path = temp_file(id_storage, temp_ext)
-                print temp_path
 
                 if not temp_path:
                     return NebulaResponse(
@@ -113,7 +112,7 @@ class NebulaFFMPEG(BaseEncoder):
                         hh, mm, ss = k.replace("time=","").split(":")
                         PC = (int(hh)*3600) + (int(mm)*60) + float(ss)
                         self.progress = (PC / PZ) * 100
-                        self.message = "Encoding"
+                        self.message = "Encoding " + k
                     except:
                         pass
 

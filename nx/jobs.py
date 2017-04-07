@@ -289,7 +289,8 @@ def get_job(id_service, action_ids, db=False):
                 continue
         else:
             db.query("UPDATE jobs SET message='Waiting' WHERE id=%s", [id_job])
-            db.query()
+            messaging.send("job_progress", id=id_job, id_asset=id_asset, id_action=id_action, status=status, progress=0, message="Waiting")
+            db.commit()
             logging.debug("{} should not start yet".format(job))
     return False
 

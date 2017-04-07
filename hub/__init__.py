@@ -103,7 +103,8 @@ hub_config = {
                 "settings" : api_settings,
                 "rundown" : api_rundown,
                 "order" : api_order,
-                "schedule" : api_schedule
+                "schedule" : api_schedule,
+                "jobs" : api_jobs,
             }
     }
 
