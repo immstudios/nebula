@@ -14,7 +14,7 @@ class ViewPanelDetail(CherryAdminView):
 
         try:
             active_tab = kwargs["t"]
-            if not active_tab in ["m", "p", "t"]:
+            if not active_tab in ["m", "p", "t", "j"]:
                 raise ValueError
         except (KeyError, ValueError):
             active_tab = "m"
