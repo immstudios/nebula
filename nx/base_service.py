@@ -8,6 +8,7 @@ class BaseService(object):
         logging.debug("Initializing service")
         self.id_service = id_service
         self.settings   = settings
+        config["id_service"] = id_service
 
         try:
             self.on_init()
