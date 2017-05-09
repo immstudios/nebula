@@ -248,10 +248,17 @@ class ImportObject(object):
 
 
 if __name__ == "__main__":
-    logging.info("Deleting old data")
     db = DB()
+
+#    logging.info("Deleting old data")
     db.query("TRUNCATE TABLE assets, events, bins, items, users, jobs, asrun RESTART IDENTITY")
     db.commit()
+
+#    user = User(db=db)
+#    user["login"] = "demo"
+#    user.set_password("demo")
+#    user["is_admin"] = True
+#    user.save()
 
     for table_name, ObjectClass in [
                 ["assets", Asset],
@@ -303,10 +310,5 @@ if __name__ == "__main__":
         print "serial reset >>", (db.fetchall())
         db.commit()
 
-    user = User(db=db)
-    user["login"] = "demo"
-    user.set_password("demo")
-    user["is_admin"] = True
-    user.save()
 
     sys.exit(0)
