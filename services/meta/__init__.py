@@ -7,7 +7,14 @@ probes = [
 
 class Service(BaseService):
     def on_init(self):
-        pass
+        self.conds = []
+        for cond in self.settings.findall("cond"):
+            if cond is None:
+                continue
+            if not cond.text:
+                continue
+            exec ("x = lambda asset: {}".format(cond.text))
+            self.conds.append(x)
 
     def on_main(self):
         self.mounted_storages = []
@@ -25,6 +32,10 @@ class Service(BaseService):
 
 
     def process(self, asset):
+        for cond in self.conds:
+            if not cond(asset):
+                return False
+
         full_path = asset.file_path
         if asset["id_storage"] not in self.mounted_storages:
             logging.warning("Skipping unmounted storage {}".format(asset["id_storage"]))
