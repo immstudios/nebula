@@ -38,14 +38,13 @@ class ViewPanelBrowser(CherryAdminView):
         #
 
         assets = api_get(
-                view = id_view,
+                id_view = id_view,
                 fulltext=search_query or False,
                 count=True,
                 order="id DESC",
                 limit=records_per_page,
                 offset=(current_page - 1)*records_per_page
             )
-
 
         #
         # page context
