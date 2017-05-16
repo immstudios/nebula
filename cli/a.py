@@ -19,17 +19,28 @@ def format_title(key, asset):
 formats = {
         "id" : lambda key, asset: "{:<5}".format(asset[key]),
         "status" : format_status,
-        "title" : lambda key, asset: "{:<24}".format(asset[key]),
+        "title" : format_title,
     }
-
-cols = ["id", "status", "title", "ctime", "mtime", "video/aspect_ratio"]
 
 
 def a(*args):
     print ()
+    cols = ["id", "status", "title", "mtime"]
 
-    for response, asset in get_objects(Asset, order="id DESC"):
+    if args and args[0].isdigit():
+        id_view = int(args[0])
+        if id_view in config["views"]:
+            cols = config["views"][id_view]["columns"]
+    else:
+        id_view = False
 
+    if len(args) > 1:
+        ft = " ".join(args[1:])
+    else:
+        ft = False
+
+
+    for response, asset in get_objects(Asset, order="id DESC", id_view=id_view, fulltext=ft):
         l = ""
         for key in cols:
             l+= " " + str(formats[key](key, asset) if key in formats else asset.show(key))
