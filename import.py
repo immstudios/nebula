@@ -212,7 +212,7 @@ def check_keys():
             for key in data.keys():
                 if key in meta_keys or key in ignore:
                         continue
-                print key
+                logging.warning("Unknown key: {}".format(key))
                 ignore.append(key)
 
 
@@ -250,15 +250,10 @@ class ImportObject(object):
 if __name__ == "__main__":
     db = DB()
 
-#    logging.info("Deleting old data")
-    db.query("TRUNCATE TABLE assets, events, bins, items, users, jobs, asrun RESTART IDENTITY")
-    db.commit()
-
-#    user = User(db=db)
-#    user["login"] = "demo"
-#    user.set_password("demo")
-#    user["is_admin"] = True
-#    user.save()
+    if "--full" in sys.argv:
+        logging.info("Deleting old data")
+        db.query("TRUNCATE TABLE assets, events, bins, items, users, jobs, asrun RESTART IDENTITY")
+        db.commit()
 
     for table_name, ObjectClass in [
                 ["assets", Asset],
@@ -268,6 +263,7 @@ if __name__ == "__main__":
                 ["users", User],
             ]:
 
+        logging.info("Importing {}".format(table_name))
         sdb = SourceDB(data_path)
 
         db.query("SELECT meta->>'mtime' FROM {} ORDER BY meta->>'mtime' DESC LIMIT 1".format(table_name))
@@ -295,7 +291,7 @@ if __name__ == "__main__":
                 db.commit()
             except Exception:
                 log_traceback()
-                print translated
+                logging.error(str(translated))
                 sys.exit(-1)
 
 
@@ -307,7 +303,7 @@ if __name__ == "__main__":
         db.commit()
 
         db.query("SELECT setval(pg_get_serial_sequence('{}', 'id'), coalesce(max(id),0) + 1, false) FROM {};".format(table_name, table_name))
-        print "serial reset >>", (db.fetchall())
+        logging.debug("serial reset >>", (db.fetchall()))
         db.commit()
 
 
