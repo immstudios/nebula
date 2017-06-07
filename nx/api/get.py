@@ -10,13 +10,33 @@ def get_objects(ObjectType, **kwargs):
     fulltext    = kwargs.get("fulltext", False)
     result_type = kwargs.get("result", False)
     do_count    = kwargs.get("count", False)
-    view_count  = kwargs.get("view_count", 0) # pre-fulltext count, if known
     limit       = kwargs.get("limit", False)
     offset      = kwargs.get("offset", False)
     order       = kwargs.get("order", False)
+    id_view     = kwargs.get("id_view", False)
+
+    view_count = False
+    if id_view and id_view in config["views"]:
+        view_config = config["views"][id_view]
+        for key, col in [
+                    ["folders", "id_folder"],
+                    ["media_types", "media_type"],
+                    ["content_types", "content_type"],
+                    ["statuses", "status"],
+                    ["folders", "id_folder"],
+                ]:
+            if key in view_config:
+                if len(view_config[key]) == 1:
+                    raw_conds.append("{}={}".format(col, view_config[key][0]))
+                else:
+                    raw_conds.append("{} IN ({})".format(col, ",".join([str(v) for v in view_config[key]])))
+        try:
+            view_count = int(cache.load("view-count-"+str(id_view)))
+        except:
+            pass
+
 
     conds = []
-
     for cond in raw_conds:
         for col in ObjectType.db_cols:
             if cond.startswith(col):
@@ -51,14 +71,13 @@ def get_objects(ObjectType, **kwargs):
 
 
 
-
 def api_get(**kwargs):
     object_type = kwargs.get("object_type", "asset")
     ids         = kwargs.get("ids", [])
     result_type = kwargs.get("result", False)
     user        = kwargs.get("user", anonymous)
     db          = kwargs.get("db", DB())
-    id_view     = kwargs.get("view", 0)
+    id_view     = kwargs.get("id_view", 0)
 
     if not "conds" in kwargs:
         kwargs["conds"] = []
@@ -87,27 +106,6 @@ def api_get(**kwargs):
 
     else:
         # We actually search the database
-
-        if id_view:
-            view_config = config["views"][id_view]
-            for key, col in [
-                        ["folders", "id_folder"],
-                        ["media_types", "media_type"],
-                        ["content_types", "content_type"],
-                        ["statuses", "status"],
-                        ["folders", "id_folder"],
-                    ]:
-                if key in view_config:
-                    if len(view_config[key]) == 1:
-                        kwargs["conds"].append("{}={}".format(col, view_config[key][0]))
-                    else:
-                        kwargs["conds"].append("{} IN ({})".format(col, ",".join([str(v) for v in view_config[key]])))
-
-            try:
-                kwargs["view_count"] = int(cache.load("view-count-"+str(id_view)))
-            except:
-                pass
-
         if type(result_type) == list:
             result_format = []
             for i, key in enumerate(result_type):

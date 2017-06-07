@@ -1,8 +1,8 @@
-import run
-import adduser
-import a
-import s
-import j
+import cli.run
+import cli.adduser
+import cli.a
+import cli.s
+import cli.j
 
 __all__ = ["modules"]
 

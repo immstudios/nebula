@@ -32,7 +32,6 @@ class ViewPanelDetail(CherryAdminView):
             fconfig = config["folders"][asset["id_folder"]]
         except:
             log_traceback()
-            print asset.meta
         self["meta_set"] = fconfig["meta_set"]
 
 

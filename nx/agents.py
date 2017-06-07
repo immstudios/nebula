@@ -1,8 +1,9 @@
 import time
+
 try:
     import thread
 except ImportError:
-    import _thread
+    import _thread as thread
 
 from nebulacore import *
 
