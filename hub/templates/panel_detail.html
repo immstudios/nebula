@@ -1,0 +1,46 @@
+
+<div id="detail-editor">
+{% if not page.asset %}
+<h2>No asset opened</h2>
+{% else %}
+
+<ul class="nav nav-tabs">
+<li{% if page.active_tab == "m" %} class="active"{% endif %}><a data-toggle="tab" class="detail-tab-switcher" data-href="m" href="#detail-main">Main</a></li>
+<li{% if page.active_tab == "p" %} class="active"{% endif %}><a data-toggle="tab" class="detail-tab-switcher" data-href="p" href="#detail-preview">Preview</a></li>
+<li{% if page.active_tab == "t" %} class="active"{% endif %}><a data-toggle="tab" class="detail-tab-switcher" data-href="t" href="#detail-technical">Technical</a></li>
+<li{% if page.active_tab == "j" %} class="active"{% endif %}><a data-toggle="tab" class="detail-tab-switcher" data-href="j" href="#detail-jobs">Jobs</a></li>
+</ul>
+
+<div class="tab-content" id="detail-tab-content">
+<div id="detail-main" class="tab-pane fade in{% if page.active_tab == "m" %} in active {% endif %}">
+{% for key, key_config in page.meta_set %}
+<div class="form-group row">
+<label for="input-key-{{ loop.index }}" class="col-xs-2 col-form-label">{{ site.meta_types[key].alias() }}</label>
+<div class="col-xs-10">{% set key_class = site.meta_types[key]["class"] %}
+{% if key_class == 0 %}<input class="form-control" type="text" value="{{ page.asset[key] }}" id="input-key-{{ loop.index }}">
+{% elif key_class == 1 %}<textarea class="form-control" id="input_key-{{ loop.index }}" rows="3">{{ page.asset[key] }}</textarea>
+{%endif%}
+</div>
+</div>
+{% endfor %}
+</div>
+
+<div id="detail-preview" class="tab-pane fade{% if page.active_tab == "p" %} in active {% endif %}">
+<div id="preview-container">
+<video src="{{page.asset.proxy_url}}" id="video-player" controls></video>
+</div>
+</div>
+
+<div id="detail-technical" class="tab-pane fade{% if page.active_tab == "t" %} in active {% endif %}">
+<pre>{{ page.asset.show_meta() }}</pre>
+</div>
+
+<div id="detail-jobs" class="tab-pane fade{% if page.active_tab == "j" %} in active {% endif %}">
+{% include "includes/job_table.html" %}
+</div>
+</div>
+
+<hr>
+
+{% endif %}
+</div>

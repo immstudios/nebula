@@ -1,0 +1,12 @@
+{% extends "_base.html" %}
+
+{% block content %}
+<div class="fs-page">
+<ul class="nav nav-tabs">
+<li{% if page.mode == "active" %} class="active"{% endif %}><a href="/jobs/active">Active</a></li>
+<li{% if page.mode == "finished" %} class="active"{% endif %}><a href="/jobs/finished">Finished</a></li>
+<li{% if page.mode == "failed" %} class="active"{% endif %}><a href="/jobs/failed">Failed</a></li>
+</ul>
+{% include "includes/job_table.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "_base_settings.html" %}
+
+{% block settings_table %}
+<thead>
+<tr>
+<th style="width:35px;">#</th>
+<th>Title</th>
+</tr>
+</thead>
+<tbody>{% for job in page.data %}
+<tr>
+<td>{{ job.id }}</td>
+<td>{{ job }}</td>
+</tr>{% endfor %}
+</tbody>
+{% endblock %}

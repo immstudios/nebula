@@ -1,0 +1,45 @@
+<nav>
+<div class="navbar navbar-default navbar-fixed-top">
+<div class="container-fluid">
+<div class="navbar-header">
+<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+<span class="icon-bar"></span>
+<span class="icon-bar"></span>
+<span class="icon-bar"></span>
+</button>
+</div>
+
+<div class="navbar-collapse collapse navbar-responsive-collapse">
+<ul class="nav navbar-nav">
+<li{% if page.name == "dashboard" %} class="active"{% endif %}><a href="/">Dashboard</a></li>
+<li{% if page.name == "mam" %} class="active"{% endif %}><a href="/mam">Assets</a></li>
+<li{% if page.name == "jobs" %} class="active"{% endif %}><a href="/jobs">Jobs</a></li>
+
+{% if user.is_admin %}
+<li class="dropdown">
+<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">System <span class="caret"></span></a>
+<ul class="dropdown-menu">
+{% for name, title in site.system_pages %}
+<li{% if page.name == name %} class="active"{% endif %}><a href="/{{ name }}">{{ title }}</a></li>
+{% endfor %}
+</ul>
+</li>
+{% endif %}
+</ul>
+
+<ul class="nav navbar-nav navbar-right">
+<li class="dropdown">
+<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="mdi mdi-account"></i></a>
+<ul class="dropdown-menu">
+<li><a href="#">User settings</a></li>
+<li><a href="#">Send message</a></li>
+<li role="separator" class="divider"></li>
+<li><a href="/logout">Log out</a></li>
+</ul>
+</li>
+</ul>
+
+</div> <!-- // navbar-collapse -->
+</div> <!-- // container-fluid -->
+</div> <!-- // navbar -->
+</nav>

@@ -1,0 +1,20 @@
+{% extends "_base_settings.html" %}
+
+{% block settings_table %}
+<thead>
+<tr>
+<th style="width:35px;">#</th>
+<th>Title</th>
+<th style="width:1px;">Color</th>
+</tr>
+</thead>
+<tbody>{% for id_folder in site.folders %}
+<tr>
+{% set color = "#{:06x}".format(site.folders[id_folder]["color"]) %}
+<td>{{ id_folder }}</td>
+<td>{{ site.folders[id_folder]["title"] }}</td>
+<td><span class="label" style="background-color : {{ color }};">{{ color }}</span></td>
+
+</tr>{% endfor %}
+</tbody>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "_base_settings.html" %}
+
+{% block settings_table %}
+<thead>
+<tr>
+<th style="width:35px;">#</th>
+<th>Title</th>
+<th>Path</th>
+</tr>
+</thead>
+<tbody>{% for id_storage in site.storages %}
+<tr>
+<td>{{ id_storage }}</td>
+<td>{{ site.storages[id_storage]["title"] }}</td>
+<td>{{ site.storages[id_storage]["path"] }}</td>
+</tr>{% endfor %}
+</tbody>
+{% endblock %}

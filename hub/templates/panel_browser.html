@@ -1,0 +1,32 @@
+{% if not page.assets %}
+<h2>No matching asset found</h2>
+{% else %}
+
+{% include "includes/pagination.html" %}
+
+<table id="browser-table" class="table table-sm table-condensed">
+<thead>
+<tr>
+{% for column in page.columns %}
+<th{% if site.meta_types[column]["class"] > 1 %} style="width:1px;"{% endif %}>{{ site.meta_types[column].header() }}</th>{% endfor %}
+</tr>
+</thead>
+<tbody id="browser-body">{% for asset in page.assets %}
+<tr class="browser-row" data-href="{{ asset.id }}">
+{% for key in page.columns %}
+<td>
+{% if key == "title" %}
+<span>{{ asset.show(key, mode="hub") }}</span>
+{% if asset["status"] == 0 %}<span class='label label-danger'><i class="mdi mdi-server-off"></i></span>
+{% elif asset["status"] == 2 %}<span class='label label-warning'><i class="mdi mdi-av-timer"></i></span>
+{% endif %}
+{% else %}
+<span><small>{{ asset.show(key, mode="hub") }}</small></span>
+{% endif %}
+</td>{% endfor %}
+</tr>{% endfor %}
+</tbody>
+</table>
+
+{% include "includes/pagination.html" %}
+{% endif %}

@@ -1,0 +1,16 @@
+{% extends "_base_settings.html" %}
+
+{% block settings_table %}
+<thead>
+<tr>
+<th style="width:35px;">#</th>
+<th>Title</th>
+</tr>
+</thead>
+<tbody>{% for id_view in site.views %}
+<tr>
+<td>{{ id_view }}</td>
+<td>{{ site.views[id_view]["title"] }}</td>
+</tr>{% endfor %}
+</tbody>
+{% endblock %}

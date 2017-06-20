@@ -1,0 +1,6 @@
+{% if flash_messages %}<ul>
+{% for message, level in flash_messages %}
+<li>{{ message }}</li>
+{% endfor %}
+</ul>{% endif %}
+

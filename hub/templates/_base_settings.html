@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+
+{% block content %}
+<div class="fs-page">
+<ul class="nav nav-tabs">
+{% for name, title in site.system_pages %}
+<li{% if page.name == name %} class="active"{% endif %}><a href="/{{ name }}">{{ title }}</a></li>
+{% endfor %}
+</ul>
+
+<table id="settings-table" class="table table-hover">
+{% block settings_table %}
+{% endblock %}
+</table>
+</div>
+{% endblock %}
