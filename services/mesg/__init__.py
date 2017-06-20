@@ -114,7 +114,7 @@ class Service(BaseService):
     def on_main(self):
         if len(self.queue) > 100:
             logging.warning("Truncating message queue")
-            self.queue = self.queue[50:]
+            self.queue = self.queue[80:]
 
 
     def listen(self):
