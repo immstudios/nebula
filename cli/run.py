@@ -41,7 +41,7 @@ def run(*args):
             db.commit()
             critical_error("Unable to start service")
 
-    _module = __import__("services." + agent, globals(), locals(), ["Service"], -1)
+    _module = __import__("services." + agent, globals(), locals(), ["Service"])
     Service = _module.Service
     service = Service(id_service, settings)
 

@@ -5,6 +5,24 @@ import time
 import json
 import traceback
 
+###
+
+version_info = sys.version_info[:2]
+PYTHON_VERSION = version_info[0] + float("." + str(version_info[1])) # TODO: make this nice
+
+if PYTHON_VERSION >= 3:
+    from urllib.request import urlopen
+
+    decode_if_py3 = lambda x: x.decode("utf-8")
+    encode_if_py3 = lambda x: bytes(x, "utf-8")
+    string_type = str
+else:
+    from urllib2 import urlopen
+
+    decode_if_py3 = lambda x: x
+    encode_if_py3 = lambda x: x
+    string_type = unicode
+
 # do not import anything
 __all__ = []
 
@@ -145,15 +163,16 @@ class Rex(object):
     def self_update(self):
         if not self.force_update:
             return
-        #if not os.path.exists(".rex_devel"):
-        #    logging.debug("This is a development machine. Skipping rex auto update.")
-        #    return
-        import urllib2
-        response = urllib2.urlopen("https://imm.cz/rex.py")
-        new_rex = response.read()
+        if os.path.exists(".rex_devel"):
+            logging.debug("This is a development machine. Skipping rex auto update.")
+            return
+        response = urlopen("https://imm.cz/rex.py")
+        new_rex = decode_if_py3(response.read())
         old_rex = open("rex.py").read()
         if new_rex != old_rex:
             logging.info("Updating REX core")
+            with open("rex_new.py", "w") as f:
+                f.write(new_rex)
         else:
             logging.info("REX is up to date")
 

@@ -20,13 +20,17 @@ class Service(BaseService):
                 logging.warning("Skipping non-existing watchfolder", watchfolder_path)
                 continue
 
-            for full_path in get_files(
+            for file_object in get_files(
                         watchfolder_path,
                         recursive=wf_settings.attrib.get("recursive", False),
                         hidden=wf_settings.attrib.get("hidden", False),
                         case_sensitive_exts=wf_settings.get("case_sensitive_exts", False)
                     ):
 
+                if not file_object.size:
+                    continue
+
+                full_path = file_object.path
                 if full_path in self.existing:
                     continue
 
@@ -41,10 +45,9 @@ class Service(BaseService):
                     self.existing.append(full_path)
                     continue
 
-                file_mtime = os.path.getmtime(full_path)
                 base_name = get_base_name(asset_path)
 
-                if quarantine_time and now - file_mtime < quarantine_time:
+                if quarantine_time and now - file_object.mtime < quarantine_time:
                     logging.debug("{} is too young. Skipping".format(base_name))
                     continue
 
@@ -72,5 +75,5 @@ class Service(BaseService):
                 asset.save(set_mtime=False)
 
         duration = time.time() - start_time
-        if duration > 60:
+        if duration > 60 or config.get("debug_mode", False):
             logging.debug("Watchfolders scanned in {}".format(s2time(duration)))

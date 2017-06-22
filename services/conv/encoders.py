@@ -1,7 +1,6 @@
 from nebula import *
 
 import subprocess
-import thread
 import os
 import signal
 

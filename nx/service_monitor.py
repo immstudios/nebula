@@ -56,7 +56,8 @@ class ServiceMonitor(BaseAgent):
         # Real service state
         #
 
-        for id_service in self.services.keys():
+        service_list = [i for i in self.services.keys()]
+        for id_service in service_list:
             proc, title = self.services[id_service]
             if proc.poll() == None:
                 continue
@@ -78,7 +79,6 @@ class ServiceMonitor(BaseAgent):
 
     def start_service(self, id_service, title, db=False):
         proc_cmd = [
-            python_cmd,
             os.path.join(config["nebula_root"], "manage.py"),
             "run",
             str(id_service),

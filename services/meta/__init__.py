@@ -17,6 +17,7 @@ class Service(BaseService):
             self.conds.append(x)
 
     def on_main(self):
+        start_time = time.time()
         self.mounted_storages = []
         for id_storage in storages:
             storage_path = storages[id_storage].local_path
@@ -30,18 +31,22 @@ class Service(BaseService):
             asset = Asset(meta=meta, db=db)
             self.process(asset)
 
+        duration = time.time() - start_time
+        if duration > 60 or config.get("debug_mode", False):
+            logging.debug("Metadata scanned in {}".format(s2time(duration)))
+
 
     def process(self, asset):
         for cond in self.conds:
             if not cond(asset):
                 return False
 
-        full_path = asset.file_path
+        asset_file = FileObject(asset.file_path)
         if asset["id_storage"] not in self.mounted_storages:
             logging.warning("Skipping unmounted storage {}".format(asset["id_storage"]))
             return
 
-        if not os.path.exists(full_path):
+        if not asset_file.isreg:
             if asset["status"] in [ONLINE, RESET, CREATING]:
                 logging.warning("{}: Turning offline (File does not exist)".format(asset))
                 asset["status"] = OFFLINE
@@ -49,8 +54,8 @@ class Service(BaseService):
             return
 
         try:
-            fmtime = int(os.path.getmtime(full_path))
-            fsize  = int(os.path.getsize(full_path))
+            fmtime = int(asset_file.mtime)
+            fsize  = int(asset_file.size)
         except Exception:
             log_traceback("{}: Unable to get file attributes".format(asset))
             return
@@ -64,7 +69,7 @@ class Service(BaseService):
 
         if fmtime != asset["file/mtime"] or asset["status"] == RESET:
             try:
-                f = open(full_path, "rb")
+                f = asset_file.open("rb")
             except Exception:
                 logging.debug("{} is not accessible (file creation in progress?)".format(asset))
                 return
@@ -93,7 +98,7 @@ class Service(BaseService):
 
                 asset["file/size"]  = fsize
                 asset["file/mtime"] = fmtime
-                asset["file/ctime"] = int(os.path.getmtime(full_path))
+                asset["file/ctime"] = int(asset_file.ctime)
 
                 for probe in probes:
                     if probe.accepts(asset):
