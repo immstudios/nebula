@@ -1,4 +1,6 @@
 from nx import *
+
+from nxtools import *
 from nxtools.media import *
 
 from .common import Probe
