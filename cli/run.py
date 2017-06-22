@@ -63,3 +63,9 @@ def run(*args):
             time.sleep(2)
             sys.exit(1)
 
+        try:
+            if sys.argv[1] == "once":
+                break
+        except IndexError:
+            pass
+
