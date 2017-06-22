@@ -13,7 +13,7 @@ class Service(BaseService):
                 continue
             if not cond.text:
                 continue
-            exec ("x = lambda asset: {}".format(cond.text))
+            x = eval("lambda asset: {}".format(cond.text))
             self.conds.append(x)
 
     def on_main(self):
@@ -27,9 +27,13 @@ class Service(BaseService):
         db = DB()
         # do not scan trashed and archived files
         db.query("SELECT id, meta FROM assets WHERE media_type=%s AND status NOT IN (3, 4)", [FILE])
+        i = 0
         for id, meta in db.fetchall():
             asset = Asset(meta=meta, db=db)
             self.process(asset)
+            i += 1
+            if i % 100 == 0 and config.get("debug_mode", False):
+                logging.debug("{} files scanned".format(i))
 
         duration = time.time() - start_time
         if duration > 60 or config.get("debug_mode", False):
@@ -39,26 +43,27 @@ class Service(BaseService):
     def process(self, asset):
         for cond in self.conds:
             if not cond(asset):
-                return False
+                return
 
         asset_file = FileObject(asset.file_path)
         if asset["id_storage"] not in self.mounted_storages:
             logging.warning("Skipping unmounted storage {}".format(asset["id_storage"]))
             return
 
-        if not asset_file.isreg:
+        try:
+            file_exists = asset_file.is_reg
+        except IOError:
+            file_exists = False
+
+        if not file_exists:
             if asset["status"] in [ONLINE, RESET, CREATING]:
                 logging.warning("{}: Turning offline (File does not exist)".format(asset))
                 asset["status"] = OFFLINE
                 asset.save()
             return
 
-        try:
-            fmtime = int(asset_file.mtime)
-            fsize  = int(asset_file.size)
-        except Exception:
-            log_traceback("{}: Unable to get file attributes".format(asset))
-            return
+        fmtime = int(asset_file.mtime)
+        fsize  = int(asset_file.size)
 
         if fsize == 0:
             if asset["status"] != OFFLINE:
