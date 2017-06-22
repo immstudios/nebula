@@ -20,12 +20,16 @@ class Service(BaseService):
                 logging.warning("Skipping non-existing watchfolder", watchfolder_path)
                 continue
 
+            i = 0
             for file_object in get_files(
                         watchfolder_path,
                         recursive=wf_settings.attrib.get("recursive", False),
                         hidden=wf_settings.attrib.get("hidden", False),
                         case_sensitive_exts=wf_settings.get("case_sensitive_exts", False)
                     ):
+                i += 1
+                if i % 100 == 0 and config.get("debug_mode", False):
+                    logging.debug("{} files scanned".format(i))
 
                 if not file_object.size:
                     continue
@@ -40,7 +44,7 @@ class Service(BaseService):
                 if not ext in file_types:
                     continue
 
-                asset = asset_by_path(id_storage, asset_path, db=DB())
+                asset = asset_by_path(id_storage, asset_path, db=db)
                 if asset:
                     self.existing.append(full_path)
                     continue
