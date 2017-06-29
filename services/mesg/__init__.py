@@ -125,8 +125,9 @@ class Service(BaseService):
                 continue
 
             try:
-                message = SeismicMessage(json.loads(data))
+                message = SeismicMessage(json.loads(decode_if_py3(data)))
             except Exception:
+                log_traceback()
                 logging.warning("Malformed seismic message detected", handlers=False)
                 continue
 
