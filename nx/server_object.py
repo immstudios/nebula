@@ -99,7 +99,7 @@ class ServerObject(BaseObject):
 
 
     def _update(self, **kwargs):
-        assert id > 0
+        assert self.id > 0
         cols = ["meta"]
         vals = [json.dumps(self.meta)]
 
