@@ -37,8 +37,10 @@ class ServerObject(BaseObject):
     def load(self, id):
         key = str(self.object_type_id) + "-" + str(id)
         try:
-            self.meta = json.loads(cache.load(key))
-            return True
+            cache_data = cache.load(key)
+            if cache_data is not None:
+                self.meta = json.loads(cache_data)
+                return True
         except Exception:
             log_traceback()
             pass
