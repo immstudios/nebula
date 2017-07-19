@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import json
@@ -117,7 +117,7 @@ meta_keys = {
     "title"                     : None,
     "title/original"            : None,
     "title/subtitle"            : "subtitle",
-    "version_of"                : None,
+    "version_of"                : lambda x: x or 0,
 
     "audio/bpm"                 : None,
     "audio/gain/mean"           : None,
@@ -232,8 +232,13 @@ class ImportObject(object):
 
         for key in meta_keys:
             conv = meta_keys[key]
-            if not self[key]:
-                continue
+
+
+            if not key in self.meta:
+                if key in ["version_of", "status"]:
+                    self.meta[key] = 0
+                else:
+                    continue
 
             if callable(conv):
                 result[key] = conv(self[key])
@@ -263,7 +268,6 @@ if __name__ == "__main__":
                 ["users", User],
             ]:
 
-        logging.info("Importing {}".format(table_name))
         sdb = SourceDB(data_path)
 
         db.query("SELECT meta->>'mtime' FROM {} ORDER BY meta->>'mtime' DESC LIMIT 1".format(table_name))
@@ -285,15 +289,21 @@ if __name__ == "__main__":
             obj.is_new = True
 
             try:
-                obj.save(commit=False)
+                obj.save(commit=False, set_mtime=False)
             except IntegrityError:
+                log_traceback()
+                print (data)
+                print (translated)
+                logging.warning("Integrity error: {} : {}".format(table_name, id))
                 #TODO: Update newer
+                sys.exit(0)
                 db.commit()
             except Exception:
                 log_traceback()
                 logging.error(str(translated))
-                sys.exit(-1)
+                continue
 
+            #logging.info("Importing {}".format(table_name))
 
             i+=1
             if i % 1000 == 0:
