@@ -111,11 +111,10 @@ class Event(EventMixIn, ServerObject):
     @property
     def bin(self):
         if not hasattr(self, "_bin"):
-            if not self["id_bin"]: # non-playout events
+            if not self["id_magic"]: # non-playout events
                 self._bin = False
             else:
-                logging.debug("Loading bin ID {} of {} from DB".format(self["id_bin"], self))
-                self._bin = Bin(self["id_bin"], db=self.db)
+                self._bin = Bin(self["id_magic"], db=self.db)
         return self._bin
 
 
