@@ -237,6 +237,8 @@ class ImportObject(object):
             if not key in self.meta:
                 if key in ["version_of", "status"]:
                     self.meta[key] = 0
+                elif key in ["media_type"]:
+                    self.meta[key] = 0
                 else:
                     continue
 
@@ -287,25 +289,24 @@ if __name__ == "__main__":
 
             obj = ObjectClass(meta=translated, db=db)
             obj.is_new = True
+            obj.text_changed = True
+
+            if obj["media_type"] != 1:
+                print (data)
+                break
 
             try:
                 obj.save(commit=False, set_mtime=False)
             except IntegrityError:
-                log_traceback()
-                print (data)
-                print (translated)
-                logging.warning("Integrity error: {} : {}".format(table_name, id))
-                #TODO: Update newer
-                sys.exit(0)
                 db.commit()
+                obj.is_new = False
+                obj.save(set_mtime=False)
             except Exception:
                 log_traceback()
                 logging.error(str(translated))
                 continue
 
-            #logging.info("Importing {}".format(table_name))
-
-            i+=1
+            i += 1
             if i % 1000 == 0:
                 logging.debug("{} {} imported".format(i, table_name))
                 db.commit()
@@ -313,8 +314,7 @@ if __name__ == "__main__":
         db.commit()
 
         db.query("SELECT setval(pg_get_serial_sequence('{}', 'id'), coalesce(max(id),0) + 1, false) FROM {};".format(table_name, table_name))
-        logging.debug("serial reset >>", (db.fetchall()))
+        logging.debug("Serial reset ({}): {}".format(table_name, db.fetchall()[0][0]))
         db.commit()
-
 
     sys.exit(0)
