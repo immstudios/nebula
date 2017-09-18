@@ -270,6 +270,10 @@ if __name__ == "__main__":
                 ["users", User],
             ]:
 
+        num_created = 0
+        num_updated = 0
+
+
         sdb = SourceDB(data_path)
 
         db.query("SELECT meta->>'mtime' FROM {} ORDER BY meta->>'mtime' DESC LIMIT 1".format(table_name))
@@ -301,10 +305,13 @@ if __name__ == "__main__":
                 db.commit()
                 obj.is_new = False
                 obj.save(set_mtime=False)
+                num_updated += 1
             except Exception:
                 log_traceback()
                 logging.error(str(translated))
                 continue
+            else:
+                num_created += 1
 
             i += 1
             if i % 1000 == 0:
@@ -313,8 +320,14 @@ if __name__ == "__main__":
 
         db.commit()
 
-        db.query("SELECT setval(pg_get_serial_sequence('{}', 'id'), coalesce(max(id),0) + 1, false) FROM {};".format(table_name, table_name))
-        logging.debug("Serial reset ({}): {}".format(table_name, db.fetchall()[0][0]))
-        db.commit()
+        if num_created:
+            db.query("""
+                    SELECT setval(pg_get_serial_sequence('{}', 'id'),
+                    coalesce(max(id),0) + 1, false)
+                    FROM {};""".format(table_name, table_name)
+                )
+            logging.debug("Serial reset ({}): {}".format(table_name, db.fetchall()[0][0]))
+            db.commit()
+        logging.info("{} {} created, {} updated".format(num_created, table_name, num_updated))
 
     sys.exit(0)
