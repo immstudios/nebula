@@ -67,6 +67,8 @@ def page_context_helper():
 
 
 hub_config = {
+        "host" : config.get("hub_host", "0.0.0.0"),
+        "port" : config.get("hub_host", 8080),
         "static_dir" : config.get("hub_static_dir", "hub/static"),
         "templates_dir" : config.get("hub_templates_dir", "hub/templates"),
         "login_helper" : login_helper,
