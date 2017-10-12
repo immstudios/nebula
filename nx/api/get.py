@@ -72,6 +72,9 @@ def get_objects(ObjectType, **kwargs):
 
 
 def api_get(**kwargs):
+    if not kwargs.get("user", None):
+        return {'response' : 401, 'message' : 'unauthorized'}
+
     object_type = kwargs.get("object_type", "asset")
     ids         = kwargs.get("ids", [])
     result_type = kwargs.get("result", False)

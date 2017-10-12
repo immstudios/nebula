@@ -3,6 +3,9 @@ from nx import *
 __all__ = ["api_mcr"]
 
 def api_message(**kwargs):
+    if not kwargs.get("user", None):
+        return {'response' : 401, 'message' : 'unauthorized'}
+
     id_channel = kwargs.get("id_channel", 0)
     method = kwargs.get("method", False)
 

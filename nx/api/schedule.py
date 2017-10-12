@@ -7,6 +7,9 @@ from nx import *
 __all__ = ["api_schedule"]
 
 def api_schedule(**kwargs):
+    if not kwargs.get("user", None):
+        return {'response' : 401, 'message' : 'unauthorized'}
+
     id_channel = kwargs.get("id_channel", 0)
     start_time = kwargs.get("start_time", 0)
     end_time = kwargs.get("end_time", 0)

@@ -3,6 +3,9 @@ from nx import *
 __all__ = ["api_actions"]
 
 def api_actions(**kwargs):
+    if not kwargs.get("user", None):
+        return {'response' : 401, 'message' : 'unauthorized'}
+
     ids = kwargs.get("ids", [])
     user = kwargs.get("user", anonymous)
     db = kwargs.get("db", DB())

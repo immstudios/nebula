@@ -7,6 +7,9 @@ from nx import *
 __all__ = ["api_order"]
 
 def api_order(**kwargs):
+    if not kwargs.get("user", None):
+        return {'response' : 401, 'message' : 'unauthorized'}
+
     id_channel = kwargs.get("id_channel", False)
     id_bin = kwargs.get("id_bin", False)
     order  = kwargs.get("order", [])

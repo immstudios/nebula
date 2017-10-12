@@ -104,6 +104,9 @@ def get_rundown(id_channel, start_time=False, db=False):
 
 
 def api_rundown(**kwargs):
+    if not kwargs.get("user", None):
+        return {'response' : 401, 'message' : 'unauthorized'}
+
     id_channel = int(kwargs["id_channel"])
     start_time = kwargs.get("start_time", 0)
 

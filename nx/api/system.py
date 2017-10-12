@@ -16,6 +16,9 @@ from nx import *
 __all__ = ["api_system"]
 
 def api_system(**kwargs):
+    if not kwargs.get("user", None):
+        return {'response' : 401, 'message' : 'unauthorized'}
+
     request = kwargs.get("request", [
             "services",
             "hosts"

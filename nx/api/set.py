@@ -7,6 +7,9 @@ from nx import *
 __all__ = ["api_set"]
 
 def api_set(**kwargs):
+    if not kwargs.get("user", None):
+        return {'response' : 401, 'message' : 'unauthorized'}
+
     object_type = kwargs.get("object_type", "asset")
     ids  = kwargs.get("ids", [])
     echo = kwargs.get("echo", False)

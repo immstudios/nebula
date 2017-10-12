@@ -7,6 +7,9 @@ from nx import *
 __all__ = ["api_send"]
 
 def api_send(**kwargs):
+    if not kwargs.get("user", None):
+        return {'response' : 401, 'message' : 'unauthorized'}
+
     return {"response" : 501, "message" : "Not implemented"}
 
     ids       = kwargs.get("ids", [])

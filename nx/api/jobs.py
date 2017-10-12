@@ -7,6 +7,9 @@ from nx import *
 __all__ = ["api_jobs"]
 
 def api_jobs(**kwargs):
+    if not kwargs.get("user", None):
+        return {'response' : 401, 'message' : 'unauthorized'}
+
     db = kwargs.get("db", DB())
 
     if "restart" in kwargs:
