@@ -11,6 +11,7 @@ __all__ = ["BaseAgent"]
 
 class BaseAgent():
     def __init__(self, once=False):
+        self.first_run = True
         try:
             self.on_init()
         except:
@@ -39,6 +40,7 @@ class BaseAgent():
                 self.main()
             except:
                 log_traceback()
+            self.first_run = False
             time.sleep(1)
         self.on_shutdown()
         self.is_running = False

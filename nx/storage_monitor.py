@@ -21,8 +21,12 @@ class StorageMonitor(BaseAgent):
                         f = open(storage_ident_path, "a")
                         f.write(storage_string+"\n")
                         f.close()
-                    except:
-                        pass
+                    except Exception:
+                        if self.first_run:
+                            logging.warning ("{} is mounted, but read only".format(storage))
+                    else:
+                        if self.first_run:
+                            logging.info ("{} is mounted and root is writable".format(storage))
                 continue
 
 
