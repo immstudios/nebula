@@ -144,19 +144,20 @@ class Rex(object):
         if not hasattr(self, "_repos"):
             if not os.path.exists(self.manifest_path):
                 self._repos = []
-            try:
-                self.manifest = json.load(open(self.manifest_path))
-                if not self.manifest:
-                    return []
-                self._repos = []
-                for repo_url in self.manifest.keys():
-                    repo_settings = self.manifest[repo_url]
-                    repo = Repository(self, repo_url, **repo_settings)
-                    self._repos.append(repo)
-            except Exception:
-                log_traceback()
-                critical_error("Unable to load rex manifest. Exiting")
-                self._repos = []
+            else:
+                try:
+                    self.manifest = json.load(open(self.manifest_path))
+                    if not self.manifest:
+                        return []
+                    self._repos = []
+                    for repo_url in self.manifest.keys():
+                        repo_settings = self.manifest[repo_url]
+                        repo = Repository(self, repo_url, **repo_settings)
+                        self._repos.append(repo)
+                except Exception:
+                    log_traceback()
+                    critical_error("Unable to load rex manifest. Exiting")
+                    self._repos = []
         return self._repos
 
     def self_update(self):
