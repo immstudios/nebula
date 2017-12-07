@@ -3,6 +3,13 @@ from nebula import *
 class Service(BaseService):
     def on_init(self):
         self.existing = []
+        db = DB()
+        db.query("SELECT meta FROM assets WHERE media_type=1 AND status=1")
+        for meta, in db.fetchall():
+            asset = Asset(meta=meta, db=db)
+            file_path = asset.file_path
+            self.existing.append(file_path)
+
 
     def on_main(self):
         db = DB()
