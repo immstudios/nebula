@@ -38,6 +38,7 @@ class ViewPanelBrowser(CherryAdminView):
         #
 
         assets = api_get(
+                user = self["user"],
                 id_view = id_view,
                 fulltext=search_query or False,
                 count=True,

@@ -53,6 +53,8 @@ def get_objects(ObjectType, **kwargs):
     else:
         if view_count:
             do_count = False
+        else:
+            do_count = True
 
     conds = " WHERE " + " AND ".join(conds) if conds else ""
     counter = ", count(id) OVER() AS full_count" if do_count else ", 0"
