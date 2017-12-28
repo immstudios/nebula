@@ -1,12 +1,7 @@
 Nebula
 ======
 
-Nebula is media asset management and workflow automation system for TV and radio broadcast.
-
-Version 5 is under development. Please use stable version 4 in production environment:
-
- - [Nebula 4 Server](https://github.com/opennx/nx.server)
- - [Nebula 4 Client](https://github.com/opennx/nx.client)
+Nebula is media asset management and workflow automation system for TV and radio broadcast. Version 5 is under development.
 
 Key features
 ------------
