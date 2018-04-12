@@ -23,7 +23,7 @@ def get_scheduled_assets(id_channel, **)
 
 
 
-class PlayoutStoragetool(self):
+class PlayoutStorageTool(self):
     def __init__(self, id_channel, **kwargs):
         self.db = kwargs.get(db, DB())
         self.id_channel = id_channel
