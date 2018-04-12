@@ -1,9 +1,0 @@
-{% if page.page_count > 1%}
-<div class="text-center">
-<ul class="pagination pagination-sm">
-{% for label, num, cls in page.pagination %}<li{% if cls %} class="{{ cls }}"{% endif %}>
-{% if num %}<a class="page-switcher" href="#" data-href="{{ num }}"">{{ label }}</a>{% else %}{{ label }}{% endif %}
-</li>
-{% endfor %}</ul>
-</div>
-{% endif %}

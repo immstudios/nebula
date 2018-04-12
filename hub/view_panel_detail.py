@@ -24,7 +24,6 @@ class ViewPanelDetail(CherryAdminView):
         db = DB()
 
         asset = Asset(id_asset, db=db)
-
         self["asset"] = asset
         self["jobs"] = get_jobs("id_asset={}".format(id_asset))
 

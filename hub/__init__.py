@@ -9,8 +9,6 @@ from .view_reports import ViewReports
 
 from .view_panel_browser import ViewPanelBrowser
 from .view_panel_detail import ViewPanelDetail
-from .view_panel_rundown import ViewPanelRundown
-from .view_panel_scheduler import ViewPanelScheduler
 
 from .view_system import *
 
@@ -82,8 +80,6 @@ hub_config = {
                 "reports" : ViewReports,
                 "panel_browser" : ViewPanelBrowser,
                 "panel_detail" : ViewPanelDetail,
-                "panel_rundown" : ViewPanelRundown,
-                "panel_scheduler" : ViewPanelScheduler,
                 "system_settings" : ViewSystemSettings,
                 "system_storages" : ViewSystemStorages,
                 "system_folders" : ViewSystemFolders,
