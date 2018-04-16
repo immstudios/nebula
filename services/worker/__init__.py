@@ -11,7 +11,7 @@ class Service(BaseService):
 
         if "script" in self.settings.attrib:
             fname = self.settings.attrib["script"]
-            result = self.load_from_scipt(fname)
+            result = self.load_from_script(fname)
         else:
             result = self.load_from_settings()
 
@@ -20,7 +20,7 @@ class Service(BaseService):
             self.shutdown(no_restart=True)
 
 
-    def load_from_scipt(self, fname):
+    def load_from_script(self, fname):
         script_path = os.path.join(plugin_path, "worker", fname)
         mod_name, file_ext = os.path.splitext(fname)
 
