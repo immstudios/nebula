@@ -2,17 +2,21 @@ from nebula import *
 
 class Service(BaseService):
     def on_init(self):
-        self.existing = []
+        pass
+
+    def on_main(self):
         db = DB()
+        self.existing = []
+        start_time = time.time()
         db.query("SELECT meta FROM assets WHERE media_type=1 AND status=1")
         for meta, in db.fetchall():
             asset = Asset(meta=meta, db=db)
             file_path = asset.file_path
             self.existing.append(file_path)
+        duration = time.time() - start_time
+        if duration > 5 or config.get("debug_mode", False):
+            logging.debug("Online assets loaded in {}".format(s2time(duration)))
 
-
-    def on_main(self):
-        db = DB()
         start_time = time.time()
         for wf_settings in self.settings.findall("folder"):
             id_storage = int(wf_settings.attrib["id_storage"])

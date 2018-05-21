@@ -30,6 +30,7 @@ def api_jobs(**kwargs):
             )
         result = [r[0] for r in db.fetchall()]
         db.commit()
+        logging.info("Restarted jobs {}".format(result))
         #TODO: smarter message
         return {"response" : 200, "data" : result, "message" : "Jobs restarted"}
 
@@ -47,6 +48,7 @@ def api_jobs(**kwargs):
             [time.time(), tuple(jobs)]
             )
         result = [r[0] for r in db.fetchall()]
+        logging.info("Aborted jobs {}".format(result))
         db.commit()
         #TODO: smarter message
         return {"response" : 200, "data" : result, "message" : "Jobs abort"}
