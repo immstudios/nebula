@@ -39,6 +39,11 @@ class Asset(AssetMixIn, ServerObject):
     def load_sidecar_metadata(self):
         pass #TODO
 
+    def delete_children(self):
+        if self.id:
+            self.db.query("DELETE FROM jobs WHERE id_asset = %s", [self.id])
+            # db.commit is called from delete method
+
 
 class Item(ItemMixIn, ServerObject):
     table_name = "items"
