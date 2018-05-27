@@ -82,9 +82,21 @@ class Bin(BinMixIn, ServerObject):
     @property
     def items(self):
         if not hasattr(self, "_items"):
-            self.db.query("SELECT meta FROM items WHERE id_bin=%s ORDER BY position ASC", [self.id])
-            self._items = [Item(meta=meta, db=self.db) for meta, in self.db.fetchall()]
+            if not self.id:
+                self._items = []
+            else:
+                self.db.query("SELECT meta FROM items WHERE id_bin=%s ORDER BY position ASC", [self.id])
+                self._items = [Item(meta=meta, db=self.db) for meta, in self.db.fetchall()]
         return self._items
+
+    @items.setter
+    def items(self, value):
+        assert type(value) == list
+        self._items = value
+
+    def append(self, item):
+        assert isinstance(item, Item)
+        self._items.append(item)
 
     @property
     def event(self):
@@ -100,6 +112,7 @@ class Bin(BinMixIn, ServerObject):
     def delete_children(self):
         for item in self.items:
             item.delete()
+        self._items = []
 
     def save(self, **kwargs):
         duration = 0
@@ -137,6 +150,5 @@ object_helper[BIN]   = Bin
 object_helper[EVENT] = Event
 object_helper[USER]  = User
 
-anonymous = User(meta={
-        "login" : "Anonymous"
-    })
+anonymous_data = {"login" : "Anonymous"}
+anonymous = User(meta=anonymous_data)
