@@ -13,11 +13,14 @@ def create_ft_index(meta):
         weight = meta_types[key]["fulltext"]
         if not weight:
             continue
-        for word in slugify(meta[key], make_set=True, min_length=3):
-            if not word in ft:
-                ft[word] = weight
-            else:
-                ft[word] = max(ft[word], weight)
+        try:
+            for word in slugify(meta[key], make_set=True, min_length=3):
+                if not word in ft:
+                    ft[word] = weight
+                else:
+                    ft[word] = max(ft[word], weight)
+        except Exception:
+            logging.error("Unable to slugify key {} , value {}".format(key, meta[key]))
     return ft
 
 
@@ -67,6 +70,7 @@ class ServerObject(BaseObject):
             self.db.commit()
         self.cache()
         self.text_changed = self.meta_changed = False
+        self.is_new = False
 
     def _insert(self, **kwargs):
         meta = json.dumps(self.meta)
