@@ -1,8 +1,14 @@
+import time
+
 from nebulacore import *
 
 from .agents import BaseAgent
 
 __all__ = ["StorageMonitor"]
+
+# id_storage: is_alive, check_interval, last_check
+storage_status = {k : [True, 2, 0] for k in storages}
+
 
 class StorageMonitor(BaseAgent):
     def main(self):
@@ -29,21 +35,35 @@ class StorageMonitor(BaseAgent):
                             logging.info ("{} is mounted and root is writable".format(storage))
                 continue
 
+            s,i,l = storage_status[id_storage]
+            if not s and time.time() - l < i:
+                continue
 
-            logging.info ("{} is not mounted. Remounting.".format(storage))
+            if s:
+                logging.info ("{} is not mounted. Mounting...".format(storage))
             if not os.path.exists(storage.local_path):
                 try:
                     os.mkdir(storage.local_path)
                 except:
-                    logging.error("Unable to create mountpoint for {}".format(storage))
+                    if s:
+                        logging.error("Unable to create mountpoint for {}".format(storage))
+                    storage_status[id_storage] = [False, 240, time.time()]
                     continue
 
             self.mount(storage["protocol"], storage["path"], storage.local_path, storage["login"], storage["password"])
 
             if ismount(storage.local_path):
-                logging.goodnews("{} remounted successfully".format(storage))
+                logging.goodnews("{} mounted successfully".format(storage))
+                storage_status[id_storage][0] = True
+                storage_status[id_storage][1] = 2
             else:
-                logging.warning("{} remounting failed".format(storage))
+                if s:
+                    logging.error("{} mounting failed".format(storage))
+                storage_status[id_storage][0] = False
+                check_interval = storage_status[id_storage][1]
+                storage_status[id_storage][1] = min(240, check_interval*2)
+
+            storage_status[id_storage][2] = time.time()
 
 
     def mount(self, protocol, source, destination, username="", password=""):
@@ -53,14 +73,14 @@ class StorageMonitor(BaseAgent):
             else:
                 credentials = ""
             host = source.split("/")[2]
+            executable = "mount.cifs"
             cmd = "mount.cifs {} {} -o '{}'".format(source, destination, credentials)
         elif protocol == NFS:
+            executable = "mount.nfs"
             cmd = "mount.nfs {} {}".format(source, destination)
         else:
             return
-
-        logging.debug("Executing:", cmd)
         c = Shell(cmd)
         if c.retcode:
-            logging.error(c.stderr().read())
+            logging.debug(executable, ":", c.stderr().read().strip())
 
