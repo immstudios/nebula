@@ -80,22 +80,27 @@ def get_item_event(id_item, **kwargs):
 
 def get_item_runs(id_channel, from_ts, to_ts, db=False):
     db = db or DB()
-    db.query("SELECT id_item, start, stop FROM nx_asrun WHERE start >= %s and start < %s ORDER BY start ASC", [int(from_ts), int(to_ts)] )
+    db.query("SELECT id_item, start, stop FROM asrun WHERE start >= %s and start < %s ORDER BY start ASC", [int(from_ts), int(to_ts)] )
     result = {}
     for id_item, start, stop in db.fetchall():
         result[id_item] = (start, stop)
     return result
 
 
-def get_next_item(id_item, **kwargs):
-    if not id_item:
-        return False
+def get_next_item(item, **kwargs):
     db = kwargs.get("db", DB())
-    lcache = kwargs.get("cache", cache)
+    if type(item) == int and item > 0:
+        current_item = Item(item, db=db)
+    elif isinstance(item, Item):
+        current_item = item
+    else:
+        logging.error("Unexpected get_next_item argument {}".format(item))
+        return False
 
+    lcache = kwargs.get("cache", cache)
     logging.debug("Looking for item following item ID {}".format(id_item))
-    current_item = Item(id_item, db=db, cache=lcache)
     current_bin = Bin(current_item["id_bin"], db=db, cache=lcache)
+
     for item in current_bin.items:
         if item["position"] > current_item["position"]:
             if item["item_role"] == "lead_out":
@@ -108,8 +113,10 @@ def get_next_item(id_item, **kwargs):
             return item
     else:
         current_event = get_item_event(id_item, db=db, cache=lcache)
-        q = "SELECT id_object FROM nx_events WHERE id_channel = {} and start > {} ORDER BY start ASC LIMIT 1".format(current_event["id_channel"], current_event["start"])
-        db.query(q)
+        db.query(
+                "SELECT meta FROM events WHERE id_channel = %s and start > %s ORDER BY start ASC LIMIT 1",
+                [current_event["id_channel"], current_event["start"]]
+            )
         try:
             next_event = Event(db.fetchall()[0][0], db=db, cache=lcache)
             if not next_event.bin.items:
