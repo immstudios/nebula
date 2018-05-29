@@ -37,7 +37,7 @@ from nx import *
 
 config["nebula_root"] = os.path.abspath(os.getcwd())
 if not config["nebula_root"] in sys.path:
-    sys.path.insert(0,config["nebula_root"])
+    sys.path.insert(0, config["nebula_root"])
 
 #
 # Start agents only if this script is executed (not imported)

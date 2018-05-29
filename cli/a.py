@@ -1,6 +1,4 @@
-from __future__ import print_function
-
-from nebula import *
+from .common import *
 
 def format_status(key, asset):
     colored = "\033[{}m{:<8}\033[0m"
