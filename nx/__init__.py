@@ -17,6 +17,7 @@ def load_settings(force=False):
         message = log_traceback("Database connection error", handlers=False)
         critical_error("Unable to connect nebula database")
 
+    #TODO: Remove this (moved to nebulacore.common)
     config["storages"] = {}
     config["playout_channels"] = {}
     config["ingest_channels"] = {}
@@ -50,11 +51,11 @@ def load_settings(force=False):
     for key, settings in db.fetchall():
         config["meta_types"][key] = settings
 
-    db.query("SELECT cs, key, value, settings FROM cs")
-    for cst, key, value, settings in db.fetchall():
+    db.query("SELECT cs, value, settings FROM cs")
+    for cst, value, settings in db.fetchall():
         if not cst in config["cs"]:
             config["cs"][cst] = []
-        config["cs"][cst].append([key, value, settings])
+        config["cs"][cst].append([value, settings])
 
     db.query("SELECT id, title, settings, owner, position FROM views")
     for id, title, settings, owner, position in db.fetchall():
