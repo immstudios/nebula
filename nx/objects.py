@@ -44,6 +44,44 @@ class Asset(AssetMixIn, ServerObject):
             self.db.query("DELETE FROM jobs WHERE id_asset = %s", [self.id])
             # db.commit is called from delete method
 
+    @property
+    def has_proxy(self):
+        return os.path.exists(self.proxy_full_path)
+
+    @property
+    def proxy_full_path(self):
+        if not hasattr(self, "_proxy_full_path"):
+            self._proxy_full_path = os.path.join(
+                        storages[config.get("proxy_storage", 1)].local_path,
+                        self.proxy_path
+                    )
+        return self._proxy_full_path
+
+    @property
+    def proxy_path(self):
+        if not hasattr(self, "_proxy_path"):
+            #TODO: Customisable path
+            self._proxy_path = os.path.join(
+                        ".nx",
+                        "proxy",
+                        str(int(self.id / 1000)).zfill(4),
+                        "{}.mp4".format(self.id)
+                    )
+        return self._proxy_path
+
+    def get_playout_name(self, id_channel):
+        return "{}-{}".format(config["site_name"], self.id)
+
+    def get_playout_storage(self, id_channel):
+        return config["playout_channels"][id_channel]["playout_storage"]
+
+    def get_playout_path(self, id_channel):
+        return os.path.join(
+                config["playout_channels"][id_channel]["playout_dir"],
+                self.get_playout_name(id_channel) + "." + config["playout_channels"][id_channel]["playout_container"]
+            )
+
+
 
 class Item(ItemMixIn, ServerObject):
     table_name = "items"
