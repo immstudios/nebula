@@ -9,6 +9,7 @@ except ImportError:
 
 from nebula import *
 
+logging.handlers = []
 
 def format_log_message(message):
     try:
@@ -50,6 +51,7 @@ class Service(BaseService):
     def on_init(self):
         self.site_name = config["site_name"]
         self.queue = []
+        self.last_message = 0
 
         self.sock = socket.socket(
                 socket.AF_INET,
@@ -127,8 +129,9 @@ class Service(BaseService):
             try:
                 message = SeismicMessage(json.loads(decode_if_py3(data)))
             except Exception:
-                log_traceback()
+                log_traceback(handlers=False)
                 logging.warning("Malformed seismic message detected", handlers=False)
+                print (message)
                 continue
 
             if message.site_name != config["site_name"]:
@@ -140,9 +143,13 @@ class Service(BaseService):
         while True:
             if not self.queue:
                 time.sleep(.01)
+                if time.time() - self.last_message > 3:
+                    logging.debug("Heartbeat")
+                    messaging.send("heartbeat")
                 continue
 
             message = self.queue.pop(0)
+            self.last_message = time.time()
             self.relay_message(message.json)
 
             if self.log_dir and message.method == "log":
@@ -158,6 +165,10 @@ class Service(BaseService):
     def relay_message(self, message):
         message = message.replace("\n", "") + "\n" # one message per line
         for relay in self.relays:
-            result = requests.post(relay, message.encode("ascii"), timeout=.5)
+            try:
+                result = requests.post(relay, message.encode("ascii"), timeout=.5)
+            except:
+                logging.error("Unable to send message to relay", relay)
+                continue
             if result.status_code != 200:
                 logging.warning("Error {}: Unable to relay message to {}".format(result.status_code, relay))
