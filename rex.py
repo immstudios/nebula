@@ -219,6 +219,8 @@ class Rex(object):
 rex = Rex()
 
 def require(url, **kwargs):
+    if not "python_path" in kwargs:
+        kwargs["python_path"] = True
     repo = Repository(rex, url, **kwargs)
     return rex.update(repo) and rex.post_install(repo)
 
