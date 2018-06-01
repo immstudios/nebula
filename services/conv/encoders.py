@@ -39,7 +39,7 @@ class NebulaFFMPEG(BaseEncoder):
                         self.ffparams.append(value)
 
             elif p.tag == "output":
-                id_storage = int(p.attrib["storage"])
+                id_storage = int(eval(p.attrib["storage"]))
                 if not storages[id_storage]:
                     return NebulaResponse(
                             500,
