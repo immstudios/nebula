@@ -36,16 +36,21 @@ def get_rundown(id_channel, start_time=False, db=False):
                 i.meta,
                 a.meta
             FROM
-                events AS e,
+                events AS e
+
+            LEFT JOIN
                 items AS i
+            ON
+                e.id_magic = i.id_bin
+
             LEFT JOIN
                 assets AS a
             ON
                 i.id_asset = a.id
+
             WHERE
                 e.id_channel = %s AND e.start >= %s AND e.start < %s
-            AND
-                e.id_magic = i.id_bin
+
             ORDER BY
                 e.start ASC,
                 i.position ASC
@@ -75,26 +80,29 @@ def get_rundown(id_channel, start_time=False, db=False):
             event.meta["rundown_scheduled"] = ts_scheduled = event["start"]
             event.meta["rundown_broadcast"] = ts_broadcast = ts_broadcast or ts_scheduled
 
+        if imeta:
+            item = Item(meta=imeta, db=db)
+            if ameta:
+                asset = Asset(meta=ameta, db=db) if ameta else False
+                item._asset = asset
+            else:
+                asset = False
 
-        asset = Asset(meta=ameta, db=db) if ameta else False
-        item = Item(meta=imeta, db=db)
-        item._asset = asset
+            as_start, as_stop = item_runs.get(item.id, (0, 0))
+            if as_start:
+                ts_broadcast = as_start
 
-        as_start, as_stop = item_runs.get(item.id, (0, 0))
-        if as_start:
-            ts_broadcast = as_start
+            item.meta["asset_mtime"] = asset["mtime"] if asset else 0
+            item.meta["rundown_scheduled"] = ts_scheduled
+            item.meta["rundown_broadcast"] = ts_broadcast
+            item.meta["rundown_difference"] = ts_broadcast - ts_scheduled
+            if rundown_event_asset:
+                item.meta["rundown_event_asset"] = rundown_event_asset
 
-        item.meta["asset_mtime"] = asset["mtime"] if asset else 0
-        item.meta["rundown_scheduled"] = ts_scheduled
-        item.meta["rundown_broadcast"] = ts_broadcast
-        item.meta["rundown_difference"] = ts_broadcast - ts_scheduled
-        if rundown_event_asset:
-            item.meta["rundown_event_asset"] = rundown_event_asset
+            ts_scheduled += item.duration
+            ts_broadcast += item.duration
 
-        ts_scheduled += item.duration
-        ts_broadcast += item.duration
-
-        event.items.append(item)
+            event.items.append(item)
 
 
 
@@ -122,14 +130,15 @@ def api_rundown(**kwargs):
     for event in get_rundown(id_channel, start_time):
         row = event.meta
         row["object_type"] = "event"
-        row["rundown_row"] = i
+#        row["rundown_row"] = i
+        row["is_empty"] = len(event.items) == 0
         row["id_bin"] = event["id_magic"]
         rows.append(row)
         i+=1
         for item in event.items:
             row = item.meta
             row["object_type"] = "item"
-            row["rundown_row"] = i
+ #           row["rundown_row"] = i
             rows.append(row)
             i+=1
 
