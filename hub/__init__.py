@@ -98,6 +98,7 @@ hub_config = {
                 "order" : api_order,
                 "schedule" : api_schedule,
                 "jobs" : api_jobs,
+                "playout" : api_playout,
             }
     }
 
