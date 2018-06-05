@@ -81,6 +81,12 @@ class Asset(AssetMixIn, ServerObject):
                 self.get_playout_name(id_channel) + "." + config["playout_channels"][id_channel]["playout_container"]
             )
 
+    def get_playout_full_path(self, id_channel):
+        return os.path.join(
+                storages[self.get_playout_storage(id_channel)].local_path,
+                self.get_playout_path(id_channel)
+            )
+
 
 
 class Item(ItemMixIn, ServerObject):
@@ -94,7 +100,7 @@ class Item(ItemMixIn, ServerObject):
             if not self.meta.get("id_asset", False):
                 self._asset = False # Virtual items
             else:
-                self._asset = Asset(self["id_asset"], db=self._db) or False
+                self._asset = Asset(self["id_asset"], db=self.db) or False
         return self._asset
 
     @property
