@@ -55,9 +55,9 @@ class Action(object):
         return False
 
     def should_start(self, asset):
-        if self.create_if:
-            return eval(self.create_if)
-        return False
+        if self.start_if:
+            return eval(self.start_if)
+        return True
 
     def should_skip(self, asset):
         if self.skip_if:
@@ -296,7 +296,7 @@ def get_job(id_service, action_ids, db=False):
 
 
 
-def send_to(id_asset, id_action, settings={}, id_user=None, priority=3, restart_existing=True, db=False):
+def send_to(id_asset, id_action, settings={}, id_user=None, priority=3, restart_existing=True, restart_running=False, db=False):
     db  = db or DB()
     if not id_asset:
         NebulaResponse(401, message="You must specify existing object")
@@ -307,6 +307,10 @@ def send_to(id_asset, id_action, settings={}, id_user=None, priority=3, restart_
     res = db.fetchall()
     if res:
         if restart_existing:
+            conds = "0,5"
+            if not restart_running:
+                conds += ",1"
+
             db.query("""
                 UPDATE jobs SET
                     id_service=NULL,
@@ -316,11 +320,16 @@ def send_to(id_asset, id_action, settings={}, id_user=None, priority=3, restart_
                     creation_time=%s,
                     start_time=NULL,
                     end_time=NULL
-                WHERE id=%s""",
+                WHERE id=%s
+                    AND status NOT IN({})
+                RETURNING id
+                    """.format(conds),
                     [time.time(), res[0][0]])
             db.commit()
-            messaging.send("job_progress", id=res[0][0], id_asset=id_asset, id_action=id_action, progress=0)
-            return NebulaResponse(200, message="Job restarted")
+            if db.fetchall():
+                messaging.send("job_progress", id=res[0][0], id_asset=id_asset, id_action=id_action, progress=0)
+                return NebulaResponse(201, message="Job restarted")
+            return NebulaResponse(200, message="Job exists. Not restarting")
         else:
             return NebulaResponse(200, message="Job exists. Not restarting")
 
