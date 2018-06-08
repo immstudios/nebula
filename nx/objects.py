@@ -52,10 +52,14 @@ class Asset(AssetMixIn, ServerObject):
     def proxy_full_path(self):
         if not hasattr(self, "_proxy_full_path"):
             self._proxy_full_path = os.path.join(
-                        storages[config.get("proxy_storage", 1)].local_path,
+                        storages[self.proxy_storage].local_path,
                         self.proxy_path
                     )
         return self._proxy_full_path
+
+    @property
+    def proxy_storage(self):
+        return config.get("proxy_storage", 1)
 
     @property
     def proxy_path(self):
