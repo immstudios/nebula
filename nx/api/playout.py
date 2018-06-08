@@ -7,6 +7,8 @@ __all__ = ["api_playout"]
 def api_playout(**kwargs):
     if not kwargs.get("user", None):
         return {'response' : 401, 'message' : 'unauthorized'}
+    user = User(meta=kwargs["user"])
+    #TODO: ACL HERE
 
     action = kwargs.get("action", False)
     id_channel = int(kwargs.get("id_channel", False))
@@ -19,12 +21,13 @@ def api_playout(**kwargs):
     channel_config = config["playout_channels"][id_channel]
 
     controller_url = "http://{}:{}".format(
-            channel_config["controller_host"],
-            channel_config["controller_port"]
+            channel_config.get("controller_host", "localhost"),
+            channel_config.get("controller_port", 42100)
         )
     response = requests.post(controller_url + "/" + action, data=kwargs)
 
-    return json.loads(response.text)
+    rdata = json.loads(response.text)
+    return rdata
 
 
 

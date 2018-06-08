@@ -20,7 +20,6 @@ def basefname(fname):
 
 class CasparController(object):
     def __init__(self, parent):
-        print ("ccg init")
         self.parent = parent
 
         self.current_item = False
@@ -188,7 +187,6 @@ class CasparController(object):
 
 
         if advanced:
-            logging.info("Advanced to next item")
             self.parent.on_change()
             self.parent.cue_next()
 

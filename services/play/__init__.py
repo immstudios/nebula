@@ -8,8 +8,6 @@ from nebula import *
 from .request_handler import *
 from .caspar_controller import *
 
-
-
 class Service(BaseService):
     def on_init(self):
         if not config["playout_channels"]:
@@ -30,6 +28,9 @@ class Service(BaseService):
         self.caspar_channel      = int(self.channel_config.get("caspar_channel", 1))
         self.caspar_feed_layer   = int(self.channel_config.get("caspar_feed_layer", 10))
         self.fps                 = float(self.channel_config.get("fps", 25.0))
+
+        self.current_asset = False
+        self.current_event = False
 
         self.current_live = False
         self.cued_live = False
@@ -240,41 +241,30 @@ class Service(BaseService):
 
 
     def on_change(self):
-        return
-        #TODO
         if not self.controller.current_item:
             return
 
-
-        return
+        item = self.controller.current_item
         db = DB()
-        if item["item_role"] == "studio":
-            channel.current_asset = Asset(meta=item.meta)
-        else:
-            channel.current_asset = item.asset
-        channel.current_event = item.event
-        channel.cued_asset = False
+
+        self.current_asset = item.asset
+        self.current_event = item.event
 
         logging.info ("Advanced to {}".format(item))
 
-#        if channel._last_run:
-#            db.query("UPDATE nx_asrun SET stop = %s WHERE id_run = %s",  [int(time.time()) , channel._last_run])
-#
-#        if channel.current_asset:
-#            db.query("INSERT INTO nx_asrun (id_channel, start, stop, title, id_item, id_asset) VALUES (%s,%s,%s,%s,%s,%s) ",
-#                [
-#                channel.ident,
-#                int(time.time()),
-#                0,
-#                db.sanit(channel.current_asset["title"]),
-#                channel.current_item,
-#                channel.current_asset.id
-#                ])
-#            channel._last_run = db.lastid()
-#            db.commit()
-#
-#        else:
-#            channel._last_run = False
+        if self.last_run:
+            db.query("UPDATE asrun SET stop = %s WHERE id = %s",  [int(time.time()) , self.last_run])
+            db.commit()
+
+        if self.current_asset:
+            db.query(
+                    "INSERT INTO asrun (id_channel, id_item, start) VALUES (%s, %s, %s)",
+                    [self.id_channel, item.id, time.time()]
+                )
+            self.last_run = db.lastid()
+            db.commit()
+        else:
+            self.last_run = False
 
 #        for plugin in channel.plugins:
 #            try:
@@ -347,10 +337,9 @@ class Service(BaseService):
         if not current_item:
             return
 
-        local_cache = Cache()
         db = DB()
 
-        current_event = get_item_event(current_item.id, db=db, cache=local_cache)
+        current_event = get_item_event(current_item.id, db=db)
 
         if not current_event:
             logging.warning("Unable to fetch current event")
@@ -363,7 +352,7 @@ class Service(BaseService):
             )
 
         try:
-            next_event = Event(meta=db.fetchall()[0][0], db=db, cache=local_cache)
+            next_event = Event(meta=db.fetchall()[0][0], db=db)
         except IndexError:
             return
 
@@ -380,15 +369,13 @@ class Service(BaseService):
 
         elif run_mode == RUN_SOFT:
             logging.info("Soft cue {}".format(next_event))
-
             for i, r in enumerate(current_event.bin.items):
                 if r["item_role"] == "lead_out":
                     try:
                         self.cue(
-                                id_channel=id_channel,
+                                id_channel=self.id_channel,
                                 id_item=current_event.bin.items[i+1].id,
-                                db=db,
-                                cache=local_cache
+                                db=db
                             )
                         break
                     except IndexError:
@@ -397,18 +384,16 @@ class Service(BaseService):
                 id_item = next_event.bin.items[0].id
                 if id_item != self.controller.next_item.id:
                     self.cue(
-                            id_channel=id_channel,
+                            id_channel=self.id_channel,
                             id_item=id_item,
-                            db=db,
-                            cache=local_cache
+                            db=db
                         )
 
         elif run_mode == RUN_HARD:
             id_item = next_event.bin.items[0].id
             self.cue(
-                    id_channel=id_channel,
+                    id_channel=self.id_channel,
                     id_item=id_item,
                     play=True,
-                    db=db,
-                    cache=local_cache
+                    db=db
                 )
