@@ -29,7 +29,7 @@ def api_order(**kwargs):
         user = User(meta={"login" : "Nebula"})
 
     if not (id_bin and order):
-        return {"response" : 400, "message" : "Bad \"order\" request"}
+        return {"response" : 400, "message" : "Bad \"order\" request<br>id_bin: {}<br>order: {}".format(id_bin, order)}
 
     logging.info("{} executes bin_order method".format(user))
     affected_bins = [id_bin]

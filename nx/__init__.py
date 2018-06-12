@@ -17,15 +17,6 @@ def load_settings(force=False):
         message = log_traceback("Database connection error", handlers=False)
         critical_error("Unable to connect nebula database")
 
-    #TODO: Remove this (moved to nebulacore.common)
-    config["storages"] = {}
-    config["playout_channels"] = {}
-    config["ingest_channels"] = {}
-    config["folders"] = {}
-    config["meta_types"] = {}
-    config["cs"] = {}
-    config["views"] = {}
-
     # Load from db
 
     db.query("SELECT key, value FROM settings")
@@ -41,7 +32,9 @@ def load_settings(force=False):
     for id, channel_type, settings in db.fetchall():
         if channel_type == 0:
             config["playout_channels"][id] = settings
-        pass #TODO: Ingest channels
+#TODO: Ingest channels
+#        elif channel_type == 1:
+#            config["ingest_channels"][id] = settings
 
     db.query("SELECT id, settings FROM folders")
     for id, settings in db.fetchall():
@@ -74,6 +67,14 @@ def load_settings(force=False):
             except Exception:
                 log_traceback()
         config["views"][id] = view
+
+    db.query("SELECT id, service_type, title FROM actions")
+    for id, service_type, title in db.fetchall():
+        config["actions"][id] = {
+                    "title" : title,
+                    "service_type" : service_type,
+                    "title" : title
+                }
 
     #
     # Init all

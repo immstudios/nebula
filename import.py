@@ -8,9 +8,11 @@ import sqlite3
 from pprint import pprint
 from nebula import *
 
-site_name = config["site_name"]
-data_url = "https://{}.nebulabroadcast.com/dump/dump.db".format(site_name)
+site_name = config["site_name"].replace("-dev", "")
+data_url = "https://{}.nebulabroadcast.com/export/dump.db".format(site_name)
 data_path = "/tmp/{}.db".format(site_name)
+
+logging.user = "Import"
 
 def do_download():
     os.system("curl {} -o {}".format(data_url, data_path))
@@ -26,14 +28,15 @@ folder_map = {
         1 : 1,   # movie
         2 : 2,   # serie
         3 : 6,   # trailer
-        4 : 7,
+        4 : 7,   # jingle
         5 : 4,   # song
-        6 : 3,
+        6 : 3,   # story
         7 : 5,   # fill
         8 : 8,   # templates
         10 : 12, # incomming
         11 : 9,  # reklama
         12 : 10, # teleshopping
+        13 : 3   # headline
     }
 
 content_type_map = {
@@ -79,7 +82,7 @@ meta_keys = {
     "ctime"                     : lambda x: int(x),
     "description"               : None,
     "description/original"      : None,
-    "director"                  : None,
+    "director"                  : "role/director",
     "duration"                  : lambda x: float(x),
     "file/format"               : None,
     "file/mtime"                : None,
@@ -90,25 +93,24 @@ meta_keys = {
     "id_folder"                 : lambda x: folder_map[x],
     "id_object"                 : "id",
     "id_storage"                : lambda x: int(x),
-    "identifier/guid"           : None,
-    "identifier/vimeo"          : None,
-    "identifier/youtube"        : None,
+    "identifier/guid"           : "id/guid",
+    "identifier/vimeo"          : "id/vimeo",
+    "identifier/youtube"        : "id/youtube",
+    "identifier/vod"            : "id/vod",
+    "logo"                      : None,
     "mark_in"                   : None,
     "mark_out"                  : None,
     "media_type"                : lambda x: media_type_map[x],
     "mtime"                     : None,
     "path"                      : None,
     "promoted"                  : None,
-    "qc/analyses" : -1,
-    "qc/report" : -1,
-    "qc/silence" : -1,
     "qc/state"                  : None,
     "rights"                    : None,
     "role/composer"             : None,
     "role/director"             : None,
     "role/performer"            : None,
-    "series/episode"            : None,
-    "series/season"             : None,
+    "series/episode"            : "serie/episode",
+    "series/season"             : "serie/season",
     "source"                    : None,
     "source/author"             : None,
     "source/url"                : None,
@@ -136,34 +138,18 @@ meta_keys = {
     "video/height"              : None,
     "video/pixel_format"        : None,
     "video/width"               : None,
+    "logo"                      : None,
+    "notes"                     : "cue_sheet",
 
 
-    "broker/started/1" : -1,
-    "broker/started/2" : -1,
-
-
-    "origin" : -1,
-    "v3/path" : -1,
-    "v3/id" : -1,
-    "title/series" : "serie",
-    "v3/storage" : -1,
-    "id_playout/1" : -1,
-    "identifier/main" : None,
-    "qc/analyses" : -1,
-    "qc/silence" : -1,
-    "date" : -1,
-    "logo" : -1,
-    "date/valid" : -1,
-    "subclips" : -1,
-    "format" : "editorial_format",
-    "commercials/client" : -1,
-    "notes" : None,
+    "title/series"              : "serie",
+    "identifier/main"           : "id/main",
+    "date/valid"                : None,
+    "subclips"                  : -1,
+    "format"                    : "editorial_format",
+    "commercials/client"        : "commercial/client",
     "meta_probed" : -1,
     "identifier/atmedia" : -1,
-    "rundown_broadcast" : -1,
-    "rundown_bin" : -1,
-    "rundown_row" : -1,
-    "rundown_scheduled" : -1,
     "locked" : -1,
     "can/job_control" : parse_rights,
     "can/asset_edit" : parse_rights,
@@ -181,9 +167,9 @@ meta_keys = {
 
 OBJECT_TYPES = [
         ["assets", Asset],
-        ["items", Item],
         ["bins", Bin],
         ["events", Event],
+        ["items", Item],
         ["users", User]
     ]
 
@@ -219,7 +205,8 @@ def check_keys():
 
 
 class ImportObject(object):
-    def __init__(self, meta):
+    def __init__(self, object_type, meta):
+        self.object_type = object_type
         self.meta = meta
 
     def __getitem__(self, key):
@@ -233,14 +220,14 @@ class ImportObject(object):
         for key in meta_keys:
             conv = meta_keys[key]
 
-
-            if not key in self.meta:
-                if key in ["version_of", "status"]:
-                    self.meta[key] = 0
-                elif key in ["media_type"]:
-                    self.meta[key] = 0
-                else:
-                    continue
+            if self.object_type == "asset":
+                if not key in self.meta:
+                    if key in ["version_of", "status"]:
+                        self.meta[key] = 0
+                    elif key in ["media_type"]:
+                        self.meta[key] = 0
+                    else:
+                        continue
 
             if callable(conv):
                 result[key] = conv(self[key])
@@ -259,22 +246,39 @@ if __name__ == "__main__":
 
     if "--full" in sys.argv:
         logging.info("Deleting old data")
-        db.query("TRUNCATE TABLE assets, events, bins, items, users, jobs, asrun RESTART IDENTITY")
+        db.query("TRUNCATE TABLE jobs, asrun RESTART IDENTITY")
         db.commit()
 
-    for table_name, ObjectClass in [
-                ["assets", Asset],
-                ["events", Event],
-                ["bins", Bin],
-                ["items", Item],
-                ["users", User],
-            ]:
+
+    sdb = SourceDB(data_path)
+    sdb.query("SELECT DISTINCT cs FROM cs")
+    for cs, in sdb.fetchall():
+        tcs = "urn:site:" + cs
+        db.query("DELETE FROM cs WHERE cs = %s", [tcs])
+    db.commit()
+
+    sdb.query("SELECT cs, value, label FROM cs")
+    for cs, value, label in sdb.fetchall():
+        tcs = "urn:site:" + cs
+        if not label or label == "None":
+            settings = {}
+        else:
+            settings = {"aliases" : {"en" : label, "cz" : label}}
+        db.query("INSERT INTO cs (cs, value, settings) VALUES (%s, %s, %s)", [tcs, value, json.dumps(settings)])
+    db.commit()
+
+
+
+    for table_name, ObjectClass in OBJECT_TYPES:
+        if "--full" in sys.argv:
+            logging.info("Truncating table {}".format(table_name))
+            db.query("TRUNCATE TABLE {} RESTART IDENTITY CASCADE".format(table_name))
+            db.commit()
 
         num_created = 0
         num_updated = 0
 
 
-        sdb = SourceDB(data_path)
 
         db.query("SELECT meta->>'mtime' FROM {} ORDER BY meta->>'mtime' DESC LIMIT 1".format(table_name))
         try:
@@ -285,7 +289,7 @@ if __name__ == "__main__":
         i = 0
         sdb.query("SELECT id, data FROM {} WHERE mtime > ? ORDER BY mtime ASC".format(table_name), [last_mtime])
         for id, data in sdb.fetchall():
-            src = ImportObject(json.loads(data))
+            src = ImportObject(table_name[:-1], json.loads(data))
 
             translated = src.translate()
             if not translated:
@@ -295,16 +299,18 @@ if __name__ == "__main__":
             obj.is_new = True
             obj.text_changed = True
 
-            if obj["media_type"] != 1:
-                print (data)
-                break
 
             try:
                 obj.save(commit=False, set_mtime=False)
             except IntegrityError:
+                logging.debug("Integrity error. Updating existing object.")
                 db.commit()
                 obj.is_new = False
-                obj.save(set_mtime=False)
+                try:
+                    obj.save(set_mtime=False)
+                except:
+                    pass
+
                 num_updated += 1
             except Exception:
                 log_traceback()

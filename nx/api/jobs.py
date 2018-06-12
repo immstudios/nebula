@@ -1,7 +1,3 @@
-#
-# WORK IN PROGRESS
-#
-
 from nx import *
 
 __all__ = ["api_jobs"]
@@ -53,5 +49,41 @@ def api_jobs(**kwargs):
         #TODO: smarter message
         return {"response" : 200, "data" : result, "message" : "Jobs abort"}
 
+    view = kwargs.get("view", "all")
 
-    return {"response" : 501, "message" : "Not implemented"}
+    data = []
+    db.query("""SELECT
+                id,
+                id_asset,
+                id_action,
+                id_service,
+                id_user,
+                priority,
+                retries,
+                status,
+                progress,
+                message,
+                creation_time,
+                start_time,
+                end_time
+            FROM jobs LIMIT 100
+            """)
+    for id, id_asset, id_action, id_service, id_user, priority, retries, status, progress, message, ctime, stime, etime in db.fetchall():
+        row = {
+                "id" : id,
+                "id_asset" : id_asset,
+                "id_action" : id_action,
+                "id_service" : id_service,
+                "id_user" : id_user,
+                "priority" : priority,
+                "retries" : retries,
+                "status" : status,
+                "progress" : progress,
+                "message" : message,
+                "ctime" : ctime,
+                "stime" : stime,
+                "etime" : etime
+            }
+        data.append(row)
+
+    return {"response" : 200, "data" : data}

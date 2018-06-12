@@ -46,8 +46,11 @@ class Service(BaseService):
                 return
 
         asset_file = FileObject(asset.file_path)
-        if asset["id_storage"] not in self.mounted_storages:
-            logging.warning("Skipping unmounted storage {}".format(asset["id_storage"]))
+        id_storage = asset["id_storage"]
+        if not id_storage:
+            return
+        if id_storage not in self.mounted_storages:
+            logging.warning("Skipping unmounted storage {} of {}".format(asset["id_storage"], asset))
             return
 
         try:

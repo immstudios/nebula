@@ -27,6 +27,13 @@ class ViewPanelBrowser(CherryAdminView):
             current_page = 1
 
         search_query = kwargs.get("q", "")
+        order = "id DESC"
+        print(kwargs)
+
+        if kwargs.get("o", "") and kwargs["o"] in meta_types:
+            order = "meta->'{}'".format(kwargs["o"])
+            if kwargs.get("u", ""):
+                order += " DESC"
 
         # View settings
 
@@ -42,7 +49,7 @@ class ViewPanelBrowser(CherryAdminView):
                 id_view = id_view,
                 fulltext=search_query or False,
                 count=True,
-                order="id DESC",
+                order=order,
                 limit=records_per_page,
                 offset=(current_page - 1)*records_per_page
             )

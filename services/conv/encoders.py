@@ -118,11 +118,11 @@ class NebulaFFMPEG(BaseEncoder):
 
     def finalize(self):
         if self.proc is None:
-            return NebulaResponse(500, message="Encoding failed")
+            return NebulaResponse(500, message="Encoding failed (proc is none)")
 
         if self.proc.poll() > 0:
             logging.error(self.proc.stderr.read())
-            return NebulaResponse(500, message="Encoding failed")
+            return NebulaResponse(500, message="Encoding failed (return code {})".format(self.proc.returncode))
 
         for temp_path in self.files:
             target_path = self.files[temp_path]

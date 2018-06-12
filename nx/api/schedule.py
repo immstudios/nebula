@@ -56,8 +56,9 @@ def api_schedule(**kwargs):
         db.query("SELECT meta FROM events WHERE id_channel=%s and start=%s", [id_channel, event_data["start"]])
         try:
             event_at_pos_meta = db.fetchall()[0][0]
-        except:
-            event_at_pos_meta = False
+            event_at_pos = Event(meta=event_at_pos_meta, db=db)
+        except IndexError:
+            event_at_pos = False
 
         if id_event:
             logging.debug("Updating event ID {}".format(id_event))
@@ -74,14 +75,16 @@ def api_schedule(**kwargs):
             event = Event(db=db)
             pbin = Bin(db=db)
             pbin.save()
+            logging.debug("Saved", pbin)
             event["id_magic"] = pbin.id
+            print (">>>1 ", pbin.meta)
             event["id_channel"] = id_channel
 
         id_asset = event_data.get("id_asset", False)
         if id_asset and id_asset != event["id_asset"]:
             asset = Asset(id_asset, db=db)
             if asset:
-                logging.info("Replacing event primary asset")
+                logging.info("Replacing event primary asset with {}".format(asset))
                 pbin.delete_children()
                 pbin.items = []
 
@@ -89,8 +92,10 @@ def api_schedule(**kwargs):
                 item["id_asset"] = asset.id
                 item["position"] = 0
                 item["id_bin"] = pbin.id
+                item._asset = asset
                 item.save()
-                pbin.items.append(item)
+                print (">>>", pbin.meta)
+                pbin.append(item)
                 pbin.save()
 
                 event["id_asset"] = asset.id
@@ -108,7 +113,8 @@ def api_schedule(**kwargs):
         changed_event_ids.append(event.id)
         event.save()
 
-    messaging.send("objects_changed", objects=changed_event_ids, object_type="event")
+    if changed_event_ids:
+        messaging.send("objects_changed", objects=changed_event_ids, object_type="event")
 
     #
     # Return existing events

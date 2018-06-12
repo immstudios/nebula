@@ -23,6 +23,13 @@ Key features
  - [Aura](https://github.com/martastain/aura) - VOD Encoder
  - [Warp](http://weebo.cz) - Web CMS
 
+
+Installation
+------------
+
+Use [nebula-setup](https://github.com/immstudios/nebula-setup) repository to install prerequisites.
+
+
 Need help?
 ----------
 

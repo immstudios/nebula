@@ -41,7 +41,7 @@ class BaseAgent():
             except:
                 log_traceback()
             self.first_run = False
-            time.sleep(1)
+            time.sleep(2)
         self.on_shutdown()
         self.is_running = False
 

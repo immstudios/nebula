@@ -26,8 +26,7 @@ def get_rundown(id_channel, start_time=False, db=False):
 
     end_time = start_time + (3600 * 24)
 
-    #FIXME    item_runs  = get_item_runs(id_channel, start_time, end_time, db=db)
-    item_runs = {}
+    item_runs = get_item_runs(id_channel, start_time, end_time, db=db)
 
     db.query("""
             SELECT
@@ -60,7 +59,7 @@ def get_rundown(id_channel, start_time=False, db=False):
     event = None
 
     ts_broadcast = ts_scheduled = 0
-
+    pskey = "playout_status/{}".format(id_channel)
     for id_event, emeta, imeta, ameta in db.fetchall() + [(-1, None, None, None)]:
         if id_event != current_event_id:
             if event:
@@ -89,8 +88,13 @@ def get_rundown(id_channel, start_time=False, db=False):
                 asset = False
 
             as_start, as_stop = item_runs.get(item.id, (0, 0))
+            airstatus = 0
             if as_start:
                 ts_broadcast = as_start
+                if as_stop:
+                    airstatus = AIRED
+                else:
+                    airstatus = ONAIR
 
             item.meta["asset_mtime"] = asset["mtime"] if asset else 0
             item.meta["rundown_scheduled"] = ts_scheduled
@@ -99,15 +103,30 @@ def get_rundown(id_channel, start_time=False, db=False):
             if rundown_event_asset:
                 item.meta["rundown_event_asset"] = rundown_event_asset
 
+            istatus = 0
+            if not asset:
+                istatus = ONLINE
+            elif airstatus:
+                istatus = airstatus
+            elif asset["status"] == OFFLINE:
+                istatus = OFFLINE
+            elif not pskey in asset.meta:
+                istatus = REMOTE
+            elif asset[pskey]["status"] == OFFLINE:
+                istatus = REMOTE
+            elif asset[pskey]["status"] == ONLINE:
+                istatus = ONLINE
+            elif asset[pskey]["status"] == CORRUPTED:
+                istatus = CORRUPTED
+            else:
+                istatus = UNKNOWN
+
+            item.meta["status"] = istatus
+
             ts_scheduled += item.duration
             ts_broadcast += item.duration
 
             event.items.append(item)
-
-
-
-
-
 
 
 
@@ -124,13 +143,11 @@ def api_rundown(**kwargs):
     if not id_channel in config["playout_channels"]:
         return {"response" : 400, message : "No such playout channel"}
 
-
     rows = []
     i = 0
     for event in get_rundown(id_channel, start_time):
         row = event.meta
         row["object_type"] = "event"
-#        row["rundown_row"] = i
         row["is_empty"] = len(event.items) == 0
         row["id_bin"] = event["id_magic"]
         rows.append(row)
@@ -138,7 +155,6 @@ def api_rundown(**kwargs):
         for item in event.items:
             row = item.meta
             row["object_type"] = "item"
- #           row["rundown_row"] = i
             rows.append(row)
             i+=1
 

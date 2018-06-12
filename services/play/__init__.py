@@ -61,8 +61,8 @@ class Service(BaseService):
 
 
     def cue(self, **kwargs):
-        db         = kwargs.get("db", DB())
-        lcache     = kwargs.get("cache", cache)
+        db = kwargs.get("db", DB())
+        lcache = kwargs.get("cache", cache)
 
         if "item" in kwargs and isinstance(kwargs["item"], Item):
             item = kwargs["item"]
@@ -75,7 +75,7 @@ class Service(BaseService):
             return NebulaResponse(400, "Unable to cue. No item specified")
 
         if not item:
-            return NebulaResponse(404, "Unable to cue. Item ID: {} does not exist".format(id_item))
+            return NebulaResponse(404, "Unable to cue. {} does not exist".format(item))
 
         if item["item_role"] == "live":
             logging.info("Next is item is live")
@@ -84,7 +84,7 @@ class Service(BaseService):
             return self.controller.cue(fname, item, **kwargs)
 
         if not item["id_asset"]:
-            return NebulaResponse(400, "Unable to cue virtual item ID: {}".format(id_item))
+            return NebulaResponse(400, "Unable to cue virtual {}".format(item))
 
         asset = item.asset
         playout_path = asset.get_playout_full_path(self.id_channel)

@@ -14,7 +14,7 @@ class ViewPanelDetail(CherryAdminView):
 
         try:
             active_tab = kwargs["t"]
-            if not active_tab in ["m", "p", "t", "j"]:
+            if not active_tab in ["m", "p", "e", "j"]:
                 raise ValueError
         except (KeyError, ValueError):
             active_tab = "m"
@@ -32,5 +32,9 @@ class ViewPanelDetail(CherryAdminView):
         except:
             log_traceback()
         self["meta_set"] = fconfig["meta_set"]
+
+
+        self["extended_keys"] = sorted([k for k in asset.meta if k not in [l[0] for l in fconfig["meta_set"]]], key=lambda k: meta_types[k]["ns"])
+
 
 

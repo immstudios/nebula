@@ -38,4 +38,4 @@ class Service(BaseService):
                     logging.error(result.message)
 
                 asset[action.created_key] = 1
-                asset.save()
+                asset.save(set_mtime=False)

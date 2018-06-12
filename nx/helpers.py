@@ -69,7 +69,7 @@ def get_item_event(id_item, **kwargs):
     db = kwargs.get("db", DB())
     lcache = kwargs.get("cahce", cache)
     #TODO: Use db mogrify
-    db.query("""SELECT e.id_object, e.meta FROM items AS i, events AS e WHERE e.id_magic = i.id_bin AND i.id = {} and e.id_channel in ({})""".format(
+    db.query("""SELECT e.id, e.meta FROM items AS i, events AS e WHERE e.id_magic = i.id_bin AND i.id = {} and e.id_channel in ({})""".format(
         id_item,
         ", ".join([str(f) for f in config["playout_channels"].keys()])
         ))
@@ -98,7 +98,7 @@ def get_next_item(item, **kwargs):
         return False
 
     lcache = kwargs.get("cache", cache)
-    logging.debug("Looking for item following item ID {}".format(id_item))
+    logging.debug("Looking for item following {}".format(item))
     current_bin = Bin(current_item["id_bin"], db=db, cache=lcache)
 
     for item in current_bin.items:
@@ -109,21 +109,30 @@ def get_next_item(item, **kwargs):
                     if r["item_role"] == "lead_in":
                         return r
                 else:
-                    return current_bin.items[0]
+                    next_item = current_bin.items[0]
+                    next_item.asset
+                    return next_item
+            item.asset
             return item
     else:
-        current_event = get_item_event(id_item, db=db, cache=lcache)
+        current_event = get_item_event(item.id, db=db, cache=lcache)
         db.query(
                 "SELECT meta FROM events WHERE id_channel = %s and start > %s ORDER BY start ASC LIMIT 1",
                 [current_event["id_channel"], current_event["start"]]
             )
         try:
-            next_event = Event(db.fetchall()[0][0], db=db, cache=lcache)
+            next_event = Event(meta=db.fetchall()[0][0], db=db, cache=lcache)
             if not next_event.bin.items:
+                logging.debug("Next playlist is empty")
                 raise Exception
             if next_event["run_mode"]:
+                logging.debug("Next playlist run mode is not auto")
                 raise Exception
-            return next_event.bin.items[0]
+            next_item = next_event.bin.items[0]
+            next_item.asset
+            return next_item
         except:
             logging.info("Looping current playlist")
-            return current_bin.items[0]
+            next_item = current_bin.items[0]
+            next_item.asset
+            return next_item

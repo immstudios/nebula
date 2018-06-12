@@ -3,3 +3,5 @@ vendor/
 test.py
 _old/
 tool_*.py
+test-*
+tool-*
