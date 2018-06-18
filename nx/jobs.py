@@ -354,13 +354,22 @@ def send_to(id_asset, id_action, settings={}, id_user=None, priority=3, restart_
             %s,
             'Pending',
             %s
-        )""",
+        )
+        RETURNING id
+        """,
             [id_asset, id_action, id_user, json.dumps(settings), priority, time.time()]
         )
-    db.commit()
+
+    try:
+        id_job = db.fetchall()[0][0]
+        db.commit()
+    except Exception:
+        log_traceback()
+        return NebulaResponse(500, "Unable to create job")
+
     messaging.send(
             "job_progress",
-            id=0,                      #TODO
+            id=id_job,
             id_asset=id_asset,
             id_action=id_action,
             progress=0,
