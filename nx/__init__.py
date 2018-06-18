@@ -32,9 +32,8 @@ def load_settings(force=False):
     for id, channel_type, settings in db.fetchall():
         if channel_type == 0:
             config["playout_channels"][id] = settings
-#TODO: Ingest channels
-#        elif channel_type == 1:
-#            config["ingest_channels"][id] = settings
+        elif channel_type == 1:
+            config["ingest_channels"][id] = settings
 
     db.query("SELECT id, settings FROM folders")
     for id, settings in db.fetchall():
