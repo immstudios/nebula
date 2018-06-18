@@ -1,20 +1,35 @@
-from nx import *
+__all__ = ["plugin_path", "PlayoutPlugin", "WorkerPlugin"]
 
-__all__ = ["plugin_path", "PlayoutPlugin"]
+import os
+import sys
 
+from nebulacore import *
 
-try:
-    plugin_path = os.path.join(storages[int(config["plugin_storage"])].local_path, config["plugin_root"])
-except (KeyError, IndexError):
+#
+# Plugin root
+#
+
+plugin_path = os.path.join(
+        storages[int(config.get("plugin_storage", 1))].local_path,
+        config.get("plugin_root", ".nx/scripts/v5")
+    )
+
+if not os.path.exists(plugin_path):
+    logging.warning("Plugin root dir does not exist")
     plugin_path = False
-else:
-    if not os.path.exists(plugin_path) and ismount(storages[int(config["plugin_storage"])].local_path):
-        try:
-            os.makedirs(plugin_path)
-        except Exception:
-            log_traceback()
-            plugin_path = False
 
+#
+# Common python scripts
+#
+
+if plugin_path:
+    common_dir = os.path.join(plugin_path, "common")
+    if os.path.isdir(common_dir) and os.listdir(common_dir) and not common_dir in sys.path:
+        sys.path.insert(0, common_dir)
+
+#
+# Playout plugins
+#
 
 class PlayoutPluginSlot(object):
     def __init__(self, slot_type, **kwargs):
@@ -27,39 +42,43 @@ class PlayoutPluginSlot(object):
     def __setitem__(self, key, value):
         self.ops[key] = value
 
-
 class PlayoutPlugin(object):
-    def __init__(self, channel):
-        self.channel = channel
-        self.id_layer = self.channel.feed_layer + 1
+    def __init__(self, service):
+        self.service = service
+        self.id_layer = self.service.caspar_feed_layer + 1
         self.slots = []
         self.tasks = []
         self.on_init()
         self.busy = False
 
-    def add_slot(self, slot_type, **kwargs):
-        self.slots.append(PlayoutPluginSlot(slot_type, **kwargs))
-
-    def slot_value(self, index):
-        return self.slots[index]["value"]
+    @property
+    def current_asset(self):
+        return self.service.current_asset
 
     def main(self):
-        self.busy = True
-        self.on_main()
-        self.busy = False
+        if not self.busy:
+            self.busy = True
+            try:
+                self.on_main()
+            except Exception:
+                log_traceback()
+            self.busy = False
 
     def layer(self, id_layer=False):
         if not id_layer:
             id_layer = self.id_layer
-        return "{}-{}".format(self.channel.channel, id_layer)
+        return "{}-{}".format(self.service.caspar_channel, id_layer)
 
     def query(self, query):
-        return self.channel.server.query(query)
+        return self.service.controller.query(query)
 
     def on_init(self):
         pass
 
     def on_change(self):
+        pass
+
+    def on_command(self, **kwargs):
         pass
 
     def on_main(self):
@@ -69,7 +88,9 @@ class PlayoutPlugin(object):
             del self.tasks[0]
             return
 
-
+#
+# Worker service plugin
+#
 
 class WorkerPlugin(object):
     def __init__(self, service):

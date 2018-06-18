@@ -7,6 +7,7 @@ from nebula import *
 
 from .request_handler import *
 from .caspar_controller import *
+from .plugins import PlayoutPlugins
 
 class Service(BaseService):
     def on_init(self):
@@ -23,6 +24,7 @@ class Service(BaseService):
 
         self.channel_config = config["playout_channels"][self.id_channel]
 
+
         self.caspar_host         = self.channel_config.get("caspar_host", "localhost")
         self.caspar_port         = int(self.channel_config.get("caspar_port", 5250))
         self.caspar_channel      = int(self.channel_config.get("caspar_channel", 1))
@@ -35,6 +37,7 @@ class Service(BaseService):
         self.current_live = False
         self.cued_live = False
 
+        self.plugins = PlayoutPlugins(self)
         self.controller = CasparController(self)
 
         try:
@@ -104,9 +107,6 @@ class Service(BaseService):
         return self.controller.cue(asset.get_playout_name(self.id_channel), item,  **kwargs)
 
 
-
-
-
     def cue_next(self, **kwargs):
         item = kwargs.get("item", self.controller.current_item)
         level = kwargs.get("level", 0)
@@ -153,9 +153,7 @@ class Service(BaseService):
         return self.controller.abort(**kwargs)
 
     def stat(self, **kwargs):
-        #TODO
-        return "200", "stat"
-
+        return "200", self.playout_status
 
     def plugin_list(self, **kwargs):
         return NebulaResponse(501, "Not implemented")
@@ -207,8 +205,8 @@ class Service(BaseService):
 
         return 200, "OK"
 
-
-    def on_progress(self):
+    @property
+    def playout_status(self):
         data = {}
         data["id_channel"]    = self.id_channel
         data["current_item"]  = self.controller.current_item.id if self.controller.current_item else False
@@ -224,14 +222,14 @@ class Service(BaseService):
 
         data["current_fname"] = self.controller.current_fname
         data["cued_fname"]    = self.controller.cued_fname
+        return data
 
-        messaging.send("playout_status", **data)
 
-#        for plugin in channel.plugins:
-#            try:
-#                plugin.main()
-#            except:
-#                log_traceback("Playout plugin error:")
+    def on_progress(self):
+        messaging.send("playout_status", **self.playout_status)
+
+        for plugin in self.plugins:
+            plugin.main()
 
 #        if self.controller.current_item and (not self.controller.cued_item) and (not self.controller.cueing):  # and not channel._next_studio and not channel._now_studio:
 #            self.cue_next()
@@ -266,26 +264,21 @@ class Service(BaseService):
         else:
             self.last_run = False
 
-#        for plugin in channel.plugins:
-#            try:
-#                plugin.on_change()
-#            except:
-#                log_traceback("Plugin on_change error")
+        for plugin in self.plugins:
+            try:
+                plugin.on_change()
+            except Exception:
+                log_traceback("Plugin on-change failed")
 
 
 
     def channel_recover(self, channel):
-        #TODO
         logging.warning("Performing recovery")
-        channel.server.query("RESTART")
-        time.sleep(5)
-        while not success(channel.server.connect()[0]):
-            time.sleep(1)
-        logging.debug("Connection estabilished. recovering playback")
-        time.sleep(5)
+        #channel.server.query("RESTART")
+        #time.sleep(5)
 
         db = DB()
-        db.query("SELECT id_item, start FROM nx_asrun WHERE id_channel = %s ORDER BY id_run DESC LIMIT 1", (channel.ident,))
+        db.query("SELECT id_item, start FROM asrun WHERE id_channel = %s ORDER BY id_run DESC LIMIT 1", [channel.ident])
         try:
             last_id_item, last_start = db.fetchall()[0]
         except IndexError:
@@ -295,22 +288,19 @@ class Service(BaseService):
 
         if last_start + last_item.duration <= time.time():
             logging.info("Last {} has been broadcasted. starting next item".format(last_item))
-            new_item = self.cue_next(channel, id_item=last_item.id, db=db, play=True)
+            new_item = self.cue_next(item=last_item, db=db, play=True)
         else:
             logging.info("Last {} has not been fully broadcasted. starting next item anyway.... FIX ME".format(last_item))
-            new_item = self.cue_next(channel, id_item=last_item.id, db=db, play=True)
+            new_item = self.cue_next(item=last_item, db=db, play=True)
 
         if not new_item:
             logging.error("Recovery failed. Unable to cue")
-            channel.cue("BLANK", id_item=False, play=True)
-            channel.cue("BLANK", id_item=False)
             return
 
-        channel.current_item = new_item.id
-        channel.cued_item = False
-        channel.cued_fname = False
-
-        self.channel_change(channel)
+        self.controller.current_item = new_item
+        self.controller.cued_item = False
+        self.controller.cued_fname = False
+        self.on_change()
 
 
     def on_live_enter(self):

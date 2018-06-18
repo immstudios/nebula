@@ -53,7 +53,6 @@ def api_system(**kwargs):
         db.query("UPDATE services SET autostart=NOT autostart WHERE id=%s", [id_service])
         db.commit()
 
-
     result = {}
     if "services" in request:
         services = []
@@ -71,7 +70,6 @@ def api_system(**kwargs):
             services.append(service)
         result["services"] = services
 
-
     if "hosts" in request:
         hosts = []
         db.query("SELECT hostname, last_seen, status FROM hosts ORDER BY hostname")
@@ -81,6 +79,5 @@ def api_system(**kwargs):
             host["last_seen"] = last_seen
             hosts.append(host)
         result["hosts"] = hosts
-
 
     return {"response" : 200, "message" : "OK", "data" : result}

@@ -163,6 +163,7 @@ class CasparController(object):
         # Auto recovery
         #
 
+# TODO
 #        if not current_fname and time.time() - self.recovery_time > 10:
 #            self.parent.channel_recover()
 #            return
@@ -182,16 +183,11 @@ class CasparController(object):
                 self.current_out   = self.cued_out
                 self.cued_in = self.cued_out = 0
                 advanced = True
-
             self.cued_item = False
-
 
         if advanced:
             self.parent.on_change()
             self.parent.cue_next()
-
-
-
 
         if self.cued_item and cued_fname and cued_fname != self.cued_fname and not self.cueing:
             logging.warning("Cue mismatch: IS: {} SHOULDBE: {}".format(cued_fname, self.cued_fname))

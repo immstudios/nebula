@@ -1,42 +1,44 @@
+__all__ = ["PlayoutPlugins"]
+
 import os
 import imp
 
 from nebula import *
 
 class PlayoutPlugins(object):
-    def __init__(self, channel):
+    def __init__(self, service):
+        global plugin_path
+        self.service = service
         self.plugins = []
+
         if not plugin_path:
             return
+
         bpath = os.path.join(plugin_path, "playout")
         if not os.path.exists(bpath):
             logging.warning("Playout plugins directory does not exist")
             return
 
-        for fname in os.listdir(bpath):
-            mod_name, file_ext = os.path.splitext(fname)
-            if file_ext != ".py":
-                continue
+        for plugin_name in self.service.channel_config["plugins"]:
+            plugin_file = plugin_name + ".py"
+            plugin_path = os.path.join(bpath, plugin_file)
 
-            if not mod_name in channel.enabled_plugins:
-                continue
+            if not os.path.exists(plugin_path):
+                logging.error("Plugin {} does not exist".format(plugin_name))
 
             try:
-                py_mod = imp.load_source(mod_name, os.path.join(bpath, fname))
-            except:
+                py_mod = imp.load_source(plugin_name, plugin_path)
+            except Exception:
                 log_traceback("Unable to load plugin {}".format(mod_name))
                 continue
 
-            if not "__manifest__" in dir(py_mod):
-                logging.warning("No plugin manifest found in {}".format(fname))
+            if not "Plugin" in dir(py_mod):
+                logging.error("No plugin class found in {}".format(plugin_file))
                 continue
 
-            if not "Plugin" in dir(py_mod):
-                logging.warning("No plugin class found in {}".format(fname))
-
-            logging.info("Initializing plugin {} on channel {}".format(py_mod.__manifest__["name"], channel.ident ))
-            self.plugins.append(py_mod.Plugin(channel))
-            self.plugins[-1].title = py_mod.__manifest__["name"]
+            logging.info("Initializing plugin {}".format(plugin_name))
+            self.plugins.append(py_mod.Plugin(self.service))
+            self.plugins[-1].title = plugin_name.capitalize()
 
     def __getitem__(self, key):
         return self.plugins[key]

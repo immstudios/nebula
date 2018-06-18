@@ -21,6 +21,8 @@ class Service(BaseService):
 
 
     def load_from_script(self, fname):
+        if not fname.lower().endswith(".py"):
+            fname += ".py"
         script_path = os.path.join(plugin_path, "worker", fname)
         mod_name, file_ext = os.path.splitext(fname)
 
