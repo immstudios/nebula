@@ -136,3 +136,34 @@ def get_next_item(item, **kwargs):
             next_item = current_bin.items[0]
             next_item.asset
             return next_item
+
+
+def bin_refresh(bins, **kwargs):
+    if not bins:
+        return True
+    db = kwargs.get("db", DB())
+    sender = kwargs.get("sender", False)
+    for id_bin in bins:
+        cache.delete("2-" + str(id_bin))
+    bq = ", ".join([str(b) for b in bins if b])
+    changed_events = []
+    db.query("""
+            SELECT e.meta FROM events as e, channels AS c
+            WHERE
+                c.channel_type = 0 AND
+                c.id = e.id_channel AND
+                e.id_magic IN ({})
+            """.format(bq)
+        )
+    for meta, in db.fetchall():
+        event = Event(meta=meta, db=db)
+        if event.id not in changed_events:
+            changed_events.append(event.id)
+    if changed_events:
+        messaging.send(
+                "objects_changed",
+                sender=sender,
+                objects=changed_events,
+                object_type="event"
+            )
+    return True
