@@ -70,6 +70,10 @@ class CasparController(object):
                 )
             )
         if result.is_error:
+            logging.error("Unable to get CasparCG status: Error {} ({})".format(
+                    result.code,
+                    result.data
+                ))
             return False
         try:
             xstat = xml(result.data)
@@ -104,7 +108,7 @@ class CasparController(object):
                 self.main()
             except Exception:
                 log_traceback()
-            time.sleep(.1)
+            time.sleep(.3)
 
     def main(self):
         if not self.update_stat():
@@ -141,7 +145,7 @@ class CasparController(object):
                 self.pos  = int(fg_prod.find("frame-number").text)
                 self.dur  = int(fg_prod.find("nb-frames").text)
                 current_fname = basefname(fg_prod.find("filename").text)
-        except:
+        except Exception:
             current_fname = False
 
         #
@@ -156,7 +160,7 @@ class CasparController(object):
                 cued_fname = False # No video is cued
             else:
                 cued_fname = basefname(bg_prod.find("filename").text)
-        except:
+        except Exception:
             cued_fname = False
 
         #
