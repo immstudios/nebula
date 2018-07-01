@@ -29,7 +29,7 @@ class PlayoutPlugins(object):
             try:
                 py_mod = imp.load_source(plugin_name, plugin_path)
             except Exception:
-                log_traceback("Unable to load plugin {}".format(mod_name))
+                log_traceback("Unable to load plugin {}".format(plugin_name))
                 continue
 
             if not "Plugin" in dir(py_mod):

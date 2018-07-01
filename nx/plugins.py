@@ -1,4 +1,4 @@
-__all__ = ["plugin_path", "PlayoutPlugin", "WorkerPlugin"]
+__all__ = ["plugin_path", "PlayoutPlugin", "PlayoutPluginSlot", "WorkerPlugin"]
 
 import os
 import sys
@@ -32,15 +32,21 @@ if plugin_path:
 #
 
 class PlayoutPluginSlot(object):
-    def __init__(self, slot_type, **kwargs):
-        self.slot_type = slot_type
-        self.ops = kwargs
+    def __init__(self, slot_type, slot_name, **kwargs):
+        assert slot_type in ["action", "text", "number", "select"]
+        self.type = slot_type
+        self.name = slot_name
+        self.opts = kwargs
 
     def __getitem__(self, key):
-        return self.ops.get(key, False)
+        return self.opts.get(key, False)
 
     def __setitem__(self, key, value):
-        self.ops[key] = value
+        self.opts[key] = value
+
+    @property
+    def title(self):
+        return self.opts.get("title", self.name.capitalize())
 
 class PlayoutPlugin(object):
     def __init__(self, service):
@@ -78,7 +84,7 @@ class PlayoutPlugin(object):
     def on_change(self):
         pass
 
-    def on_command(self, **kwargs):
+    def on_command(self, action, **kwargs):
         pass
 
     def on_main(self):

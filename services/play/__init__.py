@@ -153,60 +153,52 @@ class Service(BaseService):
         return self.controller.abort(**kwargs)
 
     def stat(self, **kwargs):
-        return "200", self.playout_status
+        return NebulaResponse(200, self.playout_status)
 
     def plugin_list(self, **kwargs):
-        return NebulaResponse(501, "Not implemented")
-        #TODO
         result = []
-
-        for j, plugin in enumerate(channel.plugins):
+        for id_plugin, plugin in enumerate(self.plugins):
             if not plugin.slots:
                 continue
-
             p = {
-                "id" : j,
-                "title" : plugin.title,
-                "slots":[]
+                    "id" : id_plugin,
+                    "title" : plugin.title,
+                    "slots": []
                 }
-
-            for i, slot in enumerate(plugin.slots):
+            for id_slot, slot in enumerate(plugin.slots):
                 s = {
-                    "slot_type" : slot.slot_type,
-                    "id" : i
+                        "id" : id_slot,
+                        "name" : slot.name,
+                        "type" : slot.type,
+                        "title" : slot.title,
                     }
-
-                for op in slot.ops:
-                    if op == "title":
-                        s["title"] = slot["title"]
-                    elif op == "source":
-                        s["data"] = slot["source"]()
-                    elif op == "value":
-                        s["value"] = slot["value"]
-
+                for key in slot.opts:
+                    if key in s:
+                        continue
+                    val = slot.opts[key]
+                    if callable(val):
+                        s[key] = val()
+                    else:
+                        s[key] = val
                 p["slots"].append(s)
-
             result.append(p)
-        return 200, result
+        return NebulaResponse(200, data=result)
 
 
     def plugin_exec(self, **kwargs):
-        return NebulaResponse(501, "Not implemented")
-        #TODO
+        action = kwargs.get("action", False)
+        if not action:
+            return NebulaResponse(400, "No plugin action requested")
+        plugin = channel.plugins[kwargs["id"]]
+        if plugin.on_command(action, **kwargs.get("data", {})):
+            return NebulaResponse(200, "OK")
+        else:
+            return NebulaResponse(500, "Playout plugin failed")
 
-        plugin = channel.plugins[kwargs["id_plugin"]]
-        slot = plugin.slots[kwargs["id_slot"]]
-
-        if slot.slot_type == "button":
-            slot["action"]()
-
-        if slot.slot_type in ["select", "text"]:
-            slot["value"] = kwargs["value"]
-
-        return 200, "OK"
 
     @property
     def playout_status(self):
+        #TODO: Rewrite to be nice
         data = {}
         data["id_channel"]    = self.id_channel
         data["current_item"]  = self.controller.current_item.id if self.controller.current_item else False
@@ -218,7 +210,7 @@ class Service(BaseService):
         data["request_time"]  = self.controller.request_time
         data["paused"]        = self.controller.paused
         data["stopped"]       = self.controller.stopped
-#        data["id_event"]      = self.controller.current_event.id if channel.current_event else False
+        data["id_event"]      = self.current_event.id if self.current_event else False
 
         data["current_fname"] = self.controller.current_fname
         data["cued_fname"]    = self.controller.cued_fname
@@ -320,9 +312,6 @@ class Service(BaseService):
         It does not handle AUTO playlist advancing
         """
 
-        #if self.controller.changing:
-        #    return
-
         current_item = self.controller.current_item # YES. CURRENT
         if not current_item:
             return
@@ -334,7 +323,6 @@ class Service(BaseService):
         if not current_event:
             logging.warning("Unable to fetch current event")
             return
-
 
         db.query(
                 "SELECT meta FROM events WHERE id_channel = %s AND start > %s AND start <= %s ORDER BY start DESC LIMIT 1",
