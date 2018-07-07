@@ -30,6 +30,7 @@ class CasparController(object):
 
         self.paused   = False
         self.stopped  = False
+        self.stalled  = True
 
         self.pos = self.dur = self.fpos = self.fdur = 0
         self.cued_in = self.cued_out = self.current_in = self.current_out = 0
@@ -173,6 +174,16 @@ class CasparController(object):
 #            return
 #        self.recovery_time = time.time()
 
+        #TODO: Test this!!!
+        if cued_fname and (not current_fname) and (not self.paused) and (not self.stopped):
+            if self.stalled:
+                logging.warning("Taking stalled clip")
+                self.take()
+            else:
+                self.stalled = True
+        else:
+            self.stalled = False
+
         #
         # Playlist advancing
         #
@@ -262,6 +273,9 @@ class CasparController(object):
         result = self.query("PLAY {}-{}".format(self.parent.caspar_channel, layer))
         if result.is_success:
             message = "Take OK"
+            self.stalled = False
+            self.paused = False
+            self.stopped = False
         else:
             message = "Take command failed: " + result.data
         return NebulaResponse(result.response, message)
@@ -276,6 +290,9 @@ class CasparController(object):
         result = self.query(q)
         if result.is_success:
             message = "Take OK"
+            self.stalled = False
+            self.paused = False
+            self.stopped = False
         else:
             message = "Take command failed: " + result.data
         return NebulaResponse(result.response, message)
@@ -285,12 +302,14 @@ class CasparController(object):
         if not self.paused:
             q = "PAUSE {}-{}".format(self.parent.caspar_channel, layer)
             message = "Playback paused"
+            new_val = True
         else:
             q = "RESUME {}-{}".format(self.parent.caspar_channel, layer)
             message = "Playback resumed"
+            new_val = False
         result = self.query(q)
         if result.is_success:
-            self.paused = not self.paused
+            self.paused = new_val
         else:
             message = result.data
         return NebulaResponse(result.response, message)

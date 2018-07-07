@@ -7,7 +7,7 @@ from nebula import *
 
 from .request_handler import *
 from .caspar_controller import *
-from .plugins import PlayoutPlugins
+from .plugins import *
 
 class Service(BaseService):
     def on_init(self):
@@ -153,7 +153,7 @@ class Service(BaseService):
         return self.controller.abort(**kwargs)
 
     def stat(self, **kwargs):
-        return NebulaResponse(200, self.playout_status)
+        return NebulaResponse(200, data=self.playout_status)
 
     def plugin_list(self, **kwargs):
         result = []
@@ -163,35 +163,26 @@ class Service(BaseService):
             p = {
                     "id" : id_plugin,
                     "title" : plugin.title,
-                    "slots": []
+                    "slots": plugin.slot_manifest,
                 }
-            for id_slot, slot in enumerate(plugin.slots):
-                s = {
-                        "id" : id_slot,
-                        "name" : slot.name,
-                        "type" : slot.type,
-                        "title" : slot.title,
-                    }
-                for key in slot.opts:
-                    if key in s:
-                        continue
-                    val = slot.opts[key]
-                    if callable(val):
-                        s[key] = val()
-                    else:
-                        s[key] = val
-                p["slots"].append(s)
             result.append(p)
         return NebulaResponse(200, data=result)
 
 
     def plugin_exec(self, **kwargs):
-        action = kwargs.get("action", False)
+        action = kwargs.get("action_name", False)
+        data = json.loads(kwargs.get("data", "{}"))
+        id_plugin = int(kwargs["id_plugin"])
+        print (">>", action, id_plugin, data)
         if not action:
             return NebulaResponse(400, "No plugin action requested")
-        plugin = channel.plugins[kwargs["id"]]
-        if plugin.on_command(action, **kwargs.get("data", {})):
-            return NebulaResponse(200, "OK")
+        try:
+            plugin = self.plugins[id_plugin]
+        except (KeyError, IndexError):
+            log_traceback()
+            return NebulaResponse(400, "No such action")
+        if plugin.on_command(action, **data):
+            return NebulaResponse(200)
         else:
             return NebulaResponse(500, "Playout plugin failed")
 

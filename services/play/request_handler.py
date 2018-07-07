@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 __all__ = ["PlayoutRequestHandler", "HTTPServer"]
 
 import sys
@@ -10,11 +8,6 @@ try:
     from http.server import BaseHTTPRequestHandler, HTTPServer
 except ImportError:
     from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-
-if __name__ == "__main__":
-    if not "/opt/nebula/vendor/nxtools" in sys.path:
-        sys.path.insert(0, "/opt/nebula/vendor/nxtools")
-        sys.path.insert(0, "/opt/nebula")
 
 from nebula import *
 
@@ -77,39 +70,9 @@ class PlayoutRequestHandler(BaseHTTPRequestHandler):
             result = self.server.methods[method](**params)
             if result.is_error:
                 logging.error(result.message)
-            else:
+            elif result["message"]:
                 logging.info(result.message)
             self.result(result.dict)
         except Exception:
             msg = log_traceback()
             self.result(NebulaResponse(500, msg).dict)
-
-
-
-if __name__ == "__main__":
-    # Self test
-    import time
-    import requests
-
-    try:
-        import _thread as thread
-        from http.server import BaseHTTPRequestHandler,HTTPServer
-    except ImportError:
-        import thread
-        from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-
-    class P():
-        def dummy(self, **kwargs):
-            logging.info("Got KWARGS:", kwargs)
-            return NebulaResponse(200, "success", data=kwargs)
-
-    service = P()
-    server = HTTPServer(('', 9999), PlayoutRequestHandler)
-    server.service = service
-    server.methods = {
-            "dummy" : service.dummy
-        }
-    thread.start_new_thread(server.serve_forever,())
-
-    h = requests.post("http://localhost:9999/dummy/fuck", data={"aaa":"bb"})
-    print (h, h.text)
