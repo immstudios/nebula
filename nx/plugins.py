@@ -56,6 +56,28 @@ class PlayoutPlugin(object):
         self.tasks = []
         self.on_init()
         self.busy = False
+        self.title = False
+
+    @property
+    def slot_manifest(self):
+        result = []
+        for id_slot, slot in enumerate(self.slots):
+            s = {
+                    "id" : id_slot,
+                    "name" : slot.name,
+                    "type" : slot.type,
+                    "title" : slot.title,
+                }
+            for key in slot.opts:
+                if key in s:
+                    continue
+                val = slot.opts[key]
+                if callable(val):
+                    s[key] = val()
+                else:
+                    s[key] = val
+            result.append(s)
+        return result
 
     @property
     def current_asset(self):
