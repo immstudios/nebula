@@ -10,20 +10,21 @@ def api_order(**kwargs):
     if not kwargs.get("user", None):
         return {'response' : 401, 'message' : 'unauthorized'}
 
-    id_channel = kwargs.get("id_channel", False)
+    id_channel = kwargs.get("id_channel", 0)
     id_bin = kwargs.get("id_bin", False)
     order  = kwargs.get("order", [])
 
-    append_cond = "True"
-    if id_channel:
-        if not id_channel in config["playout_channels"]:
-            return {"response" : 400, "message" : "No such channel ID {}".format(id_channel)}
-        playout_config = config["playout_channels"][id_channel]
-        append_cond = playout_config.get("rundown_accepts", "True")
+    if not id_channel in config["playout_channels"]:
+        return {
+                "response" : 400,
+                "message" : "No such channel ID {}".format(id_channel)
+            }
+    playout_config = config["playout_channels"][id_channel]
+    append_cond = playout_config.get("rundown_accepts", "True")
 
     if "user" in kwargs:
         user = User(meta=kwargs.get("user"))
-        if id_channel and not user.has_right("channel_edit", id_channel):
+        if id_channel and not user.has_right("rundown_edit", id_channel):
             return {"response" : 403, "message" : "You are not allowed to edit this rundown"}
     else:
         user = User(meta={"login" : "Nebula"})
@@ -60,8 +61,8 @@ def api_order(**kwargs):
             asset = Asset(id_object, db=db)
             try:
                 can_append = eval(append_cond)
-            except:
-                logging.error("Unable to evaluate rundown accept condition: {}".format(append_cond))
+            except Exception:
+                log_traceback("Unable to evaluate rundown accept condition: {}".format(append_cond))
                 continue
             if not asset or not can_append:
                 continue
