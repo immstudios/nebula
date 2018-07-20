@@ -30,6 +30,7 @@ def api_delete(**kwargs):
         obj = object_type_class(id_object, db=db)
 
         if object_type == "item":
+            #TODO: ACL
             try:
                 obj.delete()
             except psycopg2.IntegrityError:
@@ -51,4 +52,3 @@ def api_delete(**kwargs):
     if affected_bins:
         bin_refresh(affected_bins, db=db)
     return {"response" : 200, "message" : "{} objects deleted".format(num)}
-

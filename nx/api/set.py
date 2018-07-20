@@ -13,7 +13,7 @@ def api_set(**kwargs):
     object_type = kwargs.get("object_type", "asset")
     ids  = kwargs.get("objects", [])
     data = kwargs.get("data", {})
-    user = User(meta=kwargs.get("user", anonymous_data))
+    user = User(meta=kwargs["user"])
     db   = kwargs.get("db", DB())
 
     if not (data and ids):

@@ -7,6 +7,12 @@ def api_jobs(**kwargs):
         return {'response' : 401, 'message' : 'unauthorized'}
 
     db = kwargs.get("db", DB())
+    user = User(meta=kwargs["user"])
+
+    if not user.has_right("jobs_control"):
+        #TODO: Based on action type?
+        return {'response' : 403, 'message' : 'Access denied'}
+
 
     if "restart" in kwargs:
         jobs = [int(i) for i in kwargs["restart"]]
