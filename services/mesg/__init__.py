@@ -150,7 +150,9 @@ class Service(BaseService):
 
             message = self.queue.pop(0)
             self.last_message = time.time()
-            self.relay_message(message.json)
+
+            if message.method != "log":
+                self.relay_message(message.json)
 
             if self.log_dir and message.method == "log":
                 log = format_log_message(message)
