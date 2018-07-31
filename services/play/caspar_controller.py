@@ -27,6 +27,7 @@ class CasparController(object):
         self.cued_item = False
         self.cued_fname = False
         self.cueing = False
+        self.force_cue = False
 
         self.paused   = False
         self.stopped  = False
@@ -96,6 +97,8 @@ class CasparController(object):
 
     @property
     def duration(self):
+        if self.parent.current_live:
+            return 0
         dur = self.fdur
         if self.current_out > 0:
             dur -= dur - (self.current_out*self.fps)
@@ -175,7 +178,7 @@ class CasparController(object):
 #        self.recovery_time = time.time()
 
         #TODO: Test this!!!
-        if cued_fname and (not current_fname) and (not self.paused) and (not self.stopped):
+        if cued_fname and (not current_fname) and (not self.paused) and (not self.stopped) and not self.parent.current_live:
             if self.stalled:
                 logging.warning("Taking stalled clip")
                 self.take()
@@ -190,7 +193,7 @@ class CasparController(object):
 
         advanced = False
 
-        if (not cued_fname) and (current_fname):
+        if (not cued_fname) and (current_fname) and not self.parent.cued_live:
             if current_fname == self.cued_fname:
                 self.current_item  = self.cued_item
                 self.current_fname = self.cued_fname
@@ -199,6 +202,21 @@ class CasparController(object):
                 self.cued_in = self.cued_out = 0
                 advanced = True
             self.cued_item = False
+
+        if (not current_fname) and (not cued_fname) and self.parent.cued_live:
+            self.current_item  = self.cued_item
+            self.current_fname = "LIVE"
+            self.current_in    = 0
+            self.current_out   = 0
+            self.cued_in = self.cued_out = 0
+            advanced = True
+            self.cued_item = False
+            self.parent.on_live_enter()
+
+        if self.force_cue:
+            logging.info("Forcing cue next")
+            self.parent.cue_next()
+            self.force_cue = False
 
         if advanced:
             self.parent.on_change()
@@ -272,6 +290,8 @@ class CasparController(object):
         self.paused = False
         result = self.query("PLAY {}-{}".format(self.parent.caspar_channel, layer))
         if result.is_success:
+            if self.parent.current_live:
+                self.parent.on_live_leave()
             message = "Take OK"
             self.stalled = False
             self.paused = False
@@ -282,6 +302,7 @@ class CasparController(object):
 
     def retake(self, **kwargs):
         layer = kwargs.get("layer", self.parent.caspar_feed_layer)
+        #TODO: if self.parent.current_live
         seekparam = str(int(self.current_item.mark_in() * self.fps))
         if self.current_item.mark_out():
             seekparam += " LENGTH {}".format(int((self.current_item.mark_out() - self.current_item.mark_in()) * self.fps))
@@ -299,6 +320,7 @@ class CasparController(object):
 
     def freeze(self, **kwargs):
         layer = kwargs.get("layer", self.parent.caspar_feed_layer)
+        #TODO: if self.parent.current_live
         if not self.paused:
             q = "PAUSE {}-{}".format(self.parent.caspar_channel, layer)
             message = "Playback paused"

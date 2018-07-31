@@ -24,7 +24,6 @@ class Service(BaseService):
 
         self.channel_config = config["playout_channels"][self.id_channel]
 
-
         self.caspar_host         = self.channel_config.get("caspar_host", "localhost")
         self.caspar_port         = int(self.channel_config.get("caspar_port", 5250))
         self.caspar_channel      = int(self.channel_config.get("caspar_channel", 1))
@@ -36,6 +35,7 @@ class Service(BaseService):
 
         self.current_live = False
         self.cued_live = False
+        self.auto_event = 0
 
         self.plugins = PlayoutPlugins(self)
         self.controller = CasparController(self)
@@ -60,8 +60,11 @@ class Service(BaseService):
             }
         thread.start_new_thread(self.server.serve_forever,())
 
+        #self.channel_recover()
 
-
+    @property
+    def current_item(self):
+        return self.controller.current_item
 
     def cue(self, **kwargs):
         db = kwargs.get("db", DB())
@@ -82,9 +85,11 @@ class Service(BaseService):
 
         if item["item_role"] == "live":
             logging.info("Next is item is live")
-            fname = self.channel_config.get("live_source", "BLANK")
-            self.cued_live = item
-            return self.controller.cue(fname, item, **kwargs)
+            fname = self.channel_config.get("live_source", "EMPTY")
+            response = self.controller.cue(fname, item, **kwargs)
+            if response.is_success:
+                self.cued_live = True
+            return response
 
         if not item["id_asset"]:
             return NebulaResponse(400, "Unable to cue virtual {}".format(item))
@@ -119,7 +124,7 @@ class Service(BaseService):
             return
 
         self.controller.cueing = True
-        item_next = get_next_item(item.id, db=db, cache=lcache)
+        item_next = get_next_item(item.id, db=db, cache=lcache, force_next_event=bool(self.auto_event))
 
 
         if item_next["run_mode"] == 1:
@@ -129,7 +134,6 @@ class Service(BaseService):
 
         logging.info("Auto-cueing {}".format(item_next))
         result = self.cue(item=item_next, play=play, cache=lcache, auto=auto)
-
 
         if result.is_error:
             if level > 5:
@@ -202,6 +206,7 @@ class Service(BaseService):
         data["paused"]        = self.controller.paused
         data["stopped"]       = self.controller.stopped
         data["id_event"]      = self.current_event.id if self.current_event else False
+        data["fps"]           = self.fps
 
         data["current_fname"] = self.controller.current_fname
         data["cued_fname"]    = self.controller.cued_fname
@@ -255,13 +260,11 @@ class Service(BaseService):
 
 
 
-    def channel_recover(self, channel):
+    def channel_recover(self):
         logging.warning("Performing recovery")
-        #channel.server.query("RESTART")
-        #time.sleep(5)
 
         db = DB()
-        db.query("SELECT id_item, start FROM asrun WHERE id_channel = %s ORDER BY id_run DESC LIMIT 1", [channel.ident])
+        db.query("SELECT id_item, start FROM asrun WHERE id_channel = %s ORDER BY id DESC LIMIT 1", [self.id_channel])
         try:
             last_id_item, last_start = db.fetchall()[0]
         except IndexError:
@@ -269,20 +272,22 @@ class Service(BaseService):
         last_item = Item(last_id_item, db=db)
         last_item.asset
 
+        self.controller.current_item = last_item
+        self.controller.cued_item = False
+        self.controller.cued_fname = False
+
         if last_start + last_item.duration <= time.time():
             logging.info("Last {} has been broadcasted. starting next item".format(last_item))
             new_item = self.cue_next(item=last_item, db=db, play=True)
         else:
-            logging.info("Last {} has not been fully broadcasted. starting next item anyway.... FIX ME".format(last_item))
-            new_item = self.cue_next(item=last_item, db=db, play=True)
+            logging.info("Last {} has not been fully broadcasted. Loading next one".format(last_item))
+        #    self.controller.force_cue = True
+            new_item = self.cue_next(item=last_item, db=db)
 
         if not new_item:
             logging.error("Recovery failed. Unable to cue")
             return
 
-        self.controller.current_item = new_item
-        self.controller.cued_item = False
-        self.controller.cued_fname = False
         self.on_change()
 
 
@@ -316,13 +321,23 @@ class Service(BaseService):
             return
 
         db.query(
-                "SELECT meta FROM events WHERE id_channel = %s AND start > %s AND start <= %s ORDER BY start DESC LIMIT 1",
+                """SELECT DISTINCT(e.id), e.meta, e.start FROM events AS e, items AS i
+                    WHERE e.id_channel = %s
+                    AND e.start > %s
+                    AND e.start <= %s
+                    AND i.id_bin = e.id_magic
+                ORDER BY e.start ASC LIMIT 1""",
                 [self.id_channel, current_event["start"], time.time()]
             )
 
+
         try:
-            next_event = Event(meta=db.fetchall()[0][0], db=db)
+            next_event = Event(meta=db.fetchall()[0][1], db=db)
         except IndexError:
+            self.auto_event = False
+            return
+
+        if self.auto_event == next_event.id:
             return
 
         run_mode = int(next_event["run_mode"]) or RUN_AUTO
@@ -337,15 +352,18 @@ class Service(BaseService):
             pass # ?????
 
         elif run_mode == RUN_SOFT:
-            logging.info("Soft cue {}".format(next_event))
+            logging.info("Soft cue", next_event)
+            play = self.current_live # if current item is live, take next block/lead out automatically
             for i, r in enumerate(current_event.bin.items):
                 if r["item_role"] == "lead_out":
                     try:
                         self.cue(
                                 id_channel=self.id_channel,
                                 id_item=current_event.bin.items[i+1].id,
-                                db=db
+                                db=db,
+                                play=play
                             )
+                        self.auto_event = next_event.id
                         break
                     except IndexError:
                         pass
@@ -357,8 +375,11 @@ class Service(BaseService):
                             id_item=id_item,
                             db=db
                         )
+                    self.auto_event = next_event.id
+                    return
 
         elif run_mode == RUN_HARD:
+            logging.info("Hard cue", next_event)
             id_item = next_event.bin.items[0].id
             self.cue(
                     id_channel=self.id_channel,
@@ -366,3 +387,5 @@ class Service(BaseService):
                     play=True,
                     db=db
                 )
+            self.auto_event = next_event.id
+            return
