@@ -83,6 +83,10 @@ class PlayoutPlugin(object):
     def current_asset(self):
         return self.service.current_asset
 
+    @property
+    def current_item(self):
+        return self.service.current_item
+
     def main(self):
         if not self.busy:
             self.busy = True
