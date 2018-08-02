@@ -125,13 +125,13 @@ def get_next_item(item, **kwargs):
             if not next_event.bin.items:
                 logging.debug("Next playlist is empty")
                 raise Exception
-            if next_event["run_mode"]:
+            if next_event["run_mode"] and not kwargs.get("force_next_event", False):
                 logging.debug("Next playlist run mode is not auto")
                 raise Exception
             next_item = next_event.bin.items[0]
             next_item.asset
             return next_item
-        except:
+        except Exception:
             logging.info("Looping current playlist")
             next_item = current_bin.items[0]
             next_item.asset
