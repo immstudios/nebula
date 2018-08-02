@@ -49,23 +49,9 @@ def load_settings(force=False):
             config["cs"][cst] = []
         config["cs"][cst].append([value, settings])
 
-    db.query("SELECT id, title, settings, owner, position FROM views")
-    for id, title, settings, owner, position in db.fetchall():
-        settings = xml(settings)
-        view = {"title" : title, "columns" : [], "position" : position}
-        columns = settings.find("columns")
-        if columns is not None:
-            for column in columns.findall("column"):
-                if column.text:
-                    view["columns"].append(column.text.strip())
-        for elm in ["folders", "media_types", "content_types", "statuses"]:
-            try:
-                d = settings.find(elm)
-                if d is not None:
-                    view[elm] = [int(x.strip()) for x in d.text.split(",")]
-            except Exception:
-                log_traceback()
-        config["views"][id] = view
+    db.query("SELECT id, settings FROM views")
+    for id, settings in db.fetchall():
+        config["views"][id] = settings
 
     db.query("SELECT id, service_type, title FROM actions")
     for id, service_type, title in db.fetchall():
