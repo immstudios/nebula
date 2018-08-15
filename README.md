@@ -27,7 +27,7 @@ Nebula uses extendable, EBUCore based metadata model backed by a powerful databa
 
 Python scripting allows limitless extendability and automation.
 
-### Scheduling(
+### Scheduling
 
 Client application Firefly allows simple drag&drop block (EPG) based scheduling and creating and applying templates
 
