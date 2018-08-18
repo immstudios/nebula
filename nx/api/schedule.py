@@ -1,6 +1,7 @@
 #
 # WORK IN PROGRESS
 #
+import psycopg2
 
 from nx import *
 
@@ -42,8 +43,15 @@ def api_schedule(**kwargs):
         if not event:
             logging.warning("Unable to delete non existent event ID {}".format(id_event))
             continue
-        event.bin.delete()
-        event.delete()
+        try:
+            event.bin.delete()
+        except psycopg2.IntegrityError:
+            return {
+                    "response" : 423,
+                    "message" : "Unable to delete {}. Already aired.".format(event)
+                }
+        else:
+            event.delete()
         changed_event_ids.append(event.id)
 
     #
