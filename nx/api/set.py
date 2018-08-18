@@ -66,8 +66,8 @@ def api_set(**kwargs):
                     }
 
         if changed:
-            changed_objects.append(obj.id)
             obj.save()
+            changed_objects.append(obj.id)
             if object_type == "item" and obj["id_bin"] not in affected_bins:
                 affected_bins.append(obj["id_bin"])
 
@@ -78,5 +78,5 @@ def api_set(**kwargs):
     if affected_bins:
         bin_refresh(affected_bins, db=db)
 
-    return {"response" : 200}
+    return {"response" : 200, "data" : changed_objects}
 
