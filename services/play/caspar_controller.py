@@ -31,7 +31,7 @@ class CasparController(object):
 
         self.paused   = False
         self.stopped  = False
-        self.stalled  = True
+        self.stalled  = False
 
         self.pos = self.dur = self.fpos = self.fdur = 0
         self.cued_in = self.cued_out = self.current_in = self.current_out = 0
@@ -171,19 +171,18 @@ class CasparController(object):
         # Auto recovery
         #
 
-# TODO
-#        if not current_fname and time.time() - self.recovery_time > 10:
+#        if not current_fname and time.time() - self.recovery_time > 20:
 #            self.parent.channel_recover()
 #            return
 #        self.recovery_time = time.time()
 
         #TODO: Test this!!!
         if cued_fname and (not current_fname) and (not self.paused) and (not self.stopped) and not self.parent.current_live:
-            if self.stalled:
+            if self.stalled > time.time() - 2:
                 logging.warning("Taking stalled clip")
                 self.take()
-            else:
-                self.stalled = True
+            elif not self.stalled:
+                self.stalled = time.time()
         else:
             self.stalled = False
 
@@ -302,7 +301,8 @@ class CasparController(object):
 
     def retake(self, **kwargs):
         layer = kwargs.get("layer", self.parent.caspar_feed_layer)
-        #TODO: if self.parent.current_live
+        if self.parent.current_live:
+            return NebulaResponse(409, "Unable to retake live item")
         seekparam = str(int(self.current_item.mark_in() * self.fps))
         if self.current_item.mark_out():
             seekparam += " LENGTH {}".format(int((self.current_item.mark_out() - self.current_item.mark_in()) * self.fps))
@@ -310,17 +310,19 @@ class CasparController(object):
         self.paused = False
         result = self.query(q)
         if result.is_success:
-            message = "Take OK"
+            message = "Retake OK"
             self.stalled = False
             self.paused = False
             self.stopped = False
+            self.parent.cue_next()
         else:
             message = "Take command failed: " + result.data
         return NebulaResponse(result.response, message)
 
     def freeze(self, **kwargs):
         layer = kwargs.get("layer", self.parent.caspar_feed_layer)
-        #TODO: if self.parent.current_live
+        if self.parent.current_live:
+            return NebulaResponse(409, "Unable to freeze live item")
         if not self.paused:
             q = "PAUSE {}-{}".format(self.parent.caspar_channel, layer)
             message = "Playback paused"
