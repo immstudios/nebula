@@ -26,11 +26,14 @@ def api_playout(**kwargs):
             channel_config.get("controller_host", "localhost"),
             channel_config.get("controller_port", 42100)
         )
-    response = requests.post(controller_url + "/" + action, data=kwargs)
+    try:
+        response = requests.post(controller_url + "/" + action, data=kwargs)
+    except Exception:
+        msg = log_traceback()
+        return {'response' : 502, 'message': msg}
+
+    if response.status_code >= 400:
+        return {'response' : response.status_code, 'message' : response.text}
 
     rdata = json.loads(response.text)
     return rdata
-
-
-
-
