@@ -56,6 +56,17 @@ def api_jobs(**kwargs):
         return {"response" : 200, "data" : result, "message" : "Jobs abort"}
 
     view = kwargs.get("view", "all")
+#TODO
+    query = kwargs.get("query", "")
+    id_asset = kwargs.get("id_asset", False)
+
+    cond = ""
+    if view == "active":
+        cond = "WHERE status IN (0, 1, 5) OR end_time > {}".format(time.time() - 30)
+    elif view == "finished":
+        cond = "WHERE status IN (2, 6)"
+    elif view == "failed":
+        cond = "WHERE status IN (3, 4)"
 
     data = []
     db.query("""SELECT
@@ -72,8 +83,10 @@ def api_jobs(**kwargs):
                 creation_time,
                 start_time,
                 end_time
-            FROM jobs LIMIT 100
-            """)
+            FROM jobs
+            {}
+            LIMIT 100
+            """.format(cond))
     for id, id_asset, id_action, id_service, id_user, priority, retries, status, progress, message, ctime, stime, etime in db.fetchall():
         row = {
                 "id" : id,
