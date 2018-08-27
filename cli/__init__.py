@@ -4,6 +4,7 @@ import cli.passwd
 import cli.a
 import cli.s
 import cli.j
+import cli.t
 
 __all__ = ["modules"]
 
@@ -13,5 +14,6 @@ modules = {
         "passwd" :  passwd.passwd,
         "a" : a.a,
         "s" : s.s,
-        "j" : j.j
+        "j" : j.j,
+        "t" : t.t
     }
