@@ -100,6 +100,8 @@ hub_config = {
                 "schedule" : api_schedule,
                 "jobs" : api_jobs,
                 "playout" : api_playout,
+                "actions" : api_actions,
+                "send" : api_send,
             }
     }
 
