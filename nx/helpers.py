@@ -139,7 +139,7 @@ def get_next_item(item, **kwargs):
 
 
 def bin_refresh(bins, **kwargs):
-    if not bins:
+    if not [b for b in bins if b]:
         return True
     db = kwargs.get("db", DB())
     sender = kwargs.get("sender", False)
