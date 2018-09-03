@@ -7,11 +7,11 @@ Key features
 ------------
 
  - media asset management, metadata handling
- - conversion, video and audio normalization using [Themis](https://github.com/martastain/themis) library
+ - conversion, video and audio normalization
  - programme planning, scheduling
  - linear playout control ([CasparCG](http://www.casparcg.com) and [Liquidsoap](http://liquidsoap.fm))
  - VOD and pseudolinear output automation
- - dynamic CG ([nxcg](https://github.com/martastain/nxcg))
+ - dynamic CG and DVE
  - web publishing
  - statistics, reporting
 
@@ -19,7 +19,7 @@ Key features
 
 Import service normalizes and transcodes all incoming files to the production format.
 
-This process includes metadata extraction, aspect ratio correction, crop and rotation detection, smart frame rate and size normalization and EBU R128 loudness adjustment.
+This process includes metadata extraction, aspect ratio fixing, crop and rotation detection, smart frame rate and size normalization and EBU R128 loudness correction.
 
 ### Asset management
 
@@ -40,9 +40,9 @@ Nebula uses CasparCG playout server for 24/7 multichannel playback in various re
 Installation
 ------------
 
-Use [nebula-setup](https://github.com/immstudios/nebula-setup) repository to install prerequisites.
+See **nebula-setup** repository for installation scripts and instructions.
 
 Need help?
 ----------
 
-Professional support for Nebula is provided by [Nebula broadcast](http://nebulabroadcast.com)
+Professional support for Nebula is provided by [Nebula broadcast](https://nebulabroadcast.com)

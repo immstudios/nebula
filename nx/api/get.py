@@ -22,10 +22,10 @@ def get_objects(ObjectType, **kwargs):
                     ["folders", "id_folder"],
                     ["media_types", "media_type"],
                     ["content_types", "content_type"],
-                    ["statuses", "status"],
+                    ["states", "status"],
                     ["folders", "id_folder"],
                 ]:
-            if key in view_config:
+            if key in view_config and view_config[key]:
                 if len(view_config[key]) == 1:
                     raw_conds.append("{}={}".format(col, view_config[key][0]))
                 else:

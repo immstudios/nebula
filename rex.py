@@ -127,7 +127,7 @@ class Repository(object):
 class Rex(object):
     def __init__(self):
         self.app_dir = os.path.abspath(os.getcwd())
-        self.vendor_dir =os.path.join(self.app_dir, "vendor")
+        self.vendor_dir = os.path.join(self.app_dir, "vendor")
         self.manifest_path = os.path.join(self.app_dir, "rex.json")
         self.self_update()
         self.main()

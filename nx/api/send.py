@@ -16,8 +16,13 @@ def api_send(**kwargs):
     id_action = kwargs.get("id_action", False)
     settings  = kwargs.get("settings", {})
     restart   = params.get("restart", True)
-    user      = kwargs.get("user", anonymous)
     db        = kwargs.get("db", DB())
+
+    if "user" in kwargs:
+        user = User(meta=kwargs.get("user"))
+        if not user:
+            return {"response" : 403, "message" : "You are not allowed to execute this action"}
+        #TODO: Better ACL
 
     if not id_action:
         return {"response" : 400, "message" : "No valid action selected"}

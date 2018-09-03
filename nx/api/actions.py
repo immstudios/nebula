@@ -7,7 +7,6 @@ def api_actions(**kwargs):
         return {'response' : 401, 'message' : 'unauthorized'}
 
     ids = kwargs.get("ids", [])
-    user = kwargs.get("user", anonymous)
     db = kwargs.get("db", DB())
 
     if not ids:
@@ -15,10 +14,16 @@ def api_actions(**kwargs):
 
     result = []
 
-    db.query("SELECT id, title, settings FROM actions ORDER BY id_action ASC")
+    if "user" in kwargs:
+        user = User(meta=kwargs.get("user"))
+        if not user:
+            return {"response" : 403, "message" : "You are not allowed to execute any actions"}
+
+    db.query("SELECT id, title, settings FROM actions ORDER BY id ASC")
     for id, title, settings in db.fetchall():
+        allow = False
         try:
-            cond = xml(cfg).find("allow_if").text
+            cond = xml(settings).find("allow_if").text
         except Exception:
             log_traceback()
             continue
@@ -28,7 +33,7 @@ def api_actions(**kwargs):
             if not eval(cond):
                 break
         else:
-            if user.has_right("job_control", id_action):
-                result.append((id_action, title))
+            if user.has_right("job_control", id):
+                result.append((id, title))
 
     return {'response' : 200, 'message' : 'OK', 'data' : result }

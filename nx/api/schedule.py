@@ -76,7 +76,7 @@ def api_schedule(**kwargs):
                 continue
             pbin = event.bin
         elif event_at_pos:
-            event = Event(event_at_pos, db=db)
+            event = event_at_pos
             pbin = event.bin
         else:
             logging.debug("Creating new event")
@@ -85,7 +85,6 @@ def api_schedule(**kwargs):
             pbin.save()
             logging.debug("Saved", pbin)
             event["id_magic"] = pbin.id
-            print (">>>1 ", pbin.meta)
             event["id_channel"] = id_channel
 
         id_asset = event_data.get("id_asset", False)
@@ -102,7 +101,6 @@ def api_schedule(**kwargs):
                 item["id_bin"] = pbin.id
                 item._asset = asset
                 item.save()
-                print (">>>", pbin.meta)
                 pbin.append(item)
                 pbin.save()
 
