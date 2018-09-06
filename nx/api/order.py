@@ -78,5 +78,10 @@ def api_order(**kwargs):
             item.save()
         pos += 1
 
+    for id_bin in affected_bins:
+        # Update bin duration
+        bin_refresh(affected_bins, db=db)
+
+
     messaging.send("objects_changed", objects=affected_bins, object_type="bin")
     return {"response" : 200, "message" : "OK"}

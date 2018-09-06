@@ -144,7 +144,9 @@ def bin_refresh(bins, **kwargs):
     db = kwargs.get("db", DB())
     sender = kwargs.get("sender", False)
     for id_bin in bins:
-        cache.delete("2-" + str(id_bin))
+        b = Bin(id_bin, db=db)
+        b.save()
+        #cache.delete("2-" + str(id_bin))
     bq = ", ".join([str(b) for b in bins if b])
     changed_events = []
     db.query("""
