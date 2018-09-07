@@ -69,7 +69,7 @@ class Service(BaseService):
         fsize  = int(asset_file.size)
 
         if fsize == 0:
-            if asset["status"] != OFFLINE:
+            if asset["status"] not in [OFFLINE, RETRIEVING]:
                 logging.warning("{}: Turning offline (empty file)".format(asset))
                 asset["status"] = OFFLINE
                 asset.save()
