@@ -72,6 +72,7 @@ hub_config = {
         "login_helper" : login_helper,
         "site_context_helper" : site_context_helper,
         "page_context_helper" : page_context_helper,
+        "sessions_dir" : os.path.join("/tmp", config["site_name"] + "-sessions"),
         "blocking" : True,
         "views" : {
                 "index" : ViewDashboard,
