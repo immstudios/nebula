@@ -1,9 +1,11 @@
-__all__ = ["plugin_path", "PlayoutPlugin", "PlayoutPluginSlot", "WorkerPlugin"]
+__all__ = ["plugin_path", "PlayoutPlugin", "PlayoutPluginSlot", "WorkerPlugin", "ValidatorPlugin"]
 
 import os
 import sys
 
 from nebulacore import *
+
+from .connection import *
 
 #
 # Plugin root
@@ -119,6 +121,25 @@ class PlayoutPlugin(object):
         if self.tasks[0]():
             del self.tasks[0]
             return
+
+#
+# Object validator plugin
+#
+
+class ValidatorPlugin(object):
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+        self._db = False
+
+    @property
+    def db(self):
+        if not self._db:
+            if "db" in self.kwargs:
+                self._db = self.kwargs["db"]
+            else:
+                self._db = DB()
+        return self._db
+
 
 #
 # Worker service plugin
