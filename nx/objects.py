@@ -166,7 +166,9 @@ class Bin(BinMixIn, ServerObject):
         duration = 0
         for item in self.items:
             duration += item.duration
-        self["duration"] = duration
+        if duration != self.duration:
+            logging.debug("New duration of {} is {}".format(self, s2tc(duration)))
+            self["duration"] = duration
         super(Bin, self).save(**kwargs)
 
 
