@@ -1,10 +1,34 @@
-#
-# WORK IN PROGRESS
-#
+import os
+import imp
 
 from nx import *
+from nebulacore.base_objects import BaseObject
 
 __all__ = ["api_set"]
+
+
+def get_validator(object_type, **kwargs):
+    plugin_path = os.path.join(
+            storages[int(config.get("plugin_storage", 1))].local_path,
+            config.get("plugin_root", ".nx/scripts/v5")
+        )
+    if not os.path.exists(plugin_path):
+        return
+
+    f = FileObject(plugin_path, "validator", object_type + ".py")
+    if f.exists:
+        try:
+            py_mod = imp.load_source(object_type, f.path)
+        except:
+            log_traceback("Unable to load plugin {}".format(plugin_name))
+            return
+
+    if not "Plugin" in dir(py_mod):
+        logging.error("No plugin class found in {}".format(f))
+        return
+    return py_mod.Plugin(**kwargs)
+
+
 
 def api_set(**kwargs):
     if not kwargs.get("user", None):
@@ -52,16 +76,21 @@ def api_set(**kwargs):
             if obj[key] != old_value:
                 changed = True
 
-        validation_script = "" #TODO
+        validator = get_validator(object_type, db=db)
 
-        if changed and validation_script:
+        if changed and validator:
             logging.debug("Executing validation script")
-            exec(validation_script)
             tt = obj.__repr__()
-            obj = validate(obj)
-            if not isinstance(obj, BaseObject):
+            try:
+                obj = validator.validate(obj)
+            except Exception:
                 return {
                         "response" : 500,
+                        "message" : log_traceback("Unable to validate object changes.")
+                    }
+            if not isinstance(obj, BaseObject):
+                return {
+                        "response" : 409,
                         "message" : "Unable to save {}: {}".format(tt, obj)
                     }
 
@@ -70,7 +99,6 @@ def api_set(**kwargs):
             changed_objects.append(obj.id)
             if object_type == "item" and obj["id_bin"] not in affected_bins:
                 affected_bins.append(obj["id_bin"])
-
 
     if changed_objects:
         messaging.send("objects_changed", objects=changed_objects, object_type=object_type, user="{}".format(user))
