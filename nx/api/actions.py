@@ -8,16 +8,15 @@ def api_actions(**kwargs):
 
     ids = kwargs.get("ids", [])
     db = kwargs.get("db", DB())
+    user = User(meta=kwargs.get("user"))
+    if not user:
+        return {"response" : 403, "message" : "You are not allowed to execute any actions"}
 
     if not ids:
         return {"response" : 400, "message" : "No asset selected"}
 
     result = []
 
-    if "user" in kwargs:
-        user = User(meta=kwargs.get("user"))
-        if not user:
-            return {"response" : 403, "message" : "You are not allowed to execute any actions"}
 
     db.query("SELECT id, title, settings FROM actions ORDER BY id ASC")
     for id, title, settings in db.fetchall():

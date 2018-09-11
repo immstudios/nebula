@@ -85,6 +85,10 @@ def api_jobs(**kwargs):
                 end_time
             FROM jobs
             {}
+            ORDER BY
+                end_time DESC NULLS FIRST,
+                start_time DESC NULLS LAST,
+                creation_time DESC
             LIMIT 100
             """.format(cond))
     for id, id_asset, id_action, id_service, id_user, priority, retries, status, progress, message, ctime, stime, etime in db.fetchall():

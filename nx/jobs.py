@@ -373,5 +373,6 @@ def send_to(id_asset, id_action, settings={}, id_user=None, priority=3, restart_
             id_asset=id_asset,
             id_action=id_action,
             progress=0,
+            message="Job created",
         )
     return NebulaResponse(201, message="Job created")
