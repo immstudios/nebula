@@ -84,6 +84,8 @@ def api_get(**kwargs):
     db          = kwargs.get("db", DB())
     id_view     = kwargs.get("id_view", 0)
 
+    kwargs["limit"] = kwargs.get("limit", 1000)
+
     if not "conds" in kwargs:
         kwargs["conds"] = []
 

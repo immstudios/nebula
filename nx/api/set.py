@@ -22,6 +22,8 @@ def get_validator(object_type, **kwargs):
         except:
             log_traceback("Unable to load plugin {}".format(plugin_name))
             return
+    else:
+        return
 
     if not "Plugin" in dir(py_mod):
         logging.error("No plugin class found in {}".format(f))
