@@ -114,6 +114,19 @@ def api_schedule(**kwargs):
         for key in event_data:
             if key == "id_magic" and not event_data[key]:
                 continue
+
+            if key == "_items":
+                for item_data in event_data["_items"]:
+                    if not pbin.items:
+                        pos = 0
+                    else:
+                        pos = pbin.items[-1]["position"]
+                    item = Item(meta=item_data, db=db)
+                    item["position"] = pos
+                    item["id_bin"] = pbin.id
+                    item.save()
+                continue
+
             event[key] = event_data[key]
 
         changed_event_ids.append(event.id)
