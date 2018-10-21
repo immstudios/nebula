@@ -103,6 +103,7 @@ hub_config = {
                 "playout" : api_playout,
                 "actions" : api_actions,
                 "send" : api_send,
+                "solve" : api_solve,
                 "system" : api_system,
             }
     }
