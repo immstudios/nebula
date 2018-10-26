@@ -1,3 +1,8 @@
+import smtplib
+import requests
+
+from email.mime.text import MIMEText
+
 from nebulacore import *
 from .connection import *
 from .objects import *
@@ -146,7 +151,6 @@ def bin_refresh(bins, **kwargs):
     for id_bin in bins:
         b = Bin(id_bin, db=db)
         b.save(notify=False)
-        #cache.delete("2-" + str(id_bin))
     bq = ", ".join([str(b) for b in bins if b])
     changed_events = []
     db.query("""
@@ -175,3 +179,59 @@ def bin_refresh(bins, **kwargs):
                 object_type="event"
             )
     return True
+
+
+
+def send_mail(to, subject, body, **kwargs):
+    if type(to) in string_types:
+        to = [to]
+    reply_address = kwargs.get("from", "Nebula <{}@nebulabroadcast.com>".format(config["site_name"]))
+    smtp_host = config.get("smtp_host", "localhost")
+    smtp_user = config.get("smtp_user", False)
+    smtp_pass = config.get("smtp_pass", False)
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = reply_address
+    msg['To'] = ",".join(to)
+    s = smtplib.SMTP(smtp_host)
+    if smtp_user and smtp_pass:
+        s.login(smtp_user, smtp_pass)
+    s.sendmail(reply_address, [to], msg.as_string())
+
+
+def cg_download(target_path, method, **kwargs):
+    start_time = time.time()
+    target_dir = os.path.dirname(os.path.abspath(target_path))
+    cg_server = config.get("cg_server", "https://cg.immstudios.org")
+    cg_site = config.get("cg_site", config["site_name"])
+    if not os.path.isdir(target_dir):
+        try:
+            os.makedirs(target_dir)
+        except Exception:
+            logging.error("Unable to create output directory {}".format(target_dir))
+            return False
+    url = "{}/render/{}/{}".format(
+            cg_server,
+            cg_site,
+            method
+        )
+    try:
+        response = requests.get(url, params=kwargs)
+    except Exception:
+        log_traceback("Unable to download CG item")
+        return False
+    if response.status_code != 200:
+        logging.error("CG Download failed with code {}".format(response.status_code))
+        return False
+    try:
+        temp_path = target_path + ".creating"
+        with open(temp_path, "wb") as f:
+            f.write(response.content)
+        os.rename(temp_path, target_path)
+    except Exception:
+        log_traceback("Unable to write CG item to {}".format(target_path))
+        return False
+    logging.info("CG {} downloaded in {:.02f}s".format(method, time.time() - start_time))
+    return True
+
+
