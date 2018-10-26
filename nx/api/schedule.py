@@ -46,7 +46,7 @@ def api_schedule(**kwargs):
         try:
             event.bin.delete()
         except psycopg2.IntegrityError:
-            NebulaResponse(ERROR_LOCKED, "Unable to delete {}. Already aired.".format(event))
+            return NebulaResponse(ERROR_LOCKED, "Unable to delete {}. Already aired.".format(event))
         else:
             event.delete()
         changed_event_ids.append(event.id)
