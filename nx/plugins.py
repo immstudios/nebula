@@ -84,12 +84,28 @@ class PlayoutPlugin(object):
         return result
 
     @property
+    def id_channel(self):
+        return self.service.id_channel
+
+    @property
+    def channel_config(self):
+        return self.service.channel_config
+
+    @property
     def current_asset(self):
         return self.service.current_asset
 
     @property
     def current_item(self):
         return self.service.current_item
+
+    @property
+    def position(self):
+        return self.service.controller.position
+
+    @property
+    def duration(self):
+        return self.service.controller.duration
 
     def main(self):
         if not self.busy:
