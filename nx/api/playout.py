@@ -33,8 +33,7 @@ def api_playout(**kwargs):
     try:
         response = requests.post(controller_url + "/" + action, data=kwargs)
     except Exception:
-        msg = log_traceback()
-        return NebulaResponsei(ERROR_BAD_GATEWAY," Unable to connect playout service")
+        return NebulaResponse(ERROR_BAD_GATEWAY," Unable to connect playout service")
 
     if response.status_code >= 400:
         return NebulaResponse(response.status_code, response.text)
