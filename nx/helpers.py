@@ -11,7 +11,10 @@ from .objects import *
 def get_user(login, password, db=False):
     if not db:
         db = DB()
-    db.query("SELECT meta FROM users WHERE login=%s AND password=%s", [login, get_hash(password)])
+    try:
+        db.query("SELECT meta FROM users WHERE login=%s AND password=%s", [login, get_hash(password)])
+    except ValueError:
+        return False
     res = db.fetchall()
     if not res:
         return False
