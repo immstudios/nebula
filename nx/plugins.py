@@ -1,7 +1,20 @@
-__all__ = ["plugin_path", "PlayoutPlugin", "PlayoutPluginSlot", "WorkerPlugin", "ValidatorPlugin", "SolverPlugin"]
+__all__ = [
+        "plugin_path",
+        "PlayoutPlugin",
+        "PlayoutPluginSlot",
+        "WorkerPlugin",
+        "ValidatorPlugin",
+        "SolverPlugin",
+        "WebToolPlugin"
+    ]
 
 import os
 import sys
+
+try:
+    import cherrypy
+except ImportError:
+    pass # Needed just on core server
 
 from nebulacore import *
 
@@ -158,7 +171,6 @@ class ValidatorPlugin(object):
                 self._db = DB()
         return self._db
 
-
 #
 # Worker service plugin
 #
@@ -176,7 +188,6 @@ class WorkerPlugin(object):
 
     def on_main(self):
         pass
-
 
 #
 # Rundown solver plugin
@@ -258,7 +269,6 @@ class SolverPlugin(object):
         return NebulaResponse(200, "ok")
 
 
-
     def solve(self):
         """
         This method must return a list or yield items
@@ -266,3 +276,34 @@ class SolverPlugin(object):
         replaces the original placeholder.
         """
         return []
+
+
+class WebToolPlugin(object):
+    def __init__(self, view, name):
+        self.native = True
+        self.view = view
+        self.name = name
+
+    def render(self, template):
+        import jinja2
+        tpl_dir = os.path.join(plugin_path, "webtools", self.name)
+        jinja = jinja2.Environment(
+                    loader=jinja2.FileSystemLoader(tpl_dir)
+                )
+        print (tpl_dir)
+        print ("EX", os.path.exists(os.path.join(tpl_dir, "{}.html".format(template))))
+        template = jinja.get_template("{}.html".format(template))
+        return template.render(**self.context)
+
+    def __getitem__(self, key):
+        return self.view[key]
+
+    def __setitem__(self, key, value):
+        self.view[key] = value
+
+    @property
+    def context(self):
+        return self.view.context
+
+    def build(self, *args, **kwargs):
+        pass
