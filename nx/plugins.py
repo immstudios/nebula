@@ -11,11 +11,6 @@ __all__ = [
 import os
 import sys
 
-try:
-    import cherrypy
-except ImportError:
-    pass # Needed just on core server
-
 from nebulacore import *
 
 from .objects import *
@@ -235,7 +230,6 @@ class SolverPlugin(object):
                     continue
                 dur -= item.duration
             self._needed_duration = dur
-        print ("need", self._needed_duration)
         return self._needed_duration
 
     def main(self):
@@ -290,8 +284,6 @@ class WebToolPlugin(object):
         jinja = jinja2.Environment(
                     loader=jinja2.FileSystemLoader(tpl_dir)
                 )
-        print (tpl_dir)
-        print ("EX", os.path.exists(os.path.join(tpl_dir, "{}.html".format(template))))
         template = jinja.get_template("{}.html".format(template))
         return template.render(**self.context)
 
