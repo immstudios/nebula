@@ -37,7 +37,7 @@ def api_schedule(**kwargs):
     #
 
     for id_event in delete:
-        if not user.has_right("channel_edit", id_channel):
+        if not user.has_right("scheduler_edit", id_channel):
             return NebulaResponse(ERROR_ACCESS_DENIED, "You are not allowed to edit this channel")
         event = Event(id_event, db=db)
         if not event:
@@ -56,7 +56,7 @@ def api_schedule(**kwargs):
     #
 
     for event_data in events:
-        if not user.has_right("channel_edit", id_channel):
+        if not user.has_right("scheduler_edit", id_channel):
             return NebulaResponse(ERROR_ACCESS_DENIED, "You are not allowed to edit this channel")
         id_event = event_data.get("id", False)
 
