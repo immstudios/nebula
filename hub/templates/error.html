@@ -1,0 +1,11 @@
+{% extends "_base.html" %}
+
+{% block content %}
+<div id="error-window">
+    <div class="text-center">
+	     <h4>ERROR {{ page.response_code }}</h4>
+	     {{ page.message }}
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,62 @@
+{% extends "_base.html" %}
+
+{% block content %}
+
+<form id="form-search" action="/assets" method="get">
+    <div class="input-group" id="asset-search-bar">
+        <div class="input-group-prepend">
+            <select id="select-view" class="form-control" name="v">
+                {% for id_view in site.views %}
+                    {% if site.views[id_view]["title"] == "-" %}
+                        <option disabled>──────────</option>
+                    {% else %}
+                    <option value="{{ id_view }}"{% if id_view == page.id_view %} SELECTED{% endif %}>{{ site.views[id_view]["title"] }}
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+
+        <input id="input-query" name="q" type="text" class="form-control" placeholder="Search query..."{% if page.query %} value="{{ page.query }}"{% endif %}>
+
+        <div class="input-group-append">
+            <button id="btn-clear" class="btn"><i class="fas fa-times"></i></button>
+            <button id="btn-search" class="btn"><i class="fas fa-search"></i></button>
+        </div>
+    </div>
+</form>
+
+
+<table id="browser-table" class="table table-sm table-condensed">
+    <thead>
+        <tr>
+        {% for column in page.columns %}
+            <th{% if site.meta_types[column]["class"] > 1 %} style="white-space:nowrap; "{% endif %}>
+                {{ site.meta_types[column].header() }}
+            </th>
+        {% endfor %}
+        </tr>
+    </thead>
+    <tbody id="browser-body">
+    {% for asset in page.assets %}
+        <tr class="browser-row" data-href="{{ asset.id }}">
+        {% for key in page.columns %}
+            <td>
+            {% include "includes/cellformat.html" %}
+            </td>
+        {% endfor %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+
+<div class="modal fade" id="modal-detail" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content" id="modal-detail-content">
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}

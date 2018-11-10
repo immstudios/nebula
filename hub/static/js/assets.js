@@ -1,0 +1,37 @@
+$(document).ready(function(){
+
+    function do_search(){
+        $("#form-search").submit();
+    }
+
+    $("#btn-clear").click(function(event){
+        event.preventDefault();
+        $("#input-query").val("");
+        do_search();
+    });
+
+    $("#btn-search").click(function(event){
+        event.preventDefault();
+        do_search();
+    });
+
+    $("#select-view").change(function(){
+        do_search();
+    });
+
+    $("#input-query").keypress(function( event ) {
+        if ( event.which == 13 ) {
+            event.preventDefault();
+            do_search();
+        }
+    });
+
+    $("#browser-body").on("click", "tr[data-href]", function() {
+        $("#modal-detail-content").load(
+                "/detail/" + $(this).attr("data-href") + "?mode=dialog"
+            );
+        $("#modal-detail").modal("show");
+    });
+
+});
+

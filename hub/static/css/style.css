@@ -1,0 +1,98 @@
+main {
+    padding: 20px;
+}
+
+h2 {
+    font-size: 20px;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+
+.smallform {
+    width: 400px;
+    margin: 0 auto;
+    background-color: #2a2e30;
+    border: 0 !important;
+    color: #eee;
+    padding: 30px;
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+/************
+ *  Nav bar *
+ *************/
+
+.navbar-dark {
+    background-color: #2a2e30;
+}
+
+.navbar-brand img {
+    width: 140px;
+    height: auto;
+}
+
+.nav-link {
+    font-family: Roboto;
+    text-transform: Uppercase;
+}
+
+#navbar-nav{
+    padding-left: 40px;
+}
+
+
+
+/*****************
+ *  Login window *
+ *****************/
+
+#login {
+    /* background: #161616; */
+}
+
+#login-window img {
+    width: 200px;
+    height: auto;
+    margin-bottom: 30px;
+}
+
+#login-window h1 {
+    font-size: 28px;
+}
+
+#login-window input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px white inset;
+}
+
+
+#error-window {
+    width: 400px;
+    margin: 0 auto;
+    background-color: #CC0000;
+    border: 0 !important;
+    color: #eee;
+    padding: 30px;
+    font-color: 12px;
+    font-weight: bold;
+}
+
+
+#asset-search-bar{
+    padding-bottom: 30px;
+}
+
+
+#job-table-body td {
+    font-size: 11px;
+}
+
+#job-table-body button {
+    color : #fff;
+    font-size : 11px;
+}
+
+#tab-panels-detail {
+    padding : 20px;
+}
