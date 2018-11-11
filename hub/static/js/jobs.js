@@ -61,7 +61,7 @@ function load_jobs(){
                     + retime +
                 '</td><td>'
                     + progress +
-                '</td><td>'
+                '</td><td class="job-message">'
                     + rmessage +
                 '<td>' + buttons + '</td></tr>'
             );
