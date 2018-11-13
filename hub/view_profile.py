@@ -11,18 +11,29 @@ class ViewProfile(CherryAdminView):
         self["js"] = []
 
         db = DB()
+        user = User(self["user"]["id"], db=db)
 
-        print(">>>", kwargs)
+        db.query("SELECT meta FROM users WHERE meta->>'is_admin' = 'true'")
+        self["admins"] = [User(meta=meta) for meta, in db.fetchall()]
+        self["user"] = user
 
-        if "password" in kwargs or "full_name" in kwargs:
-            user = User(self["user"]["id"], db=db)
-            print("modify user", user)
-            if kwargs.get("full_name", ""):
-                user["full_name"] = kwargs["full_name"]
-            if kwargs.get("password", ""):
-                user.set_password(kwargs["password"])
+        password = kwargs.get("password", False)
+        full_name = kwargs.get("full_name", False)
+        user_changed = False
+
+        if full_name:
+            user["full_name"] = kwargs["full_name"]
+            user_changed = True
+
+        if password:
+            if len(password) < 8:
+                self.context.message("Your password is too weak. It must be at least 8 characters long.", "error")
+                return
+            user.set_password(kwargs["password"])
+            user_changed = True
+
+        if user_changed:
             user.save()
-
             self.context["user"] = user.meta
             cherrypy.session["user_data"] = user.meta
             self.context.message("User profile saved")
@@ -38,9 +49,3 @@ class ViewProfile(CherryAdminView):
                 ["service_control", "Control services", "services"],
                 ["mcr",             "Control playout", "playout_channels"],
             ]
-
-        db.query("SELECT meta FROM users WHERE meta->>'is_admin' = 'true'")
-        self["admins"] = [User(meta=meta) for meta, in db.fetchall()]
-        self["user"] = User(meta=self.context["user"])
-
-

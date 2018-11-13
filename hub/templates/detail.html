@@ -2,57 +2,55 @@
 {% block content %}
 
 {% if page.asset %}
-
     <ul class="nav nav-tabs" id=tab-nav-detail" role="tablist">
         <li class="nav-item">
             <a class="nav-link active" id="tab-main" data-toggle="tab" href="#tab-panel-main" role="tab">Main</a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" id="tab-extended" data-toggle="tab" href="#tab-panel-extended" role="tab">Extended</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" id="tab-technical" data-toggle="tab" href="#tab-panel-technical" role="tab">Technical</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" id="tab-preview" data-toggle="tab" href="#tab-panel-preview" role="tab">Preview</a>
-        </li>
-    </ul>
+    <li class="nav-item">
+        <a class="nav-link" id="tab-extended" data-toggle="tab" href="#tab-panel-extended" role="tab">Extended</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="tab-technical" data-toggle="tab" href="#tab-panel-technical" role="tab">Technical</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="tab-preview" data-toggle="tab" href="#tab-panel-preview" role="tab">Preview</a>
+    </li>
+</ul>
 
-    <div class="tab-content" id="tab-panels-detail">
+<div class="tab-content" id="tab-panels-detail">
+    <div class="tab-pane fade show active" id="tab-panel-main">
+    {% for key, key_config in page.meta_set %}
+        <div class="form-group row">
+            <label for="input-key-{{ loop.index }}" class="col-sm-2 col-form-label">
+                {{ site.meta_types[key].alias() | replace(" ", "&nbsp;")}}
+            </label>
+            <div class="col-sm-10">
+                {% set key_class = site.meta_types[key]["class"] %}
+                {% if key_class == 0 %} {# string #}
+                    <input name="{{ key }}" class="form-control" type="text" value="{{ page.asset[key] }}" id="input-key-{{ loop.index }}">
+                {% elif key_class == 1 %} {# text#}
+                <textarea name="{{ key }}" class="form-control" id="input_key-{{ loop.index }}" rows="3">{{ page.asset[key]  }}</textarea>
+                {% elif key_class == 2 %} {# integer #}
+                    <input name="{{ key }}" class="form-control" type="number" value="{{ page.asset[key] }}" id="input-key-{{ loop.index }}">
+                {% elif key_class == 3 %} {# numeric #}
+                    <input name="{{ key }}" class="form-control" type="number" value="{{ page.asset[key] }}" id="input-key-{{ loop.index }}">
+                {% elif key_class == 4 %} {# boolean #}
+                    {{ page.asset[key] }}
+                {% elif key_class == 5 %} {# datetime #}
+                    {{ page.asset.show(key) }}
+                {% elif key_class == 6 %} {# timecode #}
+                    {{ page.asset.show(key) }}
+                {% elif key_class == 7 %} {# regions #}
+                    {{ page.asset.show(key) }}
+                {% elif key_class == 8 %} {# fraction #}
+                    {{ page.asset.show(key) }}
+                {% elif key_class == 9 %} {# select #}
 
-        <div class="tab-pane fade show active" id="tab-panel-main">
-        {% for key, key_config in page.meta_set %}
-            <div class="form-group row">
-                <label for="input-key-{{ loop.index }}" class="col-sm-2 col-form-label">
-                    {{ site.meta_types[key].alias() | replace(" ", "&nbsp;")}}
-                </label>
-                <div class="col-sm-10">
-                    {% set key_class = site.meta_types[key]["class"] %}
-                    {% if key_class == 0 %} {# string #}
-                        <input name="{{ key }}" class="form-control" type="text" value="{{ page.asset[key] }}" id="input-key-{{ loop.index }}">
-                    {% elif key_class == 1 %} {# text#}
-                    <textarea name="{{ key }}" class="form-control" id="input_key-{{ loop.index }}" rows="3">{{ page.asset[key]  }}</textarea>
-                    {% elif key_class == 2 %} {# integer #}
-                        <input name="{{ key }}" class="form-control" type="number" value="{{ page.asset[key] }}" id="input-key-{{ loop.index }}">
-                    {% elif key_class == 3 %} {# numeric #}
-                        <input name="{{ key }}" class="form-control" type="number" value="{{ page.asset[key] }}" id="input-key-{{ loop.index }}">
-                    {% elif key_class == 4 %} {# boolean #}
-                        {{ page.asset[key] }}
-                    {% elif key_class == 5 %} {# datetime #}
-                        {{ page.asset.show(key) }}
-                    {% elif key_class == 6 %} {# timecode #}
-                        {{ page.asset.show(key) }}
-                    {% elif key_class == 7 %} {# regions #}
-                        {{ page.asset.show(key) }}
-                    {% elif key_class == 8 %} {# fraction #}
-                        {{ page.asset.show(key) }}
-                    {% elif key_class == 9 %} {# select #}
-
-                        <select name="{{ key }}" class="form-control">
-                        {% for r in page.asset.show(key, full=True) %}
-                            <option value="{{ r.value }}"{% if r.selected %} selected{% endif %}>{{ r.alias }}</option>
-                        {% endfor %}
-                        </select>
+                    <select name="{{ key }}" class="form-control">
+                    {% for r in page.asset.show(key, full=True) %}
+                        <option value="{{ r.value }}"{% if r.selected %} selected{% endif %}>{{ r.alias }}</option>
+                    {% endfor %}
+                    </select>
 
                     {% elif key_class == 10 %} {# list #}
                         {{ page.asset.show(key) }}
@@ -84,5 +82,15 @@
     <h2>No such asset</h2>
 {% endif %}
 
+{% endblock %}
+
+
+
+{% block buttons %}
+    {% if page.asset %}
+        <a href="/jobs?id_asset={{ page.asset.id }}" class="btn btn-primary">Show jobs</a>
+        <button type="button" class="btn btn-primary">Save changes</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+    {% endif %}
 {% endblock %}
 

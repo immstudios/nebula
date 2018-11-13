@@ -122,6 +122,12 @@ class ViewPassReset(CherryAdminView):
                     self.context.message("Passwords don't match", "error")
                     return
 
+                if len(pass1) < 8:
+                    self["mode"] = "pass-entry"
+                    self.context.message("Your password is too weak. It must be at least 8 characters long.", "error")
+                    return
+
+
                 user.set_password(pass1)
                 del(user.meta["pass_reset_code"])
                 del(user.meta["pass_reset_time"])

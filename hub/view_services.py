@@ -5,7 +5,9 @@ class ViewServices(CherryAdminView):
     def build(self, *args, **kwargs):
         self["name"] = "services"
         self["title"] = "Services"
-        self["js"] = []
+        self["js"] = [
+                "/static/js/services.js"
+            ]
 
         state_label = {
                 STOPPED  : "<span class='label text-primary'>Stopped</span>",
@@ -14,7 +16,6 @@ class ViewServices(CherryAdminView):
                 STOPPING : "<span class='label text-warning'>Stopping</span>",
                 KILL     : "<span class='label text-danger'>Killing</span>",
             }
-
 
         services = []
         db = DB()
@@ -26,10 +27,11 @@ class ViewServices(CherryAdminView):
                     "host" : host,
                     "title" : title,
                     "autostart" : autostart,
-                    "state" : state_label[state],
-                    "last_seen" : last_seen
+                    "state" : state,
+                    "last_seen" : last_seen,
+                    "message" :  ""
                 }
             if time.time() - last_seen > 120:
-                service["state"] = "<span class='label label-danger'>Not responding for {}</span>".format(s2words(time.time() - last_seen))
+                service["message"] = "Not responding for {}".format(s2words(time.time() - last_seen))
             services.append(service)
         self["data"]  = services

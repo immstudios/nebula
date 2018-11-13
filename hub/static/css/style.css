@@ -20,6 +20,11 @@ h2 {
     margin-bottom: 40px;
 }
 
+.panel {
+    border: 1px solid #d0d0d0;
+    padding: 10px;
+}
+
 /************
  *  Nav bar *
  *************/
@@ -84,13 +89,14 @@ h2 {
 }
 
 
-#job-table-body td {
-    font-size: 11px;
+.table td {
+    font-size: 12px;
+    vertical-align: middle;
 }
 
 #job-table-body button {
     color : #fff;
-    font-size : 11px;
+    font-size : 12px;
 }
 
 #tab-panels-detail {

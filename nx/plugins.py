@@ -284,6 +284,8 @@ class WebToolPlugin(object):
         jinja = jinja2.Environment(
                     loader=jinja2.FileSystemLoader(tpl_dir)
                 )
+        jinja.filters["format_time"] = format_time
+        jinja.filters["s2tc"] = s2tc
         template = jinja.get_template("{}.html".format(template))
         return template.render(**self.context)
 

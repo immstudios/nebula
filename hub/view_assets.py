@@ -1,3 +1,5 @@
+import math
+
 from nebula import *
 from cherryadmin import CherryAdminView
 
@@ -6,29 +8,29 @@ class ViewAssets(CherryAdminView):
     def build(self, *args, **kwargs):
         self["name"] = "assets"
         self["title"] = "Assets"
-        self["js"] = [
-                "/static/js/assets.js"
-            ]
+        self["js"] = ["/static/js/assets.js"]
+
+        #
+        # Query params
+        #
+
+        query = kwargs.get("q", "")
 
         try:
             id_view = int(kwargs["v"])
+            view = config["views"][id_view]
         except (KeyError, ValueError):
             id_view = min(config["views"])
-        query = kwargs.get("q", "")
-        page = kwargs.get("p", 1)
+            view = config["views"][id_view]
 
-        self["id_view"] = id_view
-        self["query"] = query
-        self["page"] = page
+        try:
+            current_page = int(kwargs["p"])
+        except (KeyError, ValueError, TypeError):
+            current_page = 1
 
-
-#        try:
-        view = config["views"][id_view]
-#        except KeyError:
-#            loggi
-#            return #TODO: Raise 400
-
-        self["columns"] = view["columns"]
+        #
+        # Build view
+        #
 
         records_per_page = 100
 
@@ -37,11 +39,16 @@ class ViewAssets(CherryAdminView):
                 id_view = id_view,
                 fulltext=query or False,
                 count=True,
-                order="mtime DESC",
+                order="ctime DESC",
                 limit=records_per_page,
-#                offset=(current_page - 1)*records_per_page
+                offset=(current_page - 1)*records_per_page
             )
 
+        page_count = int(math.ceil(assets["count"] / records_per_page))
+
+        self["id_view"] = id_view
+        self["query"] = query
+        self["current_page"] = current_page
+        self["page_count"] = page_count
+        self["columns"] = view["columns"]
         self["assets"] = [Asset(meta=meta) for meta in assets["data"]]
-
-

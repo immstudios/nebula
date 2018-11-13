@@ -19,6 +19,10 @@ $(document).ready(function(){
         do_search();
     });
 
+    $("#select-page").change(function(){
+        do_search();
+    });
+
     $("#input-query").keypress(function( event ) {
         if ( event.which == 13 ) {
             event.preventDefault();

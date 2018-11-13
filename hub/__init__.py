@@ -35,10 +35,19 @@ class SiteContext(object):
     context = {
             "name" : config["site_name"],
             "js" : [
-                    "/static/js/vendor.min.js",
-                    "/static/js/main.js"
+                "/static/js/jquery-3.3.1.min.js",
+                "/static/js/bootstrap.min.js",
+                "/static/js/gijgo.min.js",
+                "/static/js/common.js",
                 ],
-            "css" : ["/static/css/main.css"],
+            "css" : [
+                    "/static/css/bootstrap.min.css",
+                    "/static/css/gijgo.min.css",
+                    "/static/css/fontawesome.min.css",
+                    "/static/css/regular.min.css",
+                    "/static/css/solid.min.css",
+                    "/static/css/style.css",
+                ],
             "meta_types" : meta_types,
             "webtools" : webtools
         }
@@ -56,8 +65,15 @@ def site_context_helper():
 def page_context_helper():
     return {}
 
-static_dir = config.get("hub_static_dir", os.path.join(config["nebula_root"], "hub", "static"))
-templates_dir = config.get("hub_templates_dir", os.path.join(config["nebula_root"], "hub", "templates"))
+
+static_dir = config.get(
+        "hub_static_dir",
+        os.path.join(config["nebula_root"], "hub", "static")
+    )
+templates_dir = config.get(
+        "hub_templates_dir",
+        os.path.join(config["nebula_root"], "hub", "templates")
+    )
 
 hub_config = {
         "host" : config.get("hub_host", "0.0.0.0"),

@@ -18,21 +18,25 @@
 
         <input id="input-query" name="q" type="text" class="form-control" placeholder="Search query..."{% if page.query %} value="{{ page.query }}"{% endif %}>
 
+
         <div class="input-group-append">
-            <button id="btn-clear" class="btn"><i class="fas fa-times"></i></button>
-            <button id="btn-search" class="btn"><i class="fas fa-search"></i></button>
+            <select class="custom-select" id="select-page" name="p">
+                {% for p in range(1, page.page_count + 1) %}
+                <option {% if p == page.current_page %}selected{% endif %} value="{{ p }}">{{ p }}</option>
+                {% endfor %}
+            </select>
+            <button id="btn-clear" class="btn btn-danger"><i class="fas fa-times"></i></button>
+            <button id="btn-search" class="btn btn-primary"><i class="fas fa-search"></i></button>
         </div>
     </div>
 </form>
 
 
-<table id="browser-table" class="table table-sm table-condensed">
+<table id="browser-table" class="table table-hover">
     <thead>
         <tr>
         {% for column in page.columns %}
-            <th{% if site.meta_types[column]["class"] > 1 %} style="white-space:nowrap; "{% endif %}>
-                {{ site.meta_types[column].header() }}
-            </th>
+            <th>{{ site.meta_types[column].header() }}</th>
         {% endfor %}
         </tr>
     </thead>

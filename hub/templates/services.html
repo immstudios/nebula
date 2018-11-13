@@ -1,22 +1,29 @@
 {% extends "_base.html" %}
 
 {% block content %}
-<table id="settings-table" class="table table-hover">
+<table id="service-table" class="table table-hover">
     <thead>
         <tr>
             <th style="width:35px;">#</th>
             <th>Title</th>
-            <th>Host</th>
-            <th>State</th>
+            <th style="width:200px;">Host</th>
+            <th style="width:150px;">State</th>
+            <th style="width:100px;">&nbsp;</th>
         </tr>
     </thead>
-    <tbody>{% for service in page.data %}
-        <tr>
-            <td style="width:30px;">{{ service["id"] }}</td>
+    <tbody id="service-table-body">
+        {% for service in page.data %}
+        <tr data-href="{{ service["id"] }}">
+            <td>{{ service["id"] }}</td>
             <td>{{ service["title"] }}</td>
-            <td style="width:200px;">{{ service["host"] }}</td>
-            <td style="width:300px;">{{ service["state"] }}</td>
-        </tr>{% endfor %}
+            <td>{{ service["host"] }}</td>
+            <td class="service-state-label">
+                Please wait...
+            </td>
+            <td class="service-actions">
+            </td>
+        </tr>
+        {% endfor %}
     </tbody>
 </table>
 {% endblock %}

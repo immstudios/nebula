@@ -19,11 +19,13 @@ def api_system(**kwargs):
     if not kwargs.get("user", None):
         return NebulaRespone(ERROR_UNAUTHORISED)
 
+    db = DB()
+    user = User(meta=kwargs["user"])
+
     request = kwargs.get("request", [
             "services",
             "hosts"
         ])
-    db = DB()
 
     if "stop" in kwargs:
         id_service = kwargs["stop"]
@@ -31,6 +33,7 @@ def api_system(**kwargs):
             return NebulaResponse(ERROR_BAD_REQUEST, "Invalid ID service to stop")
         db.query("UPDATE services SET state=3 WHERE id=%s", [id_service])
         db.commit()
+        logging.info("{} requested service {} ({}) stop".format(user, config["services"][id_service]["title"], id_service))
 
     if "start" in kwargs:
         id_service = kwargs["start"]
@@ -38,6 +41,7 @@ def api_system(**kwargs):
             return NebulaResponse(ERROR_BAD_REQUEST, "Invalid ID service to start")
         db.query("UPDATE services SET state=2 WHERE id=%s", [id_service])
         db.commit()
+        logging.info("{} requested service {} ({}) start".format(user, config["services"][id_service]["title"], id_service))
 
     if "kill" in kwargs:
         id_service = kwargs["kill"]
@@ -45,6 +49,7 @@ def api_system(**kwargs):
             return NebulaResponse(ERROR_BAD_REQUEST, "Invalid ID service to kill")
         db.query("UPDATE services SET state=4 WHERE id=%s", [id_service])
         db.commit()
+        logging.info("{} requested service {} ({}) kill".format(user, config["services"][id_service]["title"], id_service))
 
     if "set_autostart" in kwargs:
         id_service = kwargs["set_autostart"]
