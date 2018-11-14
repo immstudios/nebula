@@ -1,13 +1,26 @@
+html {
+    overflow : hidden;
+}
+
 main {
     padding: 20px;
 }
+
+#content {
+    position : absolute;
+    top : 85px;
+    bottom : 0px;
+    left : 5px;
+    right : 5px;
+    overflow : auto;
+}
+
 
 h2 {
     font-size: 20px;
     margin-top: 30px;
     margin-bottom: 30px;
 }
-
 
 .smallform {
     width: 400px;
@@ -28,6 +41,10 @@ h2 {
 /************
  *  Nav bar *
  *************/
+
+.navbar {
+    z-index : 1000;
+}
 
 .navbar-dark {
     background-color: #2a2e30;
@@ -57,6 +74,10 @@ h2 {
     /* background: #161616; */
 }
 
+#login-window {
+    margin-top : 20px;
+}
+
 #login-window img {
     width: 200px;
     height: auto;
@@ -84,7 +105,7 @@ h2 {
 }
 
 
-#asset-search-bar{
+#asset-search-bar {
     padding-bottom: 30px;
 }
 

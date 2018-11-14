@@ -30,27 +30,31 @@ def login_helper(login, password):
     return user.meta
 
 
-
 class SiteContext(object):
     context = {
-            "name" : config["site_name"],
-            "js" : [
-                "/static/js/jquery-3.3.1.min.js",
-                "/static/js/bootstrap.min.js",
-                "/static/js/gijgo.min.js",
-                "/static/js/common.js",
-                ],
-            "css" : [
-                    "/static/css/bootstrap.min.css",
-                    "/static/css/gijgo.min.css",
-                    "/static/css/fontawesome.min.css",
-                    "/static/css/regular.min.css",
-                    "/static/css/solid.min.css",
-                    "/static/css/style.css",
-                ],
-            "meta_types" : meta_types,
-            "webtools" : webtools
-        }
+        "name" : config["site_name"],
+        "js" : [
+            "https://code.jquery.com/jquery-3.3.1.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js",
+            "https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/gijgo/1.9.10/combined/js/gijgo.min.js",
+
+            "/static/js/common.js",
+        ],
+        "css" : [
+            "https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css",
+            "https://cdnjs.cloudflare.com/ajax/libs/gijgo/1.9.10/combined/css/gijgo.min.css",
+            "https://use.fontawesome.com/releases/v5.5.0/css/solid.css",
+            "https://use.fontawesome.com/releases/v5.5.0/css/regular.css",
+            "https://use.fontawesome.com/releases/v5.5.0/css/fontawesome.css",
+            "https://fonts.googleapis.com/css?family=Roboto:400,500,700&amp;subset=latin-ext",
+
+            "/static/css/switch.css",
+            "/static/css/style.css",
+        ],
+        "meta_types" : meta_types,
+        "webtools" : webtools
+    }
 
     def __getitem__(self, key):
         if key in self.context:
@@ -61,9 +65,11 @@ class SiteContext(object):
 def site_context_helper():
     return SiteContext()
 
-
 def page_context_helper():
     return {}
+
+def user_context_helper(meta):
+    return User(meta=meta or {})
 
 
 static_dir = config.get(
@@ -83,6 +89,7 @@ hub_config = {
         "login_helper" : login_helper,
         "site_context_helper" : site_context_helper,
         "page_context_helper" : page_context_helper,
+        "user_context_helper" : user_context_helper,
         "sessions_dir" : os.path.join("/tmp", config["site_name"] + "-sessions"),
         "blocking" : True,
         "minify_html" : True,
@@ -113,4 +120,3 @@ hub_config = {
                 "system"   : api_system,
             }
     }
-

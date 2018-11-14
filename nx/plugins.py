@@ -286,6 +286,7 @@ class WebToolPlugin(object):
                 )
         jinja.filters["format_time"] = format_time
         jinja.filters["s2tc"] = s2tc
+        jinja.filters["slugify"] = slugify
         template = jinja.get_template("{}.html".format(template))
         return template.render(**self.context)
 

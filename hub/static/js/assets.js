@@ -31,11 +31,9 @@ $(document).ready(function(){
     });
 
     $("#browser-body").on("click", "tr[data-href]", function() {
-        $("#modal-detail-content").load(
-                "/detail/" + $(this).attr("data-href") + "?mode=dialog"
-            );
-        $("#modal-detail").modal("show");
+        window.location.href = "/detail/" + $(this).attr("data-href");
     });
+
 
 });
 

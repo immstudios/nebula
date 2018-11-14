@@ -1,11 +1,45 @@
-{% extends page.template %}
+{% extends "_base.html" %}
 {% block content %}
 
 {% if page.asset %}
-    <ul class="nav nav-tabs" id=tab-nav-detail" role="tablist">
-        <li class="nav-item">
-            <a class="nav-link active" id="tab-main" data-toggle="tab" href="#tab-panel-main" role="tab">Main</a>
+
+<nav class="navbar navbar-expand-sm bg-light">
+    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
+                {{ site.folders[page.id_folder]["title"] }}
+            </a>
+            <div class="dropdown-menu">
+                {% for id_folder in site.folders %}
+                <a class="dropdown-item" href="/detail/{{ page.asset.id }}?folder_change={{ id_folder }}">
+                    {{ site.folders[id_folder]["title"] }}
+                </a>
+                {% endfor %}
+            </div>
         </li>
+
+    </ul>
+    <form class="form-inline">
+        <a href="/jobs?id_asset={{ page.asset.id }}" class="btn" data-toggle="tooltip" data-placement="bottom" title="Show jobs">
+            <i class="fas fa-atom"></i>
+        </a>
+        <a href="/detail/{{ page.asset.id }}" class="btn" data-toggle="tooltip" data-placement="bottom" title="Revert changes">
+            <i class="fas fa-undo"></i>
+        </a>
+        <a href="#" class="btn" data-toggle="tooltip" data-placement="bottom" title="Save changes" id="button-save">
+            <i class="far fa-save"></i>
+        </a>
+    </form>
+</nav>
+
+
+<br>
+
+<ul class="nav nav-tabs" id=tab-nav-detail" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link active" id="tab-main" data-toggle="tab" href="#tab-panel-main" role="tab">Main</a>
+    </li>
     <li class="nav-item">
         <a class="nav-link" id="tab-extended" data-toggle="tab" href="#tab-panel-extended" role="tab">Extended</a>
     </li>
@@ -19,6 +53,8 @@
 
 <div class="tab-content" id="tab-panels-detail">
     <div class="tab-pane fade show active" id="tab-panel-main">
+    <form method="post" action="/detail/{{ page.asset.id }}" id="form-edit">
+    <input type="hidden" name="id_folder" value="{{ page.id_folder }}">
     {% for key, key_config in page.meta_set %}
         <div class="form-group row">
             <label for="input-key-{{ loop.index }}" class="col-sm-2 col-form-label">
@@ -35,9 +71,19 @@
                 {% elif key_class == 3 %} {# numeric #}
                     <input name="{{ key }}" class="form-control" type="number" value="{{ page.asset[key] }}" id="input-key-{{ loop.index }}">
                 {% elif key_class == 4 %} {# boolean #}
-                    {{ page.asset[key] }}
+                    <div>
+                        <label class='switch'>
+
+                            <input type="hidden" name="{{ key }}" value="0"><input type='checkbox' onclick="this.previousSibling.value=1-this.previousSibling.value" {% if page.asset[key]  %} checked{% endif %}>
+                            <span class='slider'></span>
+                        </label>
+                    </div>
                 {% elif key_class == 5 %} {# datetime #}
-                    {{ page.asset.show(key) }}
+                    {% if site.meta_types[key]["mode"] == "date" %}
+                    <input name="{{ key }}" type="text" class="datepicker" value="{{ page.asset.show(key, never_placeholder="") }}">
+                    {% else %}
+                        {{ site.meta_types[key]["mode"] }} is not supported yet
+                    {% endif %}
                 {% elif key_class == 6 %} {# timecode #}
                     {{ page.asset.show(key) }}
                 {% elif key_class == 7 %} {# regions #}
@@ -47,6 +93,9 @@
                 {% elif key_class == 9 %} {# select #}
 
                     <select name="{{ key }}" class="form-control">
+                    {% if not page.asset[key] %}
+                        <option value=""></option>
+                    {% endif %}
                     {% for r in page.asset.show(key, full=True) %}
                         <option value="{{ r.value }}"{% if r.selected %} selected{% endif %}>{{ r.alias }}</option>
                     {% endfor %}
@@ -61,22 +110,23 @@
                 </div>
             </div>
         {% endfor %}
-        </div>
+    </form>
+    </div> <!-- tab-main -->
 
-        <div class="tab-pane fade" id="tab-panel-extended">
-            extended
-        </div>
+    <div class="tab-pane fade" id="tab-panel-extended">
+        extended
+    </div> <!-- tab-extended -->
 
-        <div class="tab-pane fade" id="tab-panel-technical">
-            <pre>{{ page.asset.show_meta() }}</pre>
-        </div>
+    <div class="tab-pane fade" id="tab-panel-technical">
+        <pre>{{ page.asset.show_meta() }}</pre>
+    </div> <!-- tab-technical -->
 
-        <div class="tab-pane fade" id="tab-panel-preview">
-            <div id="preview-container">
-                <video src="{{ page.asset.proxy_url }}" id="video-player" controls></video>
-            </div>
+    <div class="tab-pane fade" id="tab-panel-preview">
+        <div id="preview-container">
+            <video src="{{ page.asset.proxy_url }}" id="video-player" controls></video>
         </div>
-    </div>
+    </div> <!-- tab-preview -->
+</div>
 
 {% else %}
     <h2>No such asset</h2>
@@ -86,11 +136,4 @@
 
 
 
-{% block buttons %}
-    {% if page.asset %}
-        <a href="/jobs?id_asset={{ page.asset.id }}" class="btn btn-primary">Show jobs</a>
-        <button type="button" class="btn btn-primary">Save changes</button>
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-    {% endif %}
-{% endblock %}
 

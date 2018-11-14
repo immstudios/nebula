@@ -67,7 +67,6 @@
         <p>You are an administrator of {{ site.site_name }}. You can do everything you want.</p>
     {% else %}
 
-
         <table class="table">
         {% for right, title, subset in page.rights %}
         <tr>
@@ -81,7 +80,7 @@
                     <span class="badge badge-danger">No access</span>
                 {% else %}
                     {% for k in site[subset] %}
-                        {% if page.user.has_right(right, k) %}
+                        {% if user.has_right(right, k) %}
                         <span class="badge badge-secondary">
                             {{ site[subset][k]["title"] }}
                         </span>
@@ -89,15 +88,11 @@
                     {% endfor%}
                 {% endif %}
             </td>
-
-
         </tr>
         {% endfor %}
         </table>
 
-
     {% endif%}
-
 
 </div>
 </div>

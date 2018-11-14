@@ -30,20 +30,22 @@
             </li>
             {% endif %}
 
-            <li class="nav-item dropdown">
+            {% if user.is_admin %}
+            {# <li class="nav-item dropdown">
                 <a href="" class="nav-link dropdown-toggle"
                 data-toggle="dropdown" id="navbarSettingsDropdown">Settings</a>
                 <div class="dropdown-menu">
-                    <a href="/profile" class="dropdown-item">User profile</a>
-                    {% if user.is_admin %}
-                    <!--TODO -->
-                    {% endif %}
+                    <a href="/profile" class="dropdown-item"></a>
                 </div>
-            </li>
+            </li> #}
+            {% endif %}
 
         </ul>
 
         <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a href="/profile" class="nav-link">{{ user.login }}</a>
+            </li>
             <li class="nav-item">
                 <a href="/logout" class="nav-link"><i class="fas fa-sign-out-alt"></i></a>
             </li>

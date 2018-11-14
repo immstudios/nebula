@@ -11,11 +11,10 @@ class ViewProfile(CherryAdminView):
         self["js"] = []
 
         db = DB()
-        user = User(self["user"]["id"], db=db)
+        user = self["user"]
 
         db.query("SELECT meta FROM users WHERE meta->>'is_admin' = 'true'")
         self["admins"] = [User(meta=meta) for meta, in db.fetchall()]
-        self["user"] = user
 
         password = kwargs.get("password", False)
         full_name = kwargs.get("full_name", False)

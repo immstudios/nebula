@@ -46,6 +46,9 @@ class ViewAssets(CherryAdminView):
 
         page_count = int(math.ceil(assets["count"] / records_per_page))
 
+        if current_page > page_count:
+            current_page = 1
+
         self["id_view"] = id_view
         self["query"] = query
         self["current_page"] = current_page

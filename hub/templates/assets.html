@@ -25,7 +25,7 @@
                 <option {% if p == page.current_page %}selected{% endif %} value="{{ p }}">{{ p }}</option>
                 {% endfor %}
             </select>
-            <button id="btn-clear" class="btn btn-danger"><i class="fas fa-times"></i></button>
+            <button id="btn-clear" class="btn"><i class="fas fa-times"></i></button>
             <button id="btn-search" class="btn btn-primary"><i class="fas fa-search"></i></button>
         </div>
     </div>
@@ -52,15 +52,5 @@
     {% endfor %}
     </tbody>
 </table>
-
-
-
-<div class="modal fade" id="modal-detail" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content" id="modal-detail-content">
-    </div>
-  </div>
-</div>
-
 
 {% endblock %}

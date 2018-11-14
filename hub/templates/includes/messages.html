@@ -1,0 +1,17 @@
+{% if messages %}
+<div class="container">
+    {% for message, level in messages %}
+        {% if level == "info" %}
+            {% set color = "info" %}
+        {% elif level == "error" %}
+            {% set color = "danger" %}
+        {% elif level == "warning" %}
+            {% set color = "warning" %}
+        {% endif %}
+        <div class="alert alert-{{ color }}" role="alert">
+            {{ message }}
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+

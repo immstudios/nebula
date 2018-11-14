@@ -12,7 +12,7 @@ def get_objects(ObjectType, **kwargs):
     do_count    = kwargs.get("count", False)
     limit       = kwargs.get("limit", False)
     offset      = kwargs.get("offset", False)
-    order       = kwargs.get("order", False)
+    order       = kwargs.get("order", "ctime DESC")
     id_view     = kwargs.get("id_view", False)
 
     view_count = False

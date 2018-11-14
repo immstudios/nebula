@@ -8,7 +8,7 @@
     {% elif asset["status"] in [2, 5, 11] %} {# creating, reset, retrieving #}
         <span class='label text-warning'><i class="fas fa-retweet"></i></span>&nbsp;
     {% endif %}
-    {{ asset.show(key) }}
+    <a href="/detail/{{ asset.id }}-{{ asset["title"] | slugify }}">{{ asset.show(key) }}</a>
 
 {% elif key == "id_folder" %}
 
