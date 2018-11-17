@@ -35,6 +35,7 @@
         {% endif %}
 
         <main id="content">
+            {% block header %}<h1>{{ page.title }}</h1>{% endblock %}
             {% include "includes/messages.html" %}
             {% block content %}{% endblock %}
         </main>

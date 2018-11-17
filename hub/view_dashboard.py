@@ -1,6 +1,8 @@
 from nebula import *
 from cherryadmin import CherryAdminView
 
+from hub.view_tool import ViewTool
+
 class ViewDashboard(CherryAdminView):
     def build(self, *args, **kwargs):
         self["name"] = "dashboard"

@@ -1,9 +1,8 @@
 {% extends "_base.html" %}
-{% block content %}
 
-{% if page.asset %}
 
-<nav class="navbar navbar-expand-sm bg-light">
+{% block header %}
+<nav class="navbar navbar-expand-sm module-navbar">
     <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
 
         <li class="nav-item dropdown">
@@ -32,10 +31,11 @@
         </a>
     </form>
 </nav>
+{% endblock %}
 
 
-<br>
-
+{% block content %}
+{% if page.asset %}
 <ul class="nav nav-tabs" id=tab-nav-detail" role="tablist">
     <li class="nav-item">
         <a class="nav-link active" id="tab-main" data-toggle="tab" href="#tab-panel-main" role="tab">Main</a>
@@ -55,58 +55,66 @@
     <div class="tab-pane fade show active" id="tab-panel-main">
     <form method="post" action="/detail/{{ page.asset.id }}" id="form-edit">
     <input type="hidden" name="id_folder" value="{{ page.id_folder }}">
+
     {% for key, key_config in page.meta_set %}
         <div class="form-group row">
+
             <label for="input-key-{{ loop.index }}" class="col-sm-2 col-form-label">
                 {{ site.meta_types[key].alias() | replace(" ", "&nbsp;")}}
             </label>
+
             <div class="col-sm-10">
                 {% set key_class = site.meta_types[key]["class"] %}
                 {% if key_class == 0 %} {# string #}
                     <input name="{{ key }}" class="form-control" type="text" value="{{ page.asset[key] }}" id="input-key-{{ loop.index }}">
+
                 {% elif key_class == 1 %} {# text#}
-                <textarea name="{{ key }}" class="form-control" id="input_key-{{ loop.index }}" rows="3">{{ page.asset[key]  }}</textarea>
+                    <textarea name="{{ key }}" class="form-control" id="input_key-{{ loop.index }}" rows="3">{{ page.asset[key]  }}</textarea>
+
                 {% elif key_class == 2 %} {# integer #}
                     <input name="{{ key }}" class="form-control" type="number" value="{{ page.asset[key] }}" id="input-key-{{ loop.index }}">
+
                 {% elif key_class == 3 %} {# numeric #}
                     <input name="{{ key }}" class="form-control" type="number" value="{{ page.asset[key] }}" id="input-key-{{ loop.index }}">
+
                 {% elif key_class == 4 %} {# boolean #}
                     <div>
                         <label class='switch'>
-
-                            <input type="hidden" name="{{ key }}" value="0"><input type='checkbox' onclick="this.previousSibling.value=1-this.previousSibling.value" {% if page.asset[key]  %} checked{% endif %}>
+                            <input type="hidden" name="{{ key }}" value="{{ page.asset[key] | int }}"><input type='checkbox' onclick="this.previousSibling.value=1-this.previousSibling.value" {% if page.asset[key]  %} checked{% endif %}>
                             <span class='slider'></span>
                         </label>
                     </div>
+
                 {% elif key_class == 5 %} {# datetime #}
                     {% if site.meta_types[key]["mode"] == "date" %}
-                    <input name="{{ key }}" type="text" class="datepicker" value="{{ page.asset.show(key, never_placeholder="") }}">
+                        <input name="{{ key }}" type="text" class="datepicker" value="{{ page.asset.show(key, never_placeholder="") }}" id="input-key-{{ loop.index }}">
                     {% else %}
                         {{ site.meta_types[key]["mode"] }} is not supported yet
                     {% endif %}
+
                 {% elif key_class == 6 %} {# timecode #}
                     {{ page.asset.show(key) }}
+
                 {% elif key_class == 7 %} {# regions #}
                     {{ page.asset.show(key) }}
+
                 {% elif key_class == 8 %} {# fraction #}
                     {{ page.asset.show(key) }}
-                {% elif key_class == 9 %} {# select #}
 
-                    <select name="{{ key }}" class="form-control">
-                    {% if not page.asset[key] %}
-                        <option value=""></option>
-                    {% endif %}
+                {% elif key_class == 9 %} {# select #}
+                    <select name="{{ key }}" class="form-control" id="input-key-{{ loop.index }}">
                     {% for r in page.asset.show(key, full=True) %}
                         <option value="{{ r.value }}"{% if r.selected %} selected{% endif %}>{{ r.alias }}</option>
                     {% endfor %}
                     </select>
 
-                    {% elif key_class == 10 %} {# list #}
-                        {{ page.asset.show(key) }}
-                    {% elif key_class == 11 %} {# color #}
-                        {{ page.asset.show(key) }}
+                {% elif key_class == 10 %} {# list #}
+                    {{ page.asset.show(key) }}
 
-                    {%endif%}
+                {% elif key_class == 11 %} {# color #}
+                    {{ page.asset.show(key) }}
+
+                {%endif%}
                 </div>
             </div>
         {% endfor %}
@@ -114,11 +122,25 @@
     </div> <!-- tab-main -->
 
     <div class="tab-pane fade" id="tab-panel-extended">
-        extended
+        <table class="table">
+        {% for key in page["extended_keys"] %}
+        <tr>
+            <td>{{ site.meta_types[key].alias() | replace(" ", "&nbsp;") }}</td>
+            <td>{{ page.asset.show(key) }}</td>
+        </tr>
+        {% endfor%}
+        </table>
     </div> <!-- tab-extended -->
 
     <div class="tab-pane fade" id="tab-panel-technical">
-        <pre>{{ page.asset.show_meta() }}</pre>
+        <table class="table">
+        {% for key in page["technical_keys"] %}
+        <tr>
+            <td>{{ site.meta_types[key].alias() | replace(" ", "&nbsp;") }}</td>
+            <td>{{ page.asset.show(key) }}</td>
+        </tr>
+        {% endfor%}
+        </table>
     </div> <!-- tab-technical -->
 
     <div class="tab-pane fade" id="tab-panel-preview">

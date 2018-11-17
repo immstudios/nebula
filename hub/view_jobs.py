@@ -24,4 +24,3 @@ class ViewJobs(CherryAdminView):
 
         self["mode"] = mode
         self["id_asset"] = id_asset
-        self["show_job_title"] = True

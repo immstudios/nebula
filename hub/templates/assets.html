@@ -1,37 +1,6 @@
 {% extends "_base.html" %}
 
 {% block content %}
-
-<form id="form-search" action="/assets" method="get">
-    <div class="input-group" id="asset-search-bar">
-        <div class="input-group-prepend">
-            <select id="select-view" class="form-control" name="v">
-                {% for id_view in site.views %}
-                    {% if site.views[id_view]["title"] == "-" %}
-                        <option disabled>──────────</option>
-                    {% else %}
-                    <option value="{{ id_view }}"{% if id_view == page.id_view %} SELECTED{% endif %}>{{ site.views[id_view]["title"] }}
-                    {% endif %}
-                {% endfor %}
-            </select>
-        </div>
-
-        <input id="input-query" name="q" type="text" class="form-control" placeholder="Search query..."{% if page.query %} value="{{ page.query }}"{% endif %}>
-
-
-        <div class="input-group-append">
-            <select class="custom-select" id="select-page" name="p">
-                {% for p in range(1, page.page_count + 1) %}
-                <option {% if p == page.current_page %}selected{% endif %} value="{{ p }}">{{ p }}</option>
-                {% endfor %}
-            </select>
-            <button id="btn-clear" class="btn"><i class="fas fa-times"></i></button>
-            <button id="btn-search" class="btn btn-primary"><i class="fas fa-search"></i></button>
-        </div>
-    </div>
-</form>
-
-
 <table id="browser-table" class="table table-hover">
     <thead>
         <tr>
