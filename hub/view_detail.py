@@ -1,12 +1,11 @@
-from pprint import pformat
 import cherrypy
-
 from nebula import *
 from cherryadmin import CherryAdminView
 
 
 def validate_data(context, asset, meta):
     result = {}
+    changed = False
     for key in meta:
         value = meta[key]
         meta_type = meta_types[key]
@@ -67,16 +66,17 @@ def validate_data(context, asset, meta):
         elif meta_type["class"] == COLOR:
             new_val = value
 
-
         if asset[key] != new_val:
+            changed = True
             try:
                 asset[key] = new_val
             except Exception:
                 log_traceback()
                 return "Invalid value for key {}".format(key)
 
-
-    return asset
+    if not changed:
+        return "No change"
+    return None
 
 
 
@@ -95,27 +95,35 @@ class ViewDetail(CherryAdminView):
             self["asset"] = False
             return
 
-        asset = Asset(id_asset)
-        self["asset"] = asset
-        self["title"] = asset["title"]
-
+        db = DB()
+        asset = Asset(id_asset, db=db)
         id_folder = int(kwargs.get("folder_change", asset["id_folder"]))
 
         if cherrypy.request.method == "POST":
-            meta = validate_data(self.context, asset, kwargs)
-            if type(meta) == str:
-                self.context.message(meta, level="error")
+            error_message = validate_data(self.context, asset, kwargs)
+            if error_message:
+                self.context.message(error_message, level="error")
             else:
-                self.context.message("<pre>"+pformat(asset.meta)+"</pre>")
-
+                response = api_set(
+                        user=self["user"].meta,
+                        objects=[asset.id],
+                        data=asset.meta,
+                        db=db
+                    )
+                if response.is_success:
+                    self.context.message("Asset saved")
+                else:
+                    self.context.message(response.message, level="error")
 
         try:
             fconfig = config["folders"][id_folder]
         except:
-            log_traceback()
-        self["meta_set"] = fconfig["meta_set"]
+            self.context.message("Unknown folder ID", level="error")
+            fconfig = config["folders"][min(config["folders"].keys())]
+
+        self["asset"] = asset
+        self["title"] = asset["title"]
         self["id_folder"] = id_folder
-
-
+        self["meta_set"] = fconfig["meta_set"]
         self["extended_keys"] = sorted([k for k in asset.meta if meta_types[k]["ns"] not in ["f","q"] and k not in [l[0] for l in fconfig["meta_set"]]], key=lambda k: meta_types[k]["ns"])
         self["technical_keys"] = sorted([k for k in asset.meta if meta_types[k]["ns"] in ["f","q"] ])

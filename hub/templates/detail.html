@@ -87,7 +87,7 @@
 
                 {% elif key_class == 5 %} {# datetime #}
                     {% if site.meta_types[key]["mode"] == "date" %}
-                        <input name="{{ key }}" type="text" class="datepicker" value="{{ page.asset.show(key, never_placeholder="") }}" id="input-key-{{ loop.index }}">
+                        <input name="{{ key }}" type="text" class="datepicker" value="{{ page.asset.show(key, format="%Y-%m-%d", never_placeholder="") }}" id="input-key-{{ loop.index }}">
                     {% else %}
                         {{ site.meta_types[key]["mode"] }} is not supported yet
                     {% endif %}
