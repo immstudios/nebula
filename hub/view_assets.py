@@ -28,11 +28,15 @@ class ViewAssets(CherryAdminView):
         except (KeyError, ValueError, TypeError):
             current_page = 1
 
+        if kwargs.get("lv", False) != kwargs.get("v", False) or kwargs.get("lq", False) != kwargs.get("q", False):
+            current_page = 1
+
         #
         # Build view
         #
 
         records_per_page = 100
+
 
         assets = api_get(
                 user = self["user"],
@@ -44,7 +48,8 @@ class ViewAssets(CherryAdminView):
                 offset=(current_page - 1)*records_per_page
             )
 
-        page_count = int(math.ceil(assets["count"] / records_per_page))
+        page_count = int(math.ceil(assets["count"] / records_per_page)) + 1
+        print ("page count", page_count)
 
         if current_page > page_count:
             current_page = 1

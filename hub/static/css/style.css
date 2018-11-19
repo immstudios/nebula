@@ -47,7 +47,8 @@ h2 {
  *  Nav bar *
  *************/
 
-.navbar {
+
+#site-nav{
     z-index : 1000;
 }
 

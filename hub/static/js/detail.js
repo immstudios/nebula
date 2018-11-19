@@ -1,7 +1,5 @@
-$(document).ready(function() {
-
+$(document).ready(function(){
   	$('[data-toggle="tooltip"]').tooltip()
-
 
     $(".datepicker").each(function(){
             $(this).datepicker({
@@ -17,5 +15,4 @@ $(document).ready(function() {
     $("#button-save").click(function(){
         $("#form-edit").submit();
     });
-
 });

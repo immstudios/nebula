@@ -46,7 +46,8 @@ def validate_data(context, asset, meta):
                 try:
                     new_val = datestr2ts(value)
                 except Exception:
-                    return "Invalid value for key {}".format(key)
+                    log_traceback()
+                    return "Invalid value {} for key {}".format(value, key)
                 #TODO time
 
         elif meta_type["class"] == TIMECODE:
@@ -67,6 +68,7 @@ def validate_data(context, asset, meta):
             new_val = value
 
         if asset[key] != new_val:
+            context.message("{} {} -> {}".format(key, json.dumps(asset[key]), json.dumps(new_val)))
             changed = True
             try:
                 asset[key] = new_val

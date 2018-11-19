@@ -30,10 +30,10 @@ def get_objects(ObjectType, **kwargs):
                     raw_conds.append("{}={}".format(col, view_config[key][0]))
                 else:
                     raw_conds.append("{} IN ({})".format(col, ",".join([str(v) for v in view_config[key]])))
-        try:
-            view_count = int(cache.load("view-count-"+str(id_view)))
-        except:
-            pass
+#        try:
+#            view_count = int(cache.load("view-count-"+str(id_view)+))
+#        except:
+#            pass
 
 
     conds = []
@@ -151,8 +151,8 @@ def api_get(**kwargs):
     # response
     #
 
-    if id_view and (not kwargs.get("view_count")) and result["count"]:
-        cache.save("view-count-"+str(id_view), result["count"])
+#    if id_view and (not kwargs.get("view_count")) and result["count"]:
+#        cache.save("view-count-"+str(id_view), result["count"])
 
     result["response"] = 200
     result["message"] = "{} {}s returned in {:.02}s".format(

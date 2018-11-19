@@ -1,8 +1,9 @@
+function do_search(){
+    $("#form-search").submit();
+}
+
 $(document).ready(function(){
 
-    function do_search(){
-        $("#form-search").submit();
-    }
 
     $("#btn-clear").click(function(event){
         event.preventDefault();
@@ -15,7 +16,9 @@ $(document).ready(function(){
         do_search();
     });
 
-    $("#select-view").change(function(){
+    $(".select-view-link").click(function(){
+        event.preventDefault();
+        $("#select-view").val($(this).attr("data-href"));
         do_search();
     });
 
