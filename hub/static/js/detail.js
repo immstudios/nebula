@@ -1,5 +1,19 @@
+function save_asset() {
+    console.log($("#input-duration").val());
+    console.log($("#input-form-duration").val());
+    if ($("#input-duration").val() != $("#input-form-duration").val()){
+        $("#input-form-duration").val($("#input-duration").val());
+        console.log("changing duration to", $("#input-form-duration").val());
+    }
+    $("#form-edit").submit();
+}
+
+
 $(document).ready(function(){
-  	$('[data-toggle="tooltip"]').tooltip()
+
+    if (window.history.replaceState) {
+        window.history.replaceState( null, null, window.location.href );
+    }
 
     $(".datepicker").each(function(){
             $(this).datepicker({
@@ -13,6 +27,16 @@ $(document).ready(function(){
     });
 
     $("#button-save").click(function(){
-        $("#form-edit").submit();
+        save_asset();
     });
 });
+
+
+$(document).keydown(function(event) {
+        if((event.ctrlKey || event.metaKey) && event.which == 83) {
+            save_asset();
+            event.preventDefault();
+            return false;
+        }
+    }
+);

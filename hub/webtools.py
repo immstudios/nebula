@@ -4,6 +4,9 @@ from nebula import *
 
 class WebTools():
     def __init__(self):
+        self.load()
+
+    def load(self):
         self.tools = {}
         global plugin_path
         if not plugin_path:

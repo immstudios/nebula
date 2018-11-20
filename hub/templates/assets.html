@@ -21,6 +21,11 @@
                 {% endfor %}
             </div>
         </li>
+        <li class="nav-item">
+            <a href="/detail?new_asset=1" id="btn-new-asset" class="btn" title="Create new asset">
+                <i class="fas fa-plus"></i>
+            </a>
+        </li>
     </ul>
 
 
@@ -36,19 +41,23 @@
         </li>
         {% if page.page_count > 1 %}
         <li class="nav-item">
-        <select class="custom-select" id="select-page" name="p">
-            {% for p in range(1, page.page_count ) %}
-                <option {% if p == page.current_page %}selected{% endif %} value="{{ p }}">{{ p }}</option>
-            {% endfor %}
-        </select>
+            <select class="custom-select" id="select-page" name="p" title="Result page">
+                {% for p in range(1, page.page_count ) %}
+                    <option {% if p == page.current_page %}selected{% endif %} value="{{ p }}">{{ p }}</option>
+                {% endfor %}
+            </select>
         </li>
         {% endif %}
 
         <li class="nav-item">
-            <a href="#" id="btn-clear" class="btn"><i class="fas fa-times"></i></a>
+            <a href="#" id="btn-clear" class="btn" title="Clear search query">
+                <i class="fas fa-times"></i>
+            </a>
         </li>
         <li class="nav-item">
-            <a href="#" id="btn-search" class="btn"><i class="fas fa-search"></i></a>
+            <a href="#" id="btn-search" class="btn" title="Search assets">
+                <i class="fas fa-search"></i>
+            </a>
         </li>
     </form>
     </ul>

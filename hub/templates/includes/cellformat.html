@@ -43,11 +43,11 @@
 {% elif key == "qc/state" %}
 
     {% if asset["qc/state"] == 0 %}
-        <span class='label'><i class="far fa-flag"></i></span>
+        <span class="label text-secondary"><i class="fas fa-flag"></i></span>
     {% elif asset["qc/state"] == 3 %}
-        <span class='label text-danger'><i class="fas fa-flag"></i></span>
+        <span class="label text-danger"><i class="fas fa-flag"></i></span>
     {% elif asset["qc/state"] == 4 %}
-        <span class='label text-success'><i class="fas fa-flag"></i></span>
+        <span class="label text-success"><i class="fas fa-flag"></i></span>
     {% endif %}
 
 {% else %}

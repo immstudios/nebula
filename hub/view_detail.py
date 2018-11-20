@@ -93,13 +93,23 @@ class ViewDetail(CherryAdminView):
         except (IndexError, ValueError):
             id_asset = 0
 
-        if not id_asset:
-            self["asset"] = False
-            return
-
         db = DB()
-        asset = Asset(id_asset, db=db)
+
+        if not id_asset:
+            if kwargs.get("new_asset", False):
+                asset = Asset(db=db)
+                asset["id_folder"] = min(config["folders"].keys())
+                self["new_asset"] = True
+            else:
+                self["asset"] = False
+                return
+        else:
+            asset = Asset(id_asset, db=db)
+
+
         id_folder = int(kwargs.get("folder_change", asset["id_folder"]))
+        if id_folder != asset["id_folder"]:
+            asset["id_folder"] = id_folder
 
         if cherrypy.request.method == "POST":
             error_message = validate_data(self.context, asset, kwargs)
@@ -116,6 +126,7 @@ class ViewDetail(CherryAdminView):
                     self.context.message("Asset saved")
                 else:
                     self.context.message(response.message, level="error")
+                asset = Asset(id_asset, db=db) # reload after update
 
         try:
             fconfig = config["folders"][id_folder]
@@ -124,7 +135,7 @@ class ViewDetail(CherryAdminView):
             fconfig = config["folders"][min(config["folders"].keys())]
 
         self["asset"] = asset
-        self["title"] = asset["title"]
+        self["title"] = asset.__repr__().replace("a", "A", 1) if asset.id else "New asset"
         self["id_folder"] = id_folder
         self["meta_set"] = fconfig["meta_set"]
         self["extended_keys"] = sorted([k for k in asset.meta if meta_types[k]["ns"] not in ["f","q"] and k not in [l[0] for l in fconfig["meta_set"]]], key=lambda k: meta_types[k]["ns"])
