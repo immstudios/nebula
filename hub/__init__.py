@@ -39,6 +39,7 @@ class SiteContext(object):
             "https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js",
             "https://cdnjs.cloudflare.com/ajax/libs/gijgo/1.9.10/combined/js/gijgo.min.js",
 
+            "/static/js/jquery.inputmask.js",
             "/static/js/common.js",
         ],
         "css" : [

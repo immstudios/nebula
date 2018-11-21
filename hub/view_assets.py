@@ -37,7 +37,6 @@ class ViewAssets(CherryAdminView):
 
         records_per_page = 100
 
-
         assets = api_get(
                 user = self["user"],
                 id_view = id_view,
@@ -49,7 +48,6 @@ class ViewAssets(CherryAdminView):
             )
 
         page_count = int(math.ceil(assets["count"] / records_per_page)) + 1
-        print ("page count", page_count)
 
         if current_page > page_count:
             current_page = 1

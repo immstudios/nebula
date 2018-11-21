@@ -3,15 +3,18 @@ from nx import *
 __all__ = ["api_jobs"]
 
 def api_jobs(**kwargs):
-    if not kwargs.get("user", None):
+    formatted = kwargs.get("formatted", False) # load titles etc
+    user = kwargs.get("user", anonymous)
+    query = kwargs.get("query", "")
+    id_asset = kwargs.get("id_asset", False)
+    view = kwargs.get("view", "active")
+    db = kwargs.get("db", DB())
+
+    if not user:
         return NebulaResponse(ERROR_UNAUTHORISED)
 
-    db = kwargs.get("db", DB())
-    user = User(meta=kwargs["user"])
-    formatted = kwargs.get("formatted", False) # load titles etc
-
     for k in ["restart", "abort"]:
-        if k in kwargs and not user.has_right("job_control"):
+        if k in kwargs and not user.has_right("job_control", anyval=True):
             return NebulaResponse(ERROR_ACCESS_DENIED)
 
     if "restart" in kwargs:
@@ -56,12 +59,8 @@ def api_jobs(**kwargs):
         #TODO: smarter message
         return NebulaResponse(200, "Jobs aborted", data=result)
 
-    id_asset = kwargs.get("id_asset", False)
-    view = kwargs.get("view", "active")
 
-    #TODO
-    query = kwargs.get("query", "")
-
+    #TODO: fulltext
 
     try:
         id_asset = int(id_asset)

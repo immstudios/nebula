@@ -18,24 +18,31 @@ class ViewProfile(CherryAdminView):
 
         password = kwargs.get("password", False)
         full_name = kwargs.get("full_name", False)
+        dashboard = kwargs.get("dashboard", "")
         user_changed = False
 
-        if full_name:
-            user["full_name"] = kwargs["full_name"]
-            user_changed = True
+        if cherrypy.request.method == "POST":
+            if full_name:
+                user["full_name"] = kwargs["full_name"]
+                user_changed = True
 
-        if password:
-            if len(password) < 8:
-                self.context.message("Your password is too weak. It must be at least 8 characters long.", "error")
-                return
-            user.set_password(kwargs["password"])
-            user_changed = True
+            if password:
+                if len(password) < 8:
+                    self.context.message("Your password is too weak. It must be at least 8 characters long.", "error")
+                    return
+                user.set_password(kwargs["password"])
+                user_changed = True
 
-        if user_changed:
-            user.save()
-            self.context["user"] = user.meta
-            cherrypy.session["user_data"] = user.meta
-            self.context.message("User profile saved")
+            if dashboard != user["dashboard"]:
+                user["dashboard"] = dashboard
+                user_changed = True
+
+            if user_changed:
+                user.save()
+                self.context["user"] = user.meta
+                cherrypy.session["user_data"] = user.meta
+                self.context.message("User profile saved")
+
 
         self["rights"] = [
                 ["asset_edit",      "Edit assets", "folders"],

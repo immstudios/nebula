@@ -29,6 +29,12 @@ $(document).ready(function(){
     $("#button-save").click(function(){
         save_asset();
     });
+
+    $(".btn-qcstate").click(function(){
+        console.log("set qc/state to" + $(this).attr("data-href"));
+        //TODO
+    });
+
 });
 
 

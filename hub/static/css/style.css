@@ -135,3 +135,9 @@ h2 {
 #tab-panels-detail {
     padding : 20px;
 }
+
+.input-timecode {
+    width: 120px;
+    font-family: monospace;
+    text-align: center;
+}

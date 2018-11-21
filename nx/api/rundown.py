@@ -131,11 +131,12 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
 
 
 def api_rundown(**kwargs):
-    if not kwargs.get("user", None):
-        return NebulaResponse(ERROR_UNAUTHORISED)
-
+    user = kwargs.get("user", anonymous)
     id_channel = int(kwargs.get("id_channel", -1))
     start_time = kwargs.get("start_time", 0)
+
+    if not (user.has_right("rundown_view", id_channel) or user.has_right("rundown_edit", id_channel)):
+        return NebulaResponse(ERROR_ACCESS_DENIED)
 
     process_start_time = time.time()
 

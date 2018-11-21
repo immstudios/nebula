@@ -8,28 +8,18 @@ from nx import *
 __all__ = ["api_schedule"]
 
 def api_schedule(**kwargs):
-    if not kwargs.get("user", None):
-        return NebulaResponse(ERROR_UNAUTHORISED)
-
     id_channel = kwargs.get("id_channel", 0)
     start_time = kwargs.get("start_time", 0)
     end_time = kwargs.get("end_time", 0)
     events = kwargs.get("events", []) # Events to add/update
     delete = kwargs.get("delete", []) # Event ids to delete
+    db = kwargs.get("db", DB())
+    user = kwargs.get("user", anonymous)
 
-
-    #TODO: Other channel types
     if not id_channel or id_channel not in config["playout_channels"]:
         return NebulaResponse(ERROR_BAD_REQUEST, "Unknown playout channel ID {}".format(id_channel))
+
     channel_config = config["playout_channels"][id_channel]
-
-    if "user" in kwargs:
-        user = User(meta=kwargs.get("user"))
-    else:
-        user = User(meta={"login" : "Nebula"})
-
-
-    db = DB()
     changed_event_ids = []
 
     #
@@ -125,7 +115,6 @@ def api_schedule(**kwargs):
                     item["id_bin"] = pbin.id
                     item.save()
                 continue
-
             event[key] = event_data[key]
 
         changed_event_ids.append(event.id)
@@ -137,6 +126,8 @@ def api_schedule(**kwargs):
     #
     # Return existing events
     #
+
+    #TODO: ACL scheduler view
 
     result = []
     if start_time and end_time:

@@ -117,7 +117,7 @@ class ViewDetail(CherryAdminView):
                 self.context.message(error_message, level="error")
             else:
                 response = api_set(
-                        user=self["user"].meta,
+                        user=self["user"],
                         objects=[asset.id],
                         data=asset.meta,
                         db=db
@@ -140,3 +140,6 @@ class ViewDetail(CherryAdminView):
         self["meta_set"] = fconfig["meta_set"]
         self["extended_keys"] = sorted([k for k in asset.meta if meta_types[k]["ns"] not in ["f","q"] and k not in [l[0] for l in fconfig["meta_set"]]], key=lambda k: meta_types[k]["ns"])
         self["technical_keys"] = sorted([k for k in asset.meta if meta_types[k]["ns"] in ["f","q"] ])
+
+        #TODO
+        self["actions"] = []

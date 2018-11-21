@@ -37,4 +37,7 @@ $(document).ready(function(){
     setTimeout(function() {
         $(".alert-danger").alert('close');
     }, 10000);
+
+    $(".input-timecode").inputmask({"mask": "99:99:99:99", "insertMode" : false});
+
 });

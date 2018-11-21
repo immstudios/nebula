@@ -74,20 +74,17 @@ def get_objects(ObjectType, **kwargs):
 
 
 def api_get(**kwargs):
-    if not kwargs.get("user", None):
-        return NebulaResponse(401, 'unauthorized')
-
     object_type = kwargs.get("object_type", "asset")
     ids         = kwargs.get("ids", [])
     result_type = kwargs.get("result", False)
-    user        = kwargs.get("user", anonymous)
     db          = kwargs.get("db", DB())
     id_view     = kwargs.get("id_view", 0)
-
+    user        = kwargs.get("user", anonymous)
+    kwargs["conds"] = kwargs.get("conds", [])
     kwargs["limit"] = kwargs.get("limit", 1000)
 
-    if not "conds" in kwargs:
-        kwargs["conds"] = []
+    if not user:
+        return NebulaResponse(ERROR_UNAUTHORISED)
 
     start_time = time.time()
 

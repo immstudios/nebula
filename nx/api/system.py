@@ -16,11 +16,12 @@ from nx import *
 __all__ = ["api_system"]
 
 def api_system(**kwargs):
-    if not kwargs.get("user", None):
+
+    user = kwargs.get("user", anonymous)
+    if not user:
         return NebulaRespone(ERROR_UNAUTHORISED)
 
     db = DB()
-    user = User(meta=kwargs["user"])
 
     request = kwargs.get("request", [
             "services",
