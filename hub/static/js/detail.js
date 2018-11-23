@@ -35,6 +35,11 @@ $(document).ready(function(){
         //TODO
     });
 
+    $(".btn-sendto").click(function() {
+        $("#input-id-action").val($(this).attr("data-href"));
+        $("#form-sendto").submit();
+    });
+
 });
 
 

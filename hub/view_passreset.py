@@ -30,7 +30,6 @@ class ViewPassReset(CherryAdminView):
     def build(self, *args, **kwargs):
         self["name"] = "passreset"
         self["title"] = "Password reset"
-        self["js"] = []
         self["mode"] = "email-entry"
 
         #
@@ -139,4 +138,3 @@ class ViewPassReset(CherryAdminView):
 
             self["mode"] = "pass-entry"
             return
-

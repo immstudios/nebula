@@ -134,12 +134,17 @@ class ViewDetail(CherryAdminView):
             self.context.message("Unknown folder ID", level="error")
             fconfig = config["folders"][min(config["folders"].keys())]
 
+        # Get available actions
+        actions = api_actions(
+                    user=self["user"],
+                    db=db,
+                    ids=[id_asset]
+                )
+
         self["asset"] = asset
-        self["title"] = asset.__repr__().replace("a", "A", 1) if asset.id else "New asset"
+        self["title"] = asset["title"] if asset.id else "New asset"
         self["id_folder"] = id_folder
-        self["meta_set"] = fconfig["meta_set"]
+        self["main_keys"] = fconfig["meta_set"]
         self["extended_keys"] = sorted([k for k in asset.meta if meta_types[k]["ns"] not in ["f","q"] and k not in [l[0] for l in fconfig["meta_set"]]], key=lambda k: meta_types[k]["ns"])
         self["technical_keys"] = sorted([k for k in asset.meta if meta_types[k]["ns"] in ["f","q"] ])
-
-        #TODO
-        self["actions"] = []
+        self["actions"] = actions.data if actions.is_success else []

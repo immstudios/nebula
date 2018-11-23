@@ -101,6 +101,10 @@ function seismic_handler(data){
 
 
 $(document).ready(function() {
+    if (window.history.replaceState) {
+        window.history.replaceState( null, null, window.location.href );
+    }
+
     load_jobs();
 
     notify = new seismicNotify(site_name, seismic_handler);
