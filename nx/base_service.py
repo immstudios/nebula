@@ -39,7 +39,7 @@ class BaseService(object):
         logging.info("Shutting down")
         if no_restart:
             db = DB()
-            db.query("UPDATE services SET autostart=0 WHERE id=%s", [self.id_service])
+            db.query("UPDATE services SET autostart=FALSE WHERE id=%s", [self.id_service])
             db.commit()
         sys.exit(0)
 
