@@ -51,7 +51,9 @@ class BaseService(object):
         except IndexError:
             state = KILL
         else:
-            db.query("UPDATE services SET last_seen=%s, state=1 WHERE id=%s", [time.time(), self.id_service])
+            if state == 0:
+                state = 1
+            db.query("UPDATE services SET last_seen=%s, state=%s WHERE id=%s", [time.time(), state, self.id_service])
             db.commit()
 
         if state in [STOPPED, STOPPING, KILL]:
