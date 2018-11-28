@@ -2,6 +2,7 @@ function seismic_handler(data){
 	method = data[3];
 	params = data[4];
 	if (method == "service_state"){
+//        console.log(params);
         $("#service-table-body tr").each(function(){
             if ($(this).attr("data-href") == params["id"]) {
                 label = "&nbsp;";
@@ -20,7 +21,7 @@ function seismic_handler(data){
                 } else if (params["state"] == 3) {
                     label="<span class='label text-warning'>Stopping</span>";
                     buttons="<button type='button' class='service-toggle-button btn btn-sm' data-href='"+ params["id"] + "' data-action='kill'>Kill</button>";
-                } else if (params["state"] == 1) {
+                } else if (params["state"] == 4) {
                     label="<span class='label text-danger'>Killing</span>";
                     buttons="<button type='button' class='service-toggle-button btn btn-sm' data-href='"+ params["id"] + "' disabled>...</button>";
                 }

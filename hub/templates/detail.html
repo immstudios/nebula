@@ -29,7 +29,7 @@
     {# navbar center (duration, qc) #}
     <ul class="navbar-nav mx-auto">
         <li class="nav-item">
-            <input type="text" class="form-control input-timecode" name="duration" id="input-duration" value="{{ page.asset.duration | s2tc(page.asset.fps) }}" {% if page.asset.status != 0 %} disabled {% endif %} >
+            <input type="text" class="form-control input-timecode" name="duration" id="input-duration" value="{{ page.asset.duration | s2tc(page.asset.fps) }}" {% if page.asset.status != 0 and not page.new_asset %} disabled {% endif %} >
         </li>
         <!--
         <li class="nav-item">&nbsp;</li> {# add some space between duration and qc buttons #}
