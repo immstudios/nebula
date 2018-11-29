@@ -29,9 +29,59 @@ def mk_error(fname, message):
             f.write(message)
 
 
+def version_backup(asset):
+    target_dir = os.path.join(
+            storages[asset["id_storage"]].local_path,
+            ".nx",
+            "versions",
+            "{:04d}".format(int(asset.id/1000)),
+            "{:d}".format(asset.id)
+        )
 
-def do_import(import_file, asset):
-    logging.info("Importing {} to {}".format(import_file, asset))
+    target_path = "{:d}{}".format(
+            int(asset["mtime"]),
+            os.path.splitext(asset.file_path)[1]
+        )
+
+    if not os.path.isdir(target_dir):
+        try:
+            os.makedirs(target_dir)
+        except IOError:
+            pass
+    try:
+        os.rename(
+                asset.file_path,
+                target_path
+            )
+    except IOError:
+        logging.warning("Unable to create version backup of {}".format(asset))
+
+
+
+
+def do_import(parent, import_file, asset):
+
+    probe = mediaprobe(import_file)
+    match = True
+    for condition in parent.conditions:
+        value = parent.conditions[condition]
+        print ("check", value, probe.get(condition, None))
+        if value != probe.get(condition, None):
+            match = False
+            break
+
+    print("match", match)
+    if match:
+        logging.info("Fast importing {} to {}".format(import_file, asset))
+    else:
+        logging.info("Importing {} to {}".format(import_file, asset))
+
+
+
+
+
+
+
 
 
 
@@ -44,6 +94,10 @@ class Service(BaseService):
         self.identifier = "id/main"
         self.exts = [f for f in file_types.keys() if file_types[f] == VIDEO]
         self.versioning = True
+
+        self.conditions = {
+            "video/codec" : "dnxhd"
+        }
 
         self.profile = {
             "fps" : 25,
@@ -59,8 +113,9 @@ class Service(BaseService):
         }
 
         self.filesizes = {}
-        self.import_dir = os.path.join(storages[self.import_storage].local_path, self.import_dir)
-        self.backup_dir = os.path.join(storages[self.import_storage].local_path, self.backup_dir)
+        import_storage_path = storages[self.import_storage].local_path
+        self.import_dir = os.path.join(import_storage_path, self.import_dir)
+        self.backup_dir = os.path.join(import_storage_path, self.backup_dir)
 
 
     def on_main(self):
@@ -101,7 +156,7 @@ class Service(BaseService):
                     self.mk_error(import_file, "This file has no target path specified.")
                     continue
 
-                do_import(import_file, asset)
+                do_import(self, import_file, asset)
                 break
             else:
                 mk_error(import_file, "This file is not expected.")
@@ -113,31 +168,3 @@ class Service(BaseService):
             idec = fname.replace(".error.txt", "")
             if not idec in [os.path.splitext(f)[0] for f in os.listdir(self.import_dir)]:
                 os.remove(os.path.join(self.import_dir, fname))
-
-
-
-
-
-    def version_backup(self, asset):
-        target_path = os.path.join(
-            storages[asset["id_storage"]].local_path,
-            ".nx",
-            "versions",
-            "{:04d}".format(int(asset.id/1000)),
-            "{:d}".format(asset.id)
-            )
-
-        target_fname = "{:d}{}".format(
-            int(asset["mtime"]),
-            os.path.splitext(asset.file_path)[1]
-            )
-
-        try:
-            os.makedirs(target_path)
-        except:
-            pass
-
-        try:
-            os.rename(asset.file_path, os.path.join(target_path, target_fname))
-        except:
-            logging.warning("Unable to create version backup of {}".format(asset))
