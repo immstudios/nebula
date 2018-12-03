@@ -25,11 +25,12 @@ class NebulaFFMPEG(BaseEncoder):
                         self.ffparams.append(value)
 
             elif p.tag == "script":
-                try:
-                    exec(p.text)
-                except Exception:
-                    log_traceback()
-                    return NebulaResponse(500, message="Error in task 'pre' script.")
+                if p.text:
+                    try:
+                        exec(p.text)
+                    except Exception:
+                        log_traceback()
+                        return NebulaResponse(500, message="Error in task 'pre' script.")
 
             elif p.tag == "paramset" and eval(p.attrib["condition"]):
                 for pp in p.findall("param"):
