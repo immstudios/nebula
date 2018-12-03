@@ -24,7 +24,7 @@ function load_jobs(){
             rctime = row["ctime"];
             rstime = row["stime"];
             retime = row["etime"];
-            rtitle = row["asset_title"];
+            rtitle = "<a href='/detail/"+ row["id_asset"] +"'>" + row["asset_title"] + "</a>";
             raction = row["action_title"];
 
             if (rstatus == 1){
