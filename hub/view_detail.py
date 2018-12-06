@@ -119,7 +119,7 @@ class ViewDetail(CherryAdminView):
                 response = api_set(
                         user=self["user"],
                         objects=[asset.id],
-                        data=asset.meta,
+                        data={k:asset[k] for k in kwargs},
                         db=db
                     )
                 if response.is_success:
