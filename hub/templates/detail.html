@@ -31,8 +31,8 @@
         <li class="nav-item">
             <input type="text" class="form-control input-timecode" name="duration" id="input-duration" value="{{ page.asset.duration | s2tc(page.asset.fps) }}" {% if page.asset.status != 0 and not page.new_asset %} disabled {% endif %} >
         </li>
-        <!--
         <li class="nav-item">&nbsp;</li> {# add some space between duration and qc buttons #}
+
         <li class="nav-item">
             <div class="btn-group" role="group" aria-label="Basic example">
                 <button type="button" class="btn btn-qcstate" data-href="4"><i class="{% if page.asset["qc/state"] == 4 %}fas{% else %}far{% endif %} fa-flag text-success"></i></button>
@@ -40,7 +40,6 @@
                 <button type="button" class="btn btn-qcstate" data-href="3"><i class="{% if page.asset["qc/state"] == 3 %}fas{% else %}far{% endif %} fa-flag text-danger"></i></button>
             </div>
         </li>
-        -->
     </ul>
 
 
@@ -121,7 +120,7 @@
 
 
     <input type="hidden" name="id_folder" value="{{ page.id_folder }}">
-    <input type="hidden" name="qc/state" value="{{ page.asset["qc/state"] }}">
+    <input type="hidden" id="input-form-qc-state" name="qc/state" value="{{ page.asset["qc/state"] }}">
     {% if page.asset.status == 0 %}
         <input id="input-form-duration" type="hidden" name="duration" value="{{ page.asset["duration"] | s2tc(page.asset.fps) }}">
     {% endif %}
