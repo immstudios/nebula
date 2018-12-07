@@ -1,6 +1,5 @@
 from nebula import *
 
-
 def do_import(self, fname, asset):
     logging.info("Importing {}".format(asset))
 
@@ -69,4 +68,3 @@ def do_import(self, fname, asset):
         pass
 
     logging.goodnews("Import {} completed".format(asset))
-
