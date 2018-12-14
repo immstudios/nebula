@@ -40,6 +40,15 @@ class CasparController(object):
         self.request_time = self.recovery_time = time.time()
 
         self.connect()
+        res = self.query("VERSION")
+        if res.data.startswith("2.0.6"):
+            self.version = 2.06
+        elif res.data.startswith("2.0.7"):
+            self.version = 2.07
+        else:
+            self.version = 2.1
+        logging.debug("CasparCG Version {}".format(self.version))
+
         thread.start_new_thread(self.work, ())
 
     @property
@@ -136,36 +145,64 @@ class CasparController(object):
         # Current clip
         #
 
-        try:
-            fg_prod = video_layer.find("foreground").find("producer")
-            if fg_prod.find("type").text == "image-producer":
-                self.fpos = self.fdur = self.pos = self.dur = 0
-                current_fname = basefname(fg_prod.find("location").text)
-            elif fg_prod.find("type").text == "empty-producer":
-                current_fname = False # No video is playing right now
-            else:
-                self.fpos = int(fg_prod.find("file-frame-number").text)
-                self.fdur = int(fg_prod.find("file-nb-frames").text)
-                self.pos  = int(fg_prod.find("frame-number").text)
-                self.dur  = int(fg_prod.find("nb-frames").text)
-                current_fname = basefname(fg_prod.find("filename").text)
-        except Exception:
-            current_fname = False
+        if self.version >= 2.1:
+            try:
+                fg_prod = video_layer.find("foreground").find("producer")
+                if fg_prod.find("type").text == "image-producer":
+                    self.fpos = self.fdur = self.pos = self.dur = 0
+                    current_fname = basefname(fg_prod.find("location").text)
+                elif fg_prod.find("type").text == "empty-producer":
+                    current_fname = False # No video is playing right now
+                else:
+                    self.fpos = int(fg_prod.find("file-frame-number").text)
+                    self.fdur = int(fg_prod.find("file-nb-frames").text)
+                    self.pos  = int(fg_prod.find("frame-number").text)
+                    self.dur  = int(fg_prod.find("nb-frames").text)
+                    current_fname = basefname(fg_prod.find("filename").text)
+            except Exception:
+                current_fname = False
 
-        #
-        # Next clip
-        #
+            try:
+                bg_prod = video_layer.find("background").find("producer")
+                if bg_prod.find("type").text == "image-producer":
+                    cued_fname = basefname(bg_prod.find("location").text)
+                elif bg_prod.find("type").text == "empty-producer":
+                    cued_fname = False # No video is cued
+                else:
+                    cued_fname = basefname(bg_prod.find("filename").text)
+            except Exception:
+                logging.debug("Nothing is playing")
+                cued_fname = False
 
-        try:
-            bg_prod = video_layer.find("background").find("producer")
-            if bg_prod.find("type").text == "image-producer":
-                cued_fname = basefname(bg_prod.find("location").text)
-            elif bg_prod.find("type").text == "empty-producer":
-                cued_fname = False # No video is cued
-            else:
-                cued_fname = basefname(bg_prod.find("filename").text)
-        except Exception:
-            cued_fname = False
+        else:
+
+            try:
+                fg_prod = video_layer.find("foreground").find("producer")
+                if fg_prod.find("type").text == "image-producer":
+                    self.fpos = self.fdur = self.pos = self.dur = 0
+                    current_fname = basefname(fg_prod.find("location").text)
+                elif fg_prod.find("type").text == "empty-producer":
+                    current_fname = False # No video is playing right now
+                else:
+                    self.fpos = int(fg_prod.find("file-frame-number").text)
+                    self.fdur = int(fg_prod.find("file-nb-frames").text)
+                    self.pos  = int(video_layer.find("frame-number").text)
+                    self.dur  = int(video_layer.find("nb_frames").text)
+                    current_fname = basefname(fg_prod.find("filename").text)
+            except Exception:
+                current_fname = False
+
+            try:
+                bg_prod = video_layer.find("background").find("producer").find("destination").find("producer")
+                if bg_prod.find("type").text == "image-producer":
+                    cued_fname = basefname(bg_prod.find("location").text)
+                elif bg_prod.find("type").text == "empty-producer":
+                    cued_fname = False # No video is cued
+                else:
+                    cued_fname = basefname(bg_prod.find("filename").text)
+            except Exception:
+                logging.debug("Nothing is cued")
+                cued_fname = False
 
         #
         # Auto recovery
@@ -176,7 +213,6 @@ class CasparController(object):
 #            return
 #        self.recovery_time = time.time()
 
-        #TODO: Test this!!!
         if cued_fname and (not current_fname) and (not self.paused) and (not self.stopped) and not self.parent.current_live:
             if self.stalled > time.time() - 2:
                 logging.warning("Taking stalled clip")
@@ -328,12 +364,27 @@ class CasparController(object):
             message = "Playback paused"
             new_val = True
         else:
-            q = "RESUME {}-{}".format(self.parent.caspar_channel, layer)
+            if self.version >= 2.07:
+                q = "RESUME {}-{}".format(self.parent.caspar_channel, layer)
+            else:
+                length = "LENGTH {}".format(int(
+                    (self.current_out or self.fdur) - self.fpos
+                    ))
+                q = "PLAY {}-{} {} SEEK {} {}".format(
+                        self.parent.caspar_channel,
+                        layer,
+                        self.current_fname,
+                        self.fpos,
+                        length
+                    )
             message = "Playback resumed"
             new_val = False
+
         result = self.query(q)
         if result.is_success:
             self.paused = new_val
+            if self.version < 2.07 and not new_val:
+                self.force_cue = True
         else:
             message = result.data
         return NebulaResponse(result.response, message)
