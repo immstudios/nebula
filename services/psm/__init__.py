@@ -3,11 +3,14 @@ import stat
 from nebula import *
 from nx.jobs import send_to
 
-from nxtools.media import ffprobe
-
 SCHEDULE_INTERVAL = 60
 UNSCHEDULE_INTERVAL = 86400
-DEFAULT_STATUS = {"status" : OFFLINE, "size" : 0, "mtime" : 0}
+DEFAULT_STATUS = {
+        "status" : OFFLINE,
+        "size" : 0,
+        "mtime" : 0,
+        "duration" : 0
+        }
 
 
 def get_scheduled_assets(id_channel, **kwargs):
@@ -29,10 +32,10 @@ def get_scheduled_assets(id_channel, **kwargs):
 
 
 def check_file_validity(asset, id_channel):
-    res = ffprobe(asset.get_playout_full_path(id_channel))
+    res = mediaprobe(asset.get_playout_full_path(id_channel))
     if not res:
         return False
-    return True
+    return res["duration"]
 
 
 class PlayoutStorageTool(object):
@@ -73,26 +76,40 @@ class PlayoutStorageTool(object):
 
             file_status = [OFFLINE, ONLINE][file_exists]
 
+            ostatus = old_status.get("status", OFFLINE)
+            omtime = old_status.get("mtime", 0)
+            osize = old_status.get("size", 0)
+            duration = old_status.get("duration", 0)
+
             # if file changed, check using ffprobe
-            if old_status["mtime"] != file_mtime or old_status["size"] != file_size:
+            if omtime != file_mtime or osize != file_size:
                 if file_exists:
-                    if check_file_validity(asset, self.id_channel):
-                        file_status = ONLINE
+                    duration = check_file_validity(asset, self.id_channel)
+                    if duration:
+                        file_status = CREATING
                     else:
                         file_status = CORRUPTED
                 else:
                     file_status = OFFLINE
+                print ("changed", asset, file_status)
+            elif file_status == ONLINE and ostatus == CREATING:
+                if asset["mtime"] - omtime > 10 and omtime == file_mtime:
+                    file_status = ONLINE
+                else:
+                    file_status = CREATING
 
-            if old_status["status"] != file_status or old_status["mtime"] != file_mtime or old_status["size"] != file_size:
+
+            if ostatus != file_status or omtime != file_mtime or osize != file_size:
                 logging.info("Set {} playout status to {}".format(asset, file_status))
                 asset[self.status_key] = {
                             "status" : file_status,
                             "size" : file_size,
-                            "mtime" : file_mtime
+                            "mtime" : file_mtime,
+                            "duration" : duration
                         }
                 asset.save()
 
-            if file_status != ONLINE and self.send_action and asset["status"] == ONLINE:
+            if file_status not in [ONLINE, CREATING] and self.send_action and asset["status"] == ONLINE:
                 result = send_to(
                         asset.id,
                         self.send_action,
@@ -114,3 +131,4 @@ class Service(BaseService):
         for id_channel in config["playout_channels"]:
             pst = PlayoutStorageTool(id_channel)
             pst.main()
+        logging.debug("Done")

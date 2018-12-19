@@ -67,8 +67,11 @@ class NebulaFFMPEG(BaseEncoder):
                         log_traceback()
                         return NebulaResponse(500, message="Unable to create output directory {}".format(target_dir))
 
-                self.files[temp_path] = target_path
-                self.ffparams.append(temp_path)
+                if not p.attrib.get("direct", False):
+                    self.files[temp_path] = target_path
+                    self.ffparams.append(temp_path)
+                else:
+                    self.ffparams.append(target_path)
 
         return NebulaResponse(200, message="Job configured")
 

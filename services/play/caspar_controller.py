@@ -102,7 +102,7 @@ class CasparController(object):
 
     @property
     def position(self):
-        return int(self.fpos - (self.current_in * self.fps))
+        return int(self.fpos - self.current_in)
 
     @property
     def duration(self):
@@ -110,9 +110,9 @@ class CasparController(object):
             return 0
         dur = self.fdur
         if self.current_out > 0:
-            dur -= dur - (self.current_out*self.fps)
+            dur -= dur - self.current_out
         if self.current_in > 0:
-            dur -= (self.current_in*self.fps)
+            dur -= self.current_in
         return dur
 
     def work(self):
@@ -160,6 +160,8 @@ class CasparController(object):
                     self.dur  = int(fg_prod.find("nb-frames").text)
                     current_fname = basefname(fg_prod.find("filename").text)
             except Exception:
+                if not self.parent.current_live:
+                    logging.debug("Nothing is playing")
                 current_fname = False
 
             try:
@@ -171,7 +173,8 @@ class CasparController(object):
                 else:
                     cued_fname = basefname(bg_prod.find("filename").text)
             except Exception:
-                logging.debug("Nothing is playing")
+                if not self.parent.cued_live:
+                    logging.debug("Nothing is cued")
                 cued_fname = False
 
         else:
@@ -190,6 +193,8 @@ class CasparController(object):
                     self.dur  = int(video_layer.find("nb_frames").text)
                     current_fname = basefname(fg_prod.find("filename").text)
             except Exception:
+                if not self.parent.current_live:
+                    logging.debug("Nothing is playing")
                 current_fname = False
 
             try:
@@ -201,7 +206,8 @@ class CasparController(object):
                 else:
                     cued_fname = basefname(bg_prod.find("filename").text)
             except Exception:
-                logging.debug("Nothing is cued")
+                if not self.parent.cued_live:
+                    logging.debug("Nothing is cued")
                 cued_fname = False
 
         #
@@ -278,7 +284,7 @@ class CasparController(object):
 
         marks = ""
         if mark_in:
-            marks += " SEEK {}".format(float(mark_in) * self.fps)
+            marks += " SEEK {}".format(int(float(mark_in) * self.fps))
         if mark_out:
             marks += " LENGTH {}".format(int((float(mark_out) - float(mark_in)) * self.fps))
 
@@ -307,8 +313,8 @@ class CasparController(object):
         else:
             self.cued_item  = item
             self.cued_fname = fname
-            self.cued_in    = mark_in
-            self.cued_out   = mark_out
+            self.cued_in    = mark_in*self.fps
+            self.cued_out   = mark_out*self.fps
             message = "Cued item {} ({})".format(self.cued_item, fname)
         return NebulaResponse(result.response, message)
 

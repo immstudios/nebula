@@ -54,8 +54,7 @@ def mediaprobe(source_file):
 
     dump = ffprobe(source_file)
     if not dump:
-        return meta
-
+        return {}
 
     format_info = dump["format"]
     source_vdur = 0
@@ -116,7 +115,8 @@ def mediaprobe(source_file):
     #TODO: if video_index and video track is not album art, set content_type to video, else audio
     #TODO: Tags exctraction
 
-    for k in meta:
+    keys = list(meta.keys())
+    for k in keys:
         if meta[k] is None:
             del(meta[k])
 

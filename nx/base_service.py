@@ -14,6 +14,7 @@ class BaseService(object):
             self.on_init()
         except SystemExit:
             pass
+            sys.exit(0)
         except:
             log_traceback("Unable to initialize service")
             self.shutdown()
