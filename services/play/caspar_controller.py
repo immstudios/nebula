@@ -160,8 +160,8 @@ class CasparController(object):
                     self.dur  = int(fg_prod.find("nb-frames").text)
                     current_fname = basefname(fg_prod.find("filename").text)
             except Exception:
-                if not self.parent.current_live:
-                    logging.debug("Nothing is playing")
+#                if not self.parent.current_live:
+#                    logging.debug("Nothing is playing")
                 current_fname = False
 
             try:
@@ -173,8 +173,8 @@ class CasparController(object):
                 else:
                     cued_fname = basefname(bg_prod.find("filename").text)
             except Exception:
-                if not self.parent.cued_live:
-                    logging.debug("Nothing is cued")
+#                if not self.parent.cued_live:
+#                    logging.debug("Nothing is cued")
                 cued_fname = False
 
         else:
@@ -193,8 +193,8 @@ class CasparController(object):
                     self.dur  = int(video_layer.find("nb_frames").text)
                     current_fname = basefname(fg_prod.find("filename").text)
             except Exception:
-                if not self.parent.current_live:
-                    logging.debug("Nothing is playing")
+#                if not self.parent.current_live:
+#                    logging.debug("Nothing is playing")
                 current_fname = False
 
             try:
@@ -206,8 +206,8 @@ class CasparController(object):
                 else:
                     cued_fname = basefname(bg_prod.find("filename").text)
             except Exception:
-                if not self.parent.cued_live:
-                    logging.debug("Nothing is cued")
+#                if not self.parent.cued_live:
+#                    logging.debug("Nothing is cued")
                 cued_fname = False
 
         #

@@ -15,7 +15,7 @@ DEFAULT_STATUS = {
 
 def get_scheduled_assets(id_channel, **kwargs):
     db = kwargs.get("db", DB())
-    start = kwargs.get("start_time", time.time() - 3600*72)
+    start = kwargs.get("start_time", time.time() - 3600*12)
     stop  = kwargs.get("end_time", time.time() + (3600*72))
     db.query("""
             SELECT DISTINCT(i.id_asset), a.meta FROM events as e, items as i, assets as a
@@ -28,14 +28,22 @@ def get_scheduled_assets(id_channel, **kwargs):
             [id_channel, start, stop]
         )
     for id, meta, in db.fetchall():
-        yield Asset(meta=meta)
+        yield Asset(meta=meta, db=db)
 
 
 def check_file_validity(asset, id_channel):
-    res = mediaprobe(asset.get_playout_full_path(id_channel))
+    path = asset.get_playout_full_path(id_channel)
+    try:
+        res = mediaprobe(path)
+    except:
+        #log_traceback()
+        logging.error("Unable to read", path)
+        return CORRUPTED, 0
     if not res:
-        return False
-    return res["duration"]
+        return CORRUPTED, 0
+    if res["duration"]:
+        return CREATING, res["duration"]
+    return UNKNOWN, 0
 
 
 class PlayoutStorageTool(object):
@@ -74,6 +82,7 @@ class PlayoutStorageTool(object):
             else:
                 file_size = file_mtime = 0
 
+
             file_status = [OFFLINE, ONLINE][file_exists]
 
             ostatus = old_status.get("status", OFFLINE)
@@ -81,26 +90,33 @@ class PlayoutStorageTool(object):
             osize = old_status.get("size", 0)
             duration = old_status.get("duration", 0)
 
+            now = time.time()
+
             # if file changed, check using ffprobe
             if omtime != file_mtime or osize != file_size:
                 if file_exists:
-                    duration = check_file_validity(asset, self.id_channel)
-                    if duration:
-                        file_status = CREATING
-                    else:
-                        file_status = CORRUPTED
+                    file_status, duration = check_file_validity(asset, self.id_channel)
                 else:
                     file_status = OFFLINE
-                print ("changed", asset, file_status)
-            elif file_status == ONLINE and ostatus == CREATING:
-                if asset["mtime"] - omtime > 10 and omtime == file_mtime:
-                    file_status = ONLINE
-                else:
-                    file_status = CREATING
+
+            elif file_status == ONLINE:
+                if ostatus == CREATING:
+                    if now - file_mtime > 10 and omtime == file_mtime:
+                        file_status = ONLINE
+                    else:
+                        file_status = CREATING
+                elif ostatus == UNKNOWN:
+                    if now - file_mtime > 10:
+                        file_status = CORRUPTED
 
 
             if ostatus != file_status or omtime != file_mtime or osize != file_size:
-                logging.info("Set {} playout status to {}".format(asset, file_status))
+                logging.info(
+                        "Set {} playout status to {}".format(
+                            asset,
+                            get_object_state_name(file_status)
+                        )
+                    )
                 asset[self.status_key] = {
                             "status" : file_status,
                             "size" : file_size,
@@ -131,4 +147,3 @@ class Service(BaseService):
         for id_channel in config["playout_channels"]:
             pst = PlayoutStorageTool(id_channel)
             pst.main()
-        logging.debug("Done")

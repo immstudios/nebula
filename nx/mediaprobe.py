@@ -101,7 +101,7 @@ def mediaprobe(source_file):
             except Exception:
                 pass
 
-    meta["duration"] = float(format_info["duration"]) or source_vdur or source_adur
+    meta["duration"] = float(format_info.get("duration", 0)) or source_vdur or source_adur
 
     try:
         meta["num_frames"] = meta["duration"] * meta["video/fps_f"]
