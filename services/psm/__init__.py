@@ -83,7 +83,14 @@ class PlayoutStorageTool(object):
                 file_size = file_mtime = 0
 
 
-            file_status = [OFFLINE, ONLINE][file_exists]
+            if file_exists:
+                if file_size:
+                    file_status = ONLINE
+                else:
+                    file_status = CORRUPTED
+            else:
+                file_status = OFFLINE
+
 
             ostatus = old_status.get("status", OFFLINE)
             omtime = old_status.get("mtime", 0)
@@ -93,21 +100,19 @@ class PlayoutStorageTool(object):
             now = time.time()
 
             # if file changed, check using ffprobe
-            if omtime != file_mtime or osize != file_size:
-                if file_exists:
+            if file_status == ONLINE:
+                if omtime != file_mtime or osize != file_size:
                     file_status, duration = check_file_validity(asset, self.id_channel)
-                else:
-                    file_status = OFFLINE
 
-            elif file_status == ONLINE:
-                if ostatus == CREATING:
-                    if now - file_mtime > 10 and omtime == file_mtime:
-                        file_status = ONLINE
-                    else:
-                        file_status = CREATING
-                elif ostatus == UNKNOWN:
-                    if now - file_mtime > 10:
-                        file_status = CORRUPTED
+                else:
+                    if ostatus == CREATING:
+                        if now - file_mtime > 10 and omtime == file_mtime:
+                            file_status = ONLINE
+                        else:
+                            file_status = CREATING
+                    elif ostatus == UNKNOWN:
+                        if now - file_mtime > 10:
+                            file_status = CORRUPTED
 
 
             if ostatus != file_status or omtime != file_mtime or osize != file_size:
