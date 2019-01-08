@@ -10,12 +10,12 @@ except ImportError:
     import thread
 
 
-from nx import *
-from nxtools.caspar import CasparCG
+from nebula import *
 
-def basefname(fname):
-    """Platform dependent path splitter (caspar is always on win)"""
-    return os.path.splitext(fname.split("\\")[-1])[0]
+rex.require("https://github.com/martastain/casparcg-infoparser")
+
+from nxtools.caspar import CasparCG
+from ccginfo import *
 
 
 class CasparController(object):
@@ -33,21 +33,16 @@ class CasparController(object):
         self.stopped  = False
         self.stalled  = False
 
-        self.pos = self.dur = self.fpos = self.fdur = 0
+        self.fpos = self.fdur = 0
         self.cued_in = self.cued_out = self.current_in = self.current_out = 0
 
         self.bad_requests = 0
         self.request_time = self.recovery_time = time.time()
 
         self.connect()
-        res = self.query("VERSION")
-        if res.data.startswith("2.0.6"):
-            self.version = 2.06
-        elif res.data.startswith("2.0.7"):
-            self.version = 2.07
-        else:
-            self.version = 2.1
-        logging.debug("CasparCG Version {}".format(self.version))
+
+        Parser = get_info_parser(self.infc)
+        self.parser = Parser(self.infc, self.parent.caspar_channel)
 
         thread.start_new_thread(self.work, ())
 
@@ -124,7 +119,8 @@ class CasparController(object):
             time.sleep(.3)
 
     def main(self):
-        if not self.update_stat():
+        info = self.parser.get_info(self.parent.caspar_feed_layer)
+        if not info:
             logging.warning("Channel {} update stat failed".format(self.id_channel))
             self.bad_requests += 1
             if self.bad_requests > 10:
@@ -137,96 +133,31 @@ class CasparController(object):
             time.sleep(.3)
             return
         self.bad_requests = 0
-        if not self.xstat:
-            return False
-        video_layer = self.xstat
+
+        current_fname = info["current"]
+        cued_fname = info["cued"]
 
         #
-        # Current clip
-        #
-
-        if self.version >= 2.1:
-            try:
-                fg_prod = video_layer.find("foreground").find("producer")
-                if fg_prod.find("type").text == "image-producer":
-                    self.fpos = self.fdur = self.pos = self.dur = 0
-                    current_fname = basefname(fg_prod.find("location").text)
-                elif fg_prod.find("type").text == "empty-producer":
-                    current_fname = False # No video is playing right now
-                else:
-                    self.fpos = int(fg_prod.find("file-frame-number").text)
-                    self.fdur = int(fg_prod.find("file-nb-frames").text)
-                    self.pos  = int(fg_prod.find("frame-number").text)
-                    self.dur  = int(fg_prod.find("nb-frames").text)
-                    current_fname = basefname(fg_prod.find("filename").text)
-            except Exception:
-#                if not self.parent.current_live:
-#                    logging.debug("Nothing is playing")
-                current_fname = False
-
-            try:
-                bg_prod = video_layer.find("background").find("producer")
-                if bg_prod.find("type").text == "image-producer":
-                    cued_fname = basefname(bg_prod.find("location").text)
-                elif bg_prod.find("type").text == "empty-producer":
-                    cued_fname = False # No video is cued
-                else:
-                    cued_fname = basefname(bg_prod.find("filename").text)
-            except Exception:
-#                if not self.parent.cued_live:
-#                    logging.debug("Nothing is cued")
-                cued_fname = False
-
-        else:
-
-            try:
-                fg_prod = video_layer.find("foreground").find("producer")
-                if fg_prod.find("type").text == "image-producer":
-                    self.fpos = self.fdur = self.pos = self.dur = 0
-                    current_fname = basefname(fg_prod.find("location").text)
-                elif fg_prod.find("type").text == "empty-producer":
-                    current_fname = False # No video is playing right now
-                else:
-                    self.fpos = int(fg_prod.find("file-frame-number").text)
-                    self.fdur = int(fg_prod.find("file-nb-frames").text)
-                    self.pos  = int(video_layer.find("frame-number").text)
-                    self.dur  = int(video_layer.find("nb_frames").text)
-                    current_fname = basefname(fg_prod.find("filename").text)
-            except Exception:
-#                if not self.parent.current_live:
-#                    logging.debug("Nothing is playing")
-                current_fname = False
-
-            try:
-                bg_prod = video_layer.find("background").find("producer").find("destination").find("producer")
-                if bg_prod.find("type").text == "image-producer":
-                    cued_fname = basefname(bg_prod.find("location").text)
-                elif bg_prod.find("type").text == "empty-producer":
-                    cued_fname = False # No video is cued
-                else:
-                    cued_fname = basefname(bg_prod.find("filename").text)
-            except Exception:
-#                if not self.parent.cued_live:
-#                    logging.debug("Nothing is cued")
-                cued_fname = False
-
         #
         # Auto recovery
         #
-
 #        if not current_fname and time.time() - self.recovery_time > 20:
 #            self.parent.channel_recover()
 #            return
 #        self.recovery_time = time.time()
 
-        if cued_fname and (not current_fname) and (not self.paused) and (not self.stopped) and not self.parent.current_live:
-            if self.stalled > time.time() - 2:
+        if cued_fname and (not self.paused) and (info["pos"] == self.fpos) and (not self.stopped) and not self.parent.current_live and self.cued_item and (not self.cued_item["run_mode"]):
+            if self.stalled > time.time() - 1:
                 logging.warning("Taking stalled clip")
                 self.take()
             elif not self.stalled:
+                logging.debug("Playback is stalled")
                 self.stalled = time.time()
         else:
             self.stalled = False
+
+        self.fpos = info["pos"]
+        self.fdur = info["dur"]
 
         #
         # Playlist advancing
@@ -259,6 +190,14 @@ class CasparController(object):
             self.parent.cue_next()
             self.force_cue = False
 
+
+        if self.cueing:
+            if cued_fname == self.cued_fname:
+                logging.debug("Cued")
+                self.cueing = False
+            else:
+                logging.debug("Cueing")
+
         if advanced:
             self.parent.on_change()
             self.parent.cue_next()
@@ -283,10 +222,10 @@ class CasparController(object):
         mark_out   = item.mark_out()
 
         marks = ""
-        if mark_in:
-            marks += " SEEK {}".format(int(float(mark_in) * self.fps))
-        if mark_out:
-            marks += " LENGTH {}".format(int((float(mark_out) - float(mark_in)) * self.fps))
+        if mark_in and mark_out > 0:
+            marks += " SEEK {}".format(int(float(mark_in) * self.parser.seek_fps))
+        if mark_out and mark_out < item["duration"] and mark_out > mark_in:
+            marks += " LENGTH {}".format(int((float(mark_out) - float(mark_in)) * self.parser.seek_fps))
 
         if play:
             q = "PLAY {}-{} {}{}".format(
@@ -310,11 +249,13 @@ class CasparController(object):
             message = "Unable to cue \"{}\" {} - args: {}".format(fname, result.data, str(kwargs))
             self.cued_item  = Item()
             self.cued_fname = False
+            self.cueing     = False
         else:
             self.cued_item  = item
             self.cued_fname = fname
             self.cued_in    = mark_in*self.fps
             self.cued_out   = mark_out*self.fps
+            self.cueing     = True
             message = "Cued item {} ({})".format(self.cued_item, fname)
         return NebulaResponse(result.response, message)
 
@@ -324,9 +265,10 @@ class CasparController(object):
         result = self.query("CLEAR {}-{}".format(self.channel, layer))
         return NebulaResponse(result.response, result.data)
 
+
     def take(self, **kwargs):
         layer = kwargs.get("layer", self.parent.caspar_feed_layer)
-        if not self.cued_item:
+        if not self.cued_item or self.cueing:
             return NebulaResponse(400, "Unable to take. No item is cued.")
         self.paused = False
         result = self.query("PLAY {}-{}".format(self.parent.caspar_channel, layer))
@@ -341,13 +283,14 @@ class CasparController(object):
             message = "Take command failed: " + result.data
         return NebulaResponse(result.response, message)
 
+
     def retake(self, **kwargs):
         layer = kwargs.get("layer", self.parent.caspar_feed_layer)
         if self.parent.current_live:
             return NebulaResponse(409, "Unable to retake live item")
         seekparam = str(int(self.current_item.mark_in() * self.fps))
         if self.current_item.mark_out():
-            seekparam += " LENGTH {}".format(int((self.current_item.mark_out() - self.current_item.mark_in()) * self.fps))
+            seekparam += " LENGTH {}".format(int((self.current_item.mark_out() - self.current_item.mark_in()) * self.parser.seek_fps))
         q = "PLAY {}-{} {} SEEK {}".format(self.parent.caspar_channel, layer, self.current_fname, seekparam)
         self.paused = False
         result = self.query(q)
@@ -361,6 +304,7 @@ class CasparController(object):
             message = "Take command failed: " + result.data
         return NebulaResponse(result.response, message)
 
+
     def freeze(self, **kwargs):
         layer = kwargs.get("layer", self.parent.caspar_feed_layer)
         if self.parent.current_live:
@@ -370,7 +314,7 @@ class CasparController(object):
             message = "Playback paused"
             new_val = True
         else:
-            if self.version >= 2.07:
+            if self.parser.protocol >= 2.07:
                 q = "RESUME {}-{}".format(self.parent.caspar_channel, layer)
             else:
                 length = "LENGTH {}".format(int(
@@ -389,11 +333,12 @@ class CasparController(object):
         result = self.query(q)
         if result.is_success:
             self.paused = new_val
-            if self.version < 2.07 and not new_val:
+            if self.parser.protocol < 2.07 and not new_val:
                 self.force_cue = True
         else:
             message = result.data
         return NebulaResponse(result.response, message)
+
 
     def abort(self, **kwargs):
         layer = kwargs.get("layer", self.parent.caspar_feed_layer)
@@ -401,9 +346,9 @@ class CasparController(object):
             return NebulaResponse(400, "Unable to abort. No item is cued.")
         q = "LOAD {}-{} {}".format(self.parent.caspar_channel, layer, self.cued_fname)
         if self.cued_item.mark_in():
-            q += " SEEK {}".format(int(self.cued_item.mark_in() * self.fps))
+            q += " SEEK {}".format(int(self.cued_item.mark_in() * self.parser.seek_fps))
         if self.cued_item.mark_out():
-            q += " LENGTH {}".format(int((self.cued_item.mark_out() - self.cued_item.mark_in()) * self.fps))
+            q += " LENGTH {}".format(int((self.cued_item.mark_out() - self.cued_item.mark_in()) * self.parser.seek_fps))
         result =  self.query(q)
         if result.is_success:
             self.paused = True
