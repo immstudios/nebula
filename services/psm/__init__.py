@@ -22,22 +22,23 @@ def get_scheduled_assets(id_channel, **kwargs):
     #TODO: Why DISTINCT does not DISTINCT?
     db.query("""
             SELECT
-                DISTINCT (a.id),
+                DISTINCT (i.id_asset),
                 ABS(e.start - extract(epoch from now())) AS dist,
                 a.meta
             FROM
                 events as e, items as i, assets as a
             WHERE
-                    e.id_channel = %s
+                    e.start > extract(epoch from now()) - 86400*7
+                AND e.id_channel = %s
                 AND a.id = i.id_asset
-                    AND i.id_bin = e.id_magic
-                    AND i.id_asset > 0
+                AND i.id_bin = e.id_magic
+                AND i.id_asset > 0
             ORDER BY
                 dist ASC
             """, [id_channel]
         )
     ids = []
-    for id, dist, meta, in db.fetchall():
+    for id, dist, meta in db.fetchall():
         if id in ids:
             continue
         ids.append(id)
@@ -143,7 +144,7 @@ class PlayoutStorageTool(object):
                         }
                 asset.save()
 
-            if file_status not in [ONLINE, CREATING] and self.send_action and asset["status"] == ONLINE and scheduled:
+            if file_status not in [ONLINE, CREATING, CORRUPTED] and self.send_action and asset["status"] == ONLINE and scheduled:
                 result = send_to(
                         asset.id,
                         self.send_action,
