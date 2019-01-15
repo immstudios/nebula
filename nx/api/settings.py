@@ -15,6 +15,7 @@ def api_settings(**kwargs):
             "cs",
             "folders",
             "ingest_channels",
+            "meta_types",
             "playout_channels",
             "proxy_url",
             "services",
