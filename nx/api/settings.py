@@ -18,10 +18,13 @@ def api_settings(**kwargs):
             "playout_channels",
             "proxy_url",
             "services",
+            "seismic_addr",
+            "seismic_port",
             "site_name",
             "views"
             ]:
-        data[key] = config[key]
+        if key in config:
+            data[key] = config[key]
 
     data["storages"] = {}
     for k in config["storages"]:
