@@ -68,28 +68,6 @@ class CasparController(object):
     def query(self, *args, **kwargs):
         return self.cmdc.query(*args, **kwargs)
 
-    def update_stat(self):
-        result = self.infc.query(
-                "INFO {}-{}".format(
-                    self.parent.caspar_channel,
-                    self.parent.caspar_feed_layer
-                )
-            )
-        if result.is_error:
-            logging.error("Unable to get CasparCG status: Error {} ({})".format(
-                    result.code,
-                    result.data
-                ))
-            return False
-        try:
-            xstat = xml(result.data)
-        except Exception:
-            log_traceback()
-            return False
-        else:
-            self.request_time = time.time()
-            self.xstat = xstat
-            return True
 
     @property
     def fps(self):
@@ -132,6 +110,8 @@ class CasparController(object):
                     time.sleep(2)
             time.sleep(.3)
             return
+        else:
+            self.request_time = time.time()
         self.bad_requests = 0
 
         current_fname = info["current"]
@@ -147,8 +127,8 @@ class CasparController(object):
 #        self.recovery_time = time.time()
 
         if cued_fname and (not self.paused) and (info["pos"] == self.fpos) and (not self.stopped) and not self.parent.current_live and self.cued_item and (not self.cued_item["run_mode"]):
-            if self.stalled > time.time() - 1:
-                logging.warning("Taking stalled clip")
+            if self.stalled > time.time() - 2:
+                logging.warning("Taking stalled clip (pos: {})".format(self.fpos))
                 self.take()
             elif not self.stalled:
                 logging.debug("Playback is stalled")
