@@ -13,6 +13,8 @@ class WebTools():
         if not plugin_path:
             return
         tooldir = os.path.join(plugin_path, "webtools")
+        if not os.path.isdir(tooldir):
+            return
         for plugin_entry in os.listdir(tooldir):
             entry_path = os.path.join(tooldir, plugin_entry)
             if os.path.isdir(entry_path):

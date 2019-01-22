@@ -12,8 +12,6 @@ except ImportError:
 
 from nebula import *
 
-rex.require("https://github.com/martastain/casparcg-infoparser")
-
 from nxtools.caspar import CasparCG
 from ccginfo import *
 
@@ -39,7 +37,10 @@ class CasparController(object):
         self.bad_requests = 0
         self.request_time = self.recovery_time = time.time()
 
-        self.connect()
+        if not self.connect():
+            logging.error("Unable to connect CasparCG Server. Shutting down.")
+            self.parent.shutdown()
+            return
 
         Parser = get_info_parser(self.infc)
         self.parser = Parser(self.infc, self.parent.caspar_channel)
@@ -62,7 +63,6 @@ class CasparController(object):
         if not hasattr(self, "cmdc"):
             self.cmdc = CasparCG(self.host, self.port)
             self.infc = CasparCG(self.host, self.port)
-            return True
         return self.cmdc.connect() and self.infc.connect()
 
     def query(self, *args, **kwargs):
