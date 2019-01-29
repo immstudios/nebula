@@ -41,7 +41,7 @@ def api_playout(**kwargs):
             channel_config.get("controller_port", 42100)
         )
 
-    if user in kwargs:
+    if "user" in kwargs:
         del(kwargs["user"])
 
     try:
