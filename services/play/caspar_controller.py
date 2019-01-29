@@ -145,7 +145,27 @@ class CasparController(object):
 
         advanced = False
 
-        if (not cued_fname) and (current_fname) and not self.parent.cued_live:
+#        print("***************", self.cueing)
+#        print("current (is):", current_fname)
+#        print("current (should):", self.current_fname, self.current_item)
+#        print("cued (is):", cued_fname)
+#        print("cued (should):", self.cued_fname, self.cued_item)
+
+
+        if self.cueing and self.cueing == current_fname:
+            logging.warning("Using short clip workaround")
+            self.current_item  = self.cued_item
+            self.current_fname = current_fname
+            self.current_in    = self.cued_in
+            self.current_out   = self.cued_out
+            self.cued_in = self.cued_out = 0
+            advanced = True
+            self.cued_item = False
+            self.cueing = False
+            self.cued_fname = False
+
+
+        elif (not cued_fname) and (current_fname) and not self.parent.cued_live:
             if current_fname == self.cued_fname:
                 self.current_item  = self.cued_item
                 self.current_fname = self.cued_fname
@@ -155,7 +175,7 @@ class CasparController(object):
                 advanced = True
             self.cued_item = False
 
-        if (not current_fname) and (not cued_fname) and self.parent.cued_live:
+        elif (not current_fname) and (not cued_fname) and self.parent.cued_live:
             self.current_item  = self.cued_item
             self.current_fname = "LIVE"
             self.current_in    = 0
@@ -165,29 +185,29 @@ class CasparController(object):
             self.cued_item = False
             self.parent.on_live_enter()
 
-        if self.force_cue:
+        if advanced:
+            self.parent.on_change()
+
+        if self.current_item and not cued_fname and not self.cueing:
+            self.parent.cue_next()
+
+        elif self.force_cue:
             logging.info("Forcing cue next")
             self.parent.cue_next()
             self.force_cue = False
 
-
         if self.cueing:
             if cued_fname == self.cued_fname:
-                logging.debug("Cued")
+                logging.debug("Cued", self.cueing)
                 self.cueing = False
             else:
-                logging.debug("Cueing")
+                logging.debug("Cueing", self.cueing)
 
-        if advanced:
-            self.parent.on_change()
-            self.parent.cue_next()
 
         if self.cued_item and cued_fname and cued_fname != self.cued_fname and not self.cueing:
             logging.warning("Cue mismatch: IS: {} SHOULDBE: {}".format(cued_fname, self.cued_fname))
             self.cued_item = False
 
-        if self.current_item and not self.cued_item and not self.cueing:
-            self.parent.cue_next()
 
         self.parent.on_progress()
         self.current_fname = current_fname
@@ -235,8 +255,9 @@ class CasparController(object):
             self.cued_fname = fname
             self.cued_in    = mark_in*self.fps
             self.cued_out   = mark_out*self.fps
-            self.cueing     = True
+            self.cueing     = fname
             message = "Cued item {} ({})".format(self.cued_item, fname)
+
         return NebulaResponse(result.response, message)
 
 
