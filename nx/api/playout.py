@@ -47,9 +47,9 @@ def api_playout(**kwargs):
     try:
         if has_eventlet:
             with eventlet.Timeout(1):
-                response = requests.post(controller_url + "/" + action, timeout=1, data=kwargs)
+                response = requests.post(controller_url + "/" + action, timeout=4, data=kwargs)
         else:
-            response = requests.post(controller_url + "/" + action, timeout=1, data=kwargs)
+            response = requests.post(controller_url + "/" + action, timeout=4, data=kwargs)
     except Exception:
         log_traceback()
         return NebulaResponse(ERROR_BAD_GATEWAY," Unable to connect playout service")

@@ -152,7 +152,7 @@ class CasparController(object):
 #        print("cued (should):", self.cued_fname, self.cued_item)
 
 
-        if self.cueing and self.cueing == current_fname:
+        if self.cueing and self.cueing == current_fname and not cued_fname and not self.parent.cued_live:
             logging.warning("Using short clip workaround")
             self.current_item  = self.cued_item
             self.current_fname = current_fname
@@ -188,7 +188,7 @@ class CasparController(object):
         if advanced:
             self.parent.on_change()
 
-        if self.current_item and not cued_fname and not self.cueing:
+        if self.current_item and not self.cued_item and not self.cueing:
             self.parent.cue_next()
 
         elif self.force_cue:
