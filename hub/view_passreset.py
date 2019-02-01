@@ -66,7 +66,7 @@ class ViewPassReset(CherryAdminView):
                     "site_name" : config["site_name"],
                     "hub_url" : config.get(
                             "hub_url",
-                            "https://{}.nebulabroadcast.com".format(config["site_name"])
+                            "https://{}.nbla.cloud".format(config["site_name"])
                         ),
                     "token" : token
                 }

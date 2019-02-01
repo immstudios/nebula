@@ -1,1 +1,7 @@
-/opt/nebula-setup/settings.json
+{
+    "site_name" : "demo",
+    "db_host" : "localhost",
+    "db_user" : "nebula",
+    "db_pass" : "nebula",
+    "db_name" : "nebula"
+}
