@@ -87,7 +87,7 @@ def get_item_event(id_item, **kwargs):
 
 def get_item_runs(id_channel, from_ts, to_ts, db=False):
     db = db or DB()
-    db.query("SELECT id_item, start, stop FROM asrun WHERE start >= %s and start < %s ORDER BY start ASC", [int(from_ts), int(to_ts)] )
+    db.query("SELECT id_item, start, stop FROM asrun WHERE start >= %s and start < %s ORDER BY start DESC", [int(from_ts), int(to_ts)] )
     result = {}
     for id_item, start, stop in db.fetchall():
         result[id_item] = (start, stop)
