@@ -34,8 +34,8 @@ class Service(BaseService):
         self.caspar_feed_layer   = int(self.channel_config.get("caspar_feed_layer", 10))
         self.fps                 = float(self.channel_config.get("fps", 25.0))
 
-        self.current_asset = False
-        self.current_event = False
+        self.current_asset = Asset()
+        self.current_event = Event()
 
         self.current_live = False
         self.cued_live = False
@@ -234,8 +234,8 @@ class Service(BaseService):
         item = self.controller.current_item
         db = DB()
 
-        self.current_asset = item.asset
-        self.current_event = item.event
+        self.current_asset = item.asset or Asset()
+        self.current_event = item.event or Event()
 
         logging.info ("Advanced to {}".format(item))
 
@@ -243,7 +243,7 @@ class Service(BaseService):
             db.query("UPDATE asrun SET stop = %s WHERE id = %s",  [int(time.time()) , self.last_run])
             db.commit()
 
-        if self.current_asset:
+        if self.current_item:
             db.query(
                     "INSERT INTO asrun (id_channel, id_item, start) VALUES (%s, %s, %s)",
                     [self.id_channel, item.id, time.time()]

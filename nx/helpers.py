@@ -118,6 +118,8 @@ def get_next_item(item, **kwargs):
                     next_item = current_bin.items[0]
                     next_item.asset
                     return next_item
+            if item["run_mode"] == RUN_SKIP:
+                continue
             item.asset
             return item
     else:
