@@ -1,8 +1,15 @@
+import cherrypy
+
 from nebula import *
 from cherryadmin import CherryAdminView
 
 class ViewServices(CherryAdminView):
     def build(self, *args, **kwargs):
+
+        if args[-1] == "reload_settings":
+            load_settings()
+            raise cherrypy.HTTPRedirect("/services")
+
         state_label = {
                 STOPPED  : "<span class='label text-primary'>Stopped</span>",
                 STARTED  : "<span class='label text-success'>Running</span>",
