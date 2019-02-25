@@ -45,6 +45,7 @@ class Service(BaseService):
 
         self.plugins = PlayoutPlugins(self)
         self.controller = CasparController(self)
+        self.last_info = 0
 
         try:
             port = int(self.settings.find("port").text)
@@ -56,6 +57,8 @@ class Service(BaseService):
         self.server.methods = {
                 "take" : self.take,
                 "cue" : self.cue,
+                "cue_forward" : self.cue_forward,
+                "cue_backward" : self.cue_backward,
                 "freeze" : self.freeze,
                 "retake" : self.retake,
                 "abort" : self.abort,
@@ -118,6 +121,24 @@ class Service(BaseService):
         return self.controller.cue(asset.get_playout_name(self.id_channel), item,  **kwargs)
 
 
+    def cue_forward(self, **kwargs):
+        cc = self.controller.cued_item
+        if not cc:
+            return NebulaResponse(204)
+        db = DB()
+        nc = get_next_item(cc.id, db=db, force="next")
+        return self.cue(item=nc, db=db)
+
+    def cue_backward(self, **kwargs):
+        cc = self.controller.cued_item
+        if not cc:
+            return NebulaResponse(204)
+        db = DB()
+        nc = get_next_item(cc.id, db=db, force="prev")
+        return self.cue(item=nc, db=db, level=5)
+
+
+
     def cue_next(self, **kwargs):
         item = kwargs.get("item", self.controller.current_item)
         level = kwargs.get("level", 0)
@@ -131,7 +152,6 @@ class Service(BaseService):
 
         self.controller.cueing = True
         item_next = get_next_item(item.id, db=db, cache=lcache, force_next_event=bool(self.auto_event))
-
 
         if item_next["run_mode"] == 1:
             auto = False
@@ -210,10 +230,10 @@ class Service(BaseService):
         data["cued_title"]    = self.controller.cued_item["title"]    if self.controller.cued_item    else "(no clip)"
         data["request_time"]  = self.controller.request_time
         data["paused"]        = self.controller.paused
-        data["stopped"]       = self.controller.stopped
         data["cueing"]        = self.controller.cueing
         data["id_event"]      = self.current_event.id if self.current_event else False
         data["fps"]           = self.fps
+        data["stopped"]       = False #TODO: deprecated. remove
 
         data["current_fname"] = self.controller.current_fname
         data["cued_fname"]    = self.controller.cued_fname
@@ -221,7 +241,9 @@ class Service(BaseService):
 
 
     def on_progress(self):
-        messaging.send("playout_status", **self.playout_status)
+        if time.time() - self.last_info > .3:
+            messaging.send("playout_status", **self.playout_status)
+            self.last_info = time.time()
 
         for plugin in self.plugins:
             plugin.main()
