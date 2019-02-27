@@ -139,6 +139,7 @@ class CasparController(object):
         self.fpos = info["pos"]
         self.fdur = info["dur"]
 
+
         #
         # Playlist advancing
         #
@@ -222,10 +223,10 @@ class CasparController(object):
         mark_out   = item.mark_out()
 
         marks = ""
-        if mark_in and mark_out > 0:
-            marks += " SEEK {}".format(int(float(mark_in) * self.parser.seek_fps))
+        if mark_in:
+            marks += " SEEK {}".format(int(mark_in * self.parser.seek_fps))
         if mark_out and mark_out < item["duration"] and mark_out > mark_in:
-            marks += " LENGTH {}".format(int((float(mark_out) - float(mark_in)) * self.parser.seek_fps))
+            marks += " LENGTH {}".format(int((mark_out - mark_in) * self.parser.seek_fps))
 
         if play:
             q = "PLAY {}-{} {}{}".format(
