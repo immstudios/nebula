@@ -273,10 +273,14 @@ class SolverPlugin(object):
 
 
 class WebToolPlugin(object):
+    gui = True
+    native = True
+    public = False
+
     def __init__(self, view, name):
-        self.native = True
         self.view = view
         self.name = name
+        self["name"] = self.title
 
     def render(self, template):
         import jinja2

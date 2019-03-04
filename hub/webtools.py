@@ -49,7 +49,7 @@ class WebTools():
 
     @property
     def links(self):
-        return [[k, self.tools[k][1]] for k in sorted(self.tools.keys())]
+        return [[k, self.tools[k][1]] for k in sorted(self.tools.keys()) if self.tools[k][0].gui]
 
 
 webtools = WebTools()
