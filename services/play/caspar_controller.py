@@ -219,10 +219,13 @@ class CasparController(object):
         auto       = kwargs.get("auto", True)
         layer      = kwargs.get("layer", self.parent.caspar_feed_layer)
         play       = kwargs.get("play", False)
+        loop       = kwargs.get("loop", False)
         mark_in    = item.mark_in()
         mark_out   = item.mark_out()
 
         marks = ""
+        if loop:
+            marks += " LOOP"
         if mark_in:
             marks += " SEEK {}".format(int(mark_in * self.parser.seek_fps))
         if mark_out and mark_out < item["duration"] and mark_out > mark_in:

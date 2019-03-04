@@ -117,6 +117,8 @@ class Service(BaseService):
         else:
             kwargs["auto"] = True
 
+        kwargs["loop"] = bool(item["loop"])
+
         self.cued_live = False
         return self.controller.cue(asset.get_playout_name(self.id_channel), item,  **kwargs)
 
@@ -219,6 +221,7 @@ class Service(BaseService):
 
     @property
     def playout_status(self):
+
         #TODO: Rewrite to be nice
         data = {}
         data["id_channel"]    = self.id_channel
