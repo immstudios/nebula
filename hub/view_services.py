@@ -4,12 +4,14 @@ from nebula import *
 from cherryadmin import CherryAdminView
 
 from nebulacore.meta_format import FMH_DATA, CSH_DATA, CSA_DATA
+from .webtools import webtools
 
 class ViewServices(CherryAdminView):
     def build(self, *args, **kwargs):
 
         if args[-1] == "reload_settings":
             load_settings()
+            webtools.load()
 
             FMH_DATA = {}
             CSH_DATA = {}

@@ -187,7 +187,10 @@ class CasparController(object):
             self.parent.on_live_enter()
 
         if advanced:
-            self.parent.on_change()
+            try:
+                self.parent.on_change()
+            except Exception:
+                log_traceback("Playout on_change failed")
 
         if self.current_item and not self.cued_item and not self.cueing:
             self.parent.cue_next()
@@ -210,7 +213,10 @@ class CasparController(object):
             self.cued_item = False
 
 
-        self.parent.on_progress()
+        try:
+            self.parent.on_progress()
+        except Exception:
+            log_traceback("Playout on_main failed")
         self.current_fname = current_fname
         self.cued_fname = cued_fname
 
