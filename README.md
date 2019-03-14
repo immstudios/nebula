@@ -9,7 +9,7 @@ Key features
  - media asset management, metadata handling
  - process automation (media conversion and analysis)
  - programme planning, scheduling
- - linear playout control ([CasparCG](http://www.casparcg.com) and [Liquidsoap](http://liquidsoap.fm))
+ - linear playout control
  - VOD and pseudolinear output automation
  - web and social publishing
  - statistics, reporting
