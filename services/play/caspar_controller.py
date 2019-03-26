@@ -127,7 +127,7 @@ class CasparController(object):
 #        self.recovery_time = time.time()
 
         if cued_fname and (not self.paused) and (info["pos"] == self.fpos) and (not self.stopped) and not self.parent.current_live and self.cued_item and (not self.cued_item["run_mode"]):
-            if self.stalled > time.time() - 2:
+            if self.stalled > time.time() - 4:
                 logging.warning("Taking stalled clip (pos: {})".format(self.fpos))
                 self.take()
             elif not self.stalled:
@@ -146,13 +146,6 @@ class CasparController(object):
 
         advanced = False
 
-#        print("***************", self.cueing)
-#        print("current (is):", current_fname)
-#        print("current (should):", self.current_fname, self.current_item)
-#        print("cued (is):", cued_fname)
-#        print("cued (should):", self.cued_fname, self.cued_item)
-
-
         if self.cueing and self.cueing == current_fname and not cued_fname and not self.parent.cued_live:
             logging.warning("Using short clip workaround")
             self.current_item  = self.cued_item
@@ -164,7 +157,6 @@ class CasparController(object):
             self.cued_item = False
             self.cueing = False
             self.cued_fname = False
-
 
         elif (not cued_fname) and (current_fname) and not self.parent.cued_live:
             if current_fname == self.cued_fname:
