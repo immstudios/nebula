@@ -1,5 +1,3 @@
-<img src="https://nebulabroadcast.com/static/img/logo.svg" width="300px">
-
 Nebula server
 =============
 
