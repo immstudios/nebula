@@ -7,7 +7,7 @@ Type=simple
 User=root
 WorkingDirectory=/opt/nebula
 ExecStartPre=/bin/sleep 30
-ExecStart=/opt/nebula/nebula.py
+ExecStart=/opt/nebula/nebula.py --daemon
 Restart=on-failure
 
 [Install]

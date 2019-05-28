@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/nebula
-ExecStart=/opt/nebula/manage.py run hub
+ExecStart=/opt/nebula/manage.py run hub --daemon
 Restart=on-failure
 
 [Install]
