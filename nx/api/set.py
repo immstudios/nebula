@@ -42,7 +42,6 @@ def api_set(**kwargs):
         return NebulaResponse(ERROR_UNAUTHORISED)
 
     if not (data and ids):
-        #TODO: Use 304?
         return NebulaResponse(200, "No object created or modified")
 
     object_type_class = {
@@ -50,7 +49,11 @@ def api_set(**kwargs):
                 "item"  : Item,
                 "bin"   : Bin,
                 "event" : Event,
-            }[object_type]
+                "user" : User,
+            }.get(object_type, None)
+
+    if object_type_class is None:
+        return NebulaResponse(400, "Unsupported object type {}".format(object_type))
 
     changed_objects = []
     affected_bins = []
