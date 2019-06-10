@@ -33,7 +33,7 @@ def get_validator(object_type, **kwargs):
 
 def api_set(**kwargs):
     object_type = kwargs.get("object_type", "asset")
-    ids  = kwargs.get("objects", [])
+    objects  = kwargs.get("objects", [])
     data = kwargs.get("data", {})
     user = kwargs.get("user", anonymous)
     db   = kwargs.get("db", DB())
@@ -41,7 +41,7 @@ def api_set(**kwargs):
     if not user:
         return NebulaResponse(ERROR_UNAUTHORISED)
 
-    if not (data and ids):
+    if not (data and objects):
         return NebulaResponse(200, "No object created or modified")
 
     object_type_class = {
@@ -58,7 +58,7 @@ def api_set(**kwargs):
     changed_objects = []
     affected_bins = []
 
-    for id_object in ids:
+    for id_object in objects:
         obj = object_type_class(id_object, db=db)
         changed = False
 

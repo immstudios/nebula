@@ -310,6 +310,12 @@ def get_solver(solver_name):
 
 
 
+class APIPlugin(object):
+    def auth(self, user):
+        return bool(user.id)
+
+    def main(self, **kwargs):
+        pass
 
 
 class WebToolPlugin(object):

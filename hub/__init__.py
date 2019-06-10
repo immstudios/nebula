@@ -10,6 +10,7 @@ logging.user = "hub"
 from cherryadmin import CherryAdmin
 
 from .webtools import webtools
+from .apimethods import api_methods
 from .view_dashboard import ViewDashboard
 from .view_assets import ViewAssets
 from .view_detail import ViewDetail
@@ -78,6 +79,7 @@ def user_context_helper(meta):
     return User(meta=meta or {})
 
 
+
 static_dir = config.get(
         "hub_static_dir",
         os.path.join(config["nebula_root"], "hub", "static")
@@ -112,19 +114,5 @@ hub_config = {
                 "profile"   : ViewProfile,
             },
 
-        "api_methods" : {
-                "get"      : api_get,
-                "set"      : api_set,
-                "delete"   : api_delete,
-                "settings" : api_settings,
-                "rundown"  : api_rundown,
-                "order"    : api_order,
-                "schedule" : api_schedule,
-                "jobs"     : api_jobs,
-                "playout"  : api_playout,
-                "actions"  : api_actions,
-                "send"     : api_send,
-                "solve"    : api_solve,
-                "system"   : api_system,
-            }
+        "api_methods" : api_methods
     }
