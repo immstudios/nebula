@@ -19,6 +19,16 @@ def get_objects(ObjectType, **kwargs):
     offset      = kwargs.get("offset", False)
     order       = kwargs.get("order", default_order)
     id_view     = kwargs.get("id_view", False)
+    objects     = kwargs.get("objects", [])
+
+
+    if objects:
+        l = {"count": len(objects)}
+        # We do not do database lookup. Just returning objects by their ids
+        for id_object in objects:
+            yield l, ObjectType(id_object, db=db)
+        return
+
 
     view_count = False
     if id_view and id_view in config["views"]:
@@ -77,7 +87,7 @@ def get_objects(ObjectType, **kwargs):
 
 def api_get(**kwargs):
     object_type = kwargs.get("object_type", "asset")
-    ids         = kwargs.get("ids", [])
+    objects = kwargs.get("objects") or kwargs.get("ids", []) #TODO: ids is deprecated. use objects instead
     result_type = kwargs.get("result", False)
     db          = kwargs.get("db", DB())
     id_view     = kwargs.get("id_view", 0)
@@ -105,46 +115,39 @@ def api_get(**kwargs):
             "count" : 0
         }
 
-    if ids:
-        # We do not do database lookup. Just returning objects by their ids
-        result["data"] = [ObjectType(id, db=db).meta for id in ids]
-        result["count"] = len(result["data"])
+    if type(result_type) == list:
+        result_format = []
+        for i, key in enumerate(result_type):
+            form = key.split("@")
+            if len(form) == 2:
+                result_format.append(json.loads(form[1] or "{}"))
+            else:
+                result_format.append(None)
+            result_type[i] = form[0]
+
+        for response, obj in get_objects(ObjectType, **kwargs):
+            result["count"] |= response["count"]
+            row = []
+            for key, form in zip(result_type, result_format):
+                if form is None:
+                    row.append(obj[key])
+                else:
+                    form = form or {}
+                    row.append(obj.show(key, **form))
+            result["data"].append(row)
+
+
+    elif result_type == "ids":
+        # Result is just array of matching object IDs
+        for response, obj in get_objects(ObjectType, **kwargs):
+            result["count"] |= response["count"]
+            result["data"].append(obj.id)
 
     else:
-        # We actually search the database
-        if type(result_type) == list:
-            result_format = []
-            for i, key in enumerate(result_type):
-                form = key.split("@")
-                if len(form) == 2:
-                    result_format.append(json.loads(form[1] or "{}"))
-                else:
-                    result_format.append(None)
-                result_type[i] = form[0]
-
-            for response, obj in get_objects(ObjectType, **kwargs):
-                result["count"] |= response["count"]
-                row = []
-                for key, form in zip(result_type, result_format):
-                    if form is None:
-                        row.append(obj[key])
-                    else:
-                        form = form or {}
-                        row.append(obj.show(key, **form))
-                result["data"].append(row)
-
-
-        elif result_type == "ids":
-            # Result is just array of matching object IDs
-            for response, obj in get_objects(ObjectType, **kwargs):
-                result["count"] |= response["count"]
-                result["data"].append(obj.id)
-
-        else:
-            # Result is array of full asset metadata sets
-            for response, obj in get_objects(ObjectType, **kwargs):
-                result["count"] |= response["count"]
-                result["data"].append(obj.meta)
+        # Result is array of full asset metadata sets
+        for response, obj in get_objects(ObjectType, **kwargs):
+            result["count"] |= response["count"]
+            result["data"].append(obj.meta)
 
     #
     # response
