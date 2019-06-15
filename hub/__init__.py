@@ -31,6 +31,8 @@ SITE_CSS = [
         "https://use.fontawesome.com/releases/v5.8.1/css/fontawesome.css",
         "https://fonts.googleapis.com/css?family=Roboto:400,500,700&amp;subset=latin-ext",
 
+        "https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.9/dist/css/bootstrap-select.min.css",
+
         "/static/css/switch.css",
         "/static/css/style.css",
     ]
@@ -40,6 +42,8 @@ SITE_JS = [
         "https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js",
         "https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js",
         "https://cdnjs.cloudflare.com/ajax/libs/gijgo/1.9.13/combined/js/gijgo.min.js",
+
+        "https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.9/dist/js/bootstrap-select.min.js",
 
         "/static/js/jquery.inputmask.js",
         "/static/js/common.js",
