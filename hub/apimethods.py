@@ -25,11 +25,8 @@ class APIMethods(dict):
                 "system"   : api_system,
             })
         logging.info("Reloading API methods")
-        global plugin_path
-        if not plugin_path:
-            return
-        apidir = os.path.join(str(plugin_path), "api")
-        if not os.path.isdir(apidir):
+        apidir = get_plugin_path("api")
+        if not apidir:
             return
 
 

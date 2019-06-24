@@ -172,10 +172,16 @@
                 {% elif key_class == 8 %} {# fraction #}
                     {{ page.asset.show(key) }}
 
-                {% elif key_class == 9 %} {# select #}
-                    <select name="{{ key }}" class="form-control" id="input-key-{{ loop.index }}">
+                {% elif key_class in (9, 10) %} {# select #}
+                    <select name="{{ key }}" class="form-control selectpicker" id="input-key-{{ loop.index }}" {% if key_class == 10 %}multiple{% endif %}>
                     {% for r in page.asset.show(key, full=True) %}
-                        <option value="{{ r.value }}"{% if r.selected %} selected{% endif %}>{{ r.alias }}</option>
+                        <option
+                            value="{{ r.value }}"
+                            {% if r.selected %} selected{% endif %}
+                            {% if r.role == "label" %} disabled{% endif %}
+                            title="{{ r.alias }}"
+                            class="dropdown-menu-level-{{ r.get("indent", 0) }} {% if r.role == "header"%}dropdown-menu-header{% endif %}"
+                            >{{ r.alias }}</option>
                     {% endfor %}
                     </select>
 

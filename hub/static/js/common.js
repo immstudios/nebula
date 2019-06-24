@@ -1,3 +1,5 @@
+$.fn.selectpicker.Constructor.BootstrapVersion = '4';
+
 (function (window, document, undefined) {
     "use strict";
     if (window.seismicNotify) {

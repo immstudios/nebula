@@ -141,3 +141,25 @@ h2 {
 #preview-container {
     margin: 0 auto;
 }
+
+
+
+
+.dropdown-menu .dropdown-item {
+    padding-left: 40px;
+}
+
+.dropdown-menu-header { font-weight: bold;}
+.dropdown-menu-level-0{ padding-left: 40px !important; }
+.dropdown-menu-level-1{ padding-left: 60px !important; }
+.dropdown-menu-level-2{ padding-left: 80px !important; }
+.dropdown-menu-level-3{ padding-left: 100px !important; }
+.dropdown-menu-level-4{ padding-left: 120px !important; }
+.dropdown-menu-level-5{ padding-left: 140px !important; }
+.dropdown-menu-level-6{ padding-left: 160px !important; }
+
+.dropdown-menu .dropdown-item span.check-mark,
+.dropdown-menu .selected span.check-mark {
+    right: auto;
+    left: 15px;
+}

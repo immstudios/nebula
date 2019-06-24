@@ -6,10 +6,12 @@ from .helpers import *
 from .mediaprobe import *
 from .api import *
 from .base_service import *
+from .plugins import *
 
 
 def load_settings(force=False):
     global config
+    logging.debug("Loading site settings")
     # This is the first time we are connecting DB
     # so error handling should be here
     try:
@@ -85,8 +87,7 @@ def load_settings(force=False):
 
     messaging.configure()
     cache.configure()
+    load_common_scripts()
     return True
 
 load_settings()
-
-from .plugins import *

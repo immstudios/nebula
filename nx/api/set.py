@@ -1,34 +1,8 @@
-import os
-import imp
-
-from nx import *
-from nebulacore.base_objects import BaseObject
-
 __all__ = ["api_set"]
 
-
-def get_validator(object_type, **kwargs):
-    plugin_path = os.path.join(
-            storages[int(config.get("plugin_storage", 1))].local_path,
-            config.get("plugin_root", ".nx/scripts/v5")
-        )
-    if not os.path.exists(plugin_path):
-        return
-
-    f = FileObject(plugin_path, "validator", object_type + ".py")
-    if f.exists:
-        try:
-            py_mod = imp.load_source(object_type, f.path)
-        except:
-            log_traceback("Unable to load plugin {}".format(plugin_name))
-            return
-    else:
-        return
-
-    if not "Plugin" in dir(py_mod):
-        logging.error("No plugin class found in {}".format(f))
-        return
-    return py_mod.Plugin(**kwargs)
+from nx import *
+from nx.plugins.validator import get_validator
+from nebulacore.base_objects import BaseObject
 
 
 def api_set(**kwargs):
@@ -71,6 +45,17 @@ def api_set(**kwargs):
                             config["folders"][id_folder]["title"]
                         )
                     )
+        elif object_type == "user":
+            if obj.id:
+                if not user.has_right("user_edit"):
+                    return NebulaResponse(ERROR_ACCESS_DENIED,
+                            "{} is not allowed to edit users data".format(user)
+                        )
+            else:
+                if not user.has_right("user_create"):
+                    return NebulaResponse(ERROR_ACCESS_DENIED,
+                            "{} is not allowed to add new users".format(user)
+                        )
 
         changed = False
         for key in data:

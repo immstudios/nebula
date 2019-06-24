@@ -104,11 +104,15 @@ def api_schedule(**kwargs):
             if key == "_items":
                 for item_data in event_data["_items"]:
                     if not pbin.items:
-                        pos = 0
+                        start_pos = 0
                     else:
-                        pos = pbin.items[-1]["position"]
+                        start_pos = pbin.items[-1]["position"]
+                    try:
+                        pos = int(item_data["position"])
+                    except KeyError:
+                        pos = 0
                     item = Item(meta=item_data, db=db)
-                    item["position"] = pos
+                    item["position"] = start_pos + pos
                     item["id_bin"] = pbin.id
                     item.save()
                 continue
