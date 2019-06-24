@@ -45,6 +45,17 @@ def api_set(**kwargs):
                             config["folders"][id_folder]["title"]
                         )
                     )
+        elif object_type == "user":
+            if obj.id:
+                if not user.has_right("user_edit"):
+                    return NebulaResponse(ERROR_ACCESS_DENIED,
+                            "{} is not allowed to edit users data".format(user)
+                        )
+            else:
+                if not user.has_right("user_create"):
+                    return NebulaResponse(ERROR_ACCESS_DENIED,
+                            "{} is not allowed to add new users".format(user)
+                        )
 
         changed = False
         for key in data:
