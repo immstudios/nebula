@@ -5,11 +5,6 @@ __all__ = ["api_get", "get_objects"]
 def get_objects(ObjectType, **kwargs):
     """objects lookup function. To be used inside services"""
 
-    if ObjectType.object_type_id == ASSET:
-        default_order = "ctime DESC"
-    else:
-        default_order = "meta->>'ctime' DESC"
-
     db          = kwargs.get("db", DB())
     raw_conds   = kwargs.get("conds", [])
     fulltext    = kwargs.get("fulltext", False)
@@ -17,9 +12,21 @@ def get_objects(ObjectType, **kwargs):
     do_count    = kwargs.get("count", False)
     limit       = kwargs.get("limit", False)
     offset      = kwargs.get("offset", False)
-    order       = kwargs.get("order", default_order)
+    order       = kwargs.get("order", "ctime desc")
     id_view     = kwargs.get("id_view", False)
     objects     = kwargs.get("objects", [])
+
+
+    try:
+        order_key, order_trend = order.split(" ")
+    except Exception:
+        order_key = order
+        order_trend = "ASC"
+
+    if not order_trend.lower() in ["asc", "desc"]:
+        order_trend = "ASC"
+    order = "meta->>'{}' {}".format(order_key, order_trend)
+
 
 
     if objects:

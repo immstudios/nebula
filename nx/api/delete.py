@@ -9,6 +9,7 @@ def api_delete(**kwargs):
     objects = kwargs.get("objects") or kwargs.get("ids", []) #TODO: ids is deprecated. use objects instead
     db = kwargs.get("db", DB())
     user = kwargs.get("user", anonymous)
+    initiator = kwargs.get("initiator", None)
 
     if not user:
         return NebulaResponse(ERROR_UNAUTHORISED)
@@ -44,5 +45,5 @@ def api_delete(**kwargs):
         num += 1
 
     if affected_bins:
-        bin_refresh(affected_bins, db=db)
+        bin_refresh(affected_bins, db=db, initiator=initiator)
     return NebulaResponse(200, " {} objects deleted".format(num))

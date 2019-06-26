@@ -11,6 +11,7 @@ def api_set(**kwargs):
     data = kwargs.get("data", {})
     user = kwargs.get("user", anonymous)
     db   = kwargs.get("db", DB())
+    initiator = kwargs.get("initiator", None)
 
     if not user:
         return NebulaResponse(ERROR_UNAUTHORISED)
@@ -86,9 +87,15 @@ def api_set(**kwargs):
                 affected_bins.append(obj["id_bin"])
 
     if changed_objects:
-        messaging.send("objects_changed", objects=changed_objects, object_type=object_type, user="{}".format(user))
+        messaging.send(
+                "objects_changed",
+                objects=changed_objects,
+                object_type=object_type,
+                user="{}".format(user),
+                initiator=initiator
+            )
 
     if affected_bins:
-        bin_refresh(affected_bins, db=db)
+        bin_refresh(affected_bins, db=db, initiator=initiator)
 
     return NebulaResponse(200, data=changed_objects)
