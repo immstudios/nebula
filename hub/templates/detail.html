@@ -131,7 +131,7 @@
         <div class="form-group row">
 
             <label for="input-key-{{ loop.index }}" class="col-sm-2 col-form-label">
-                {{ site.meta_types[key].alias() | replace(" ", "&nbsp;")}}
+                {{ site.meta_types[key].alias(lang=site["language"]) | replace(" ", "&nbsp;")}}
             </label>
 
             <div class="col-sm-10">

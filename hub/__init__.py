@@ -62,6 +62,7 @@ class SiteContext(object):
     context = {
         "name" : config["site_name"],
         "meta_types" : meta_types,
+        "language" : config.get("language", "en"),
         "webtools" : webtools,
         "css" : SITE_CSS,
         "js" : SITE_JS

@@ -67,7 +67,7 @@
     <thead>
         <tr>
         {% for column in page.columns %}
-            <th>{{ site.meta_types[column].header() }}</th>
+            <th>{{ site.meta_types[column].header(lang=site["language"]) }}</th>
         {% endfor %}
         </tr>
     </thead>
