@@ -45,7 +45,6 @@ def get_objects(ObjectType, **kwargs):
                     ["media_types", "media_type"],
                     ["content_types", "content_type"],
                     ["states", "status"],
-                    ["folders", "id_folder"],
                 ]:
             if key in view_config and view_config[key]:
                 if len(view_config[key]) == 1:
