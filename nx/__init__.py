@@ -11,7 +11,6 @@ from .plugins import *
 
 def load_settings(force=False):
     global config
-    logging.debug("Loading site settings")
     # This is the first time we are connecting DB
     # so error handling should be here
     try:
