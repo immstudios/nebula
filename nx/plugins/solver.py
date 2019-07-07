@@ -94,7 +94,7 @@ class SolverPlugin(object):
         return True
 
 
-    def main(self, debug=False):
+    def main(self, debug=False, counter=0):
         logging.info("Solving {}".format(self.placeholder))
         message = "Solver returned no items. Keeping placeholder."
         try:
@@ -103,14 +103,14 @@ class SolverPlugin(object):
                 if debug:
                     logging.debug("Appending {}".format(new_item.asset))
         except Exception:
-            message = log_traceback()
-            self.new_items = []
+            message = log_traceback("Error occured during solving")
+            return NebulaResponse(501, message)
 
         if debug:
             return NebulaResponse(202)
 
         if not self.new_items:
-            return NebulaResponse(501, message)
+            return NebulaResponse(204, message)
 
         i = 0
         for item in self.bin.items:
@@ -131,11 +131,11 @@ class SolverPlugin(object):
 
         if self.solve_next:
             self.init_solver(self.solve_next)
-            return self.main(debug=debug)
+            return self.main(debug=debug, counter=len(self.new_items) + counter)
 
 
         bin_refresh(self.affected_bins, db=self.db)
-        return NebulaResponse(200, "ok")
+        return NebulaResponse(200, "Created {} new items".format(len(self.new_items) + counter))
 
 
     def solve(self):
@@ -151,13 +151,19 @@ def get_solver(solver_name):
     if not get_plugin_path("solver"):
         return
 
-    f = FileObject(get_plugin_path("solver"), solver_name + ".py")
-    if f.exists:
-        try:
-            py_mod = imp.load_source(solver_name, f.path)
-        except:
-            log_traceback("Unable to load plugin {}".format(solver_name))
-            return
+    for f in [
+            FileObject(get_plugin_path("solver"), solver_name + ".py"),
+            FileObject(get_plugin_path("solver"), solver_name, solver_name + ".py")
+            ]:
+
+        if f.exists:
+            sys.path.insert(0, f.dir_name)
+            try:
+                py_mod = imp.load_source(solver_name, f.path)
+                break
+            except:
+                log_traceback("Unable to load plugin {}".format(solver_name))
+                return
     else:
         logging.error("{} does not exist".format(f))
         return
@@ -166,4 +172,3 @@ def get_solver(solver_name):
         logging.error("No plugin class found in {}".format(f))
         return
     return py_mod.Plugin
-

@@ -95,6 +95,7 @@ def api_get(**kwargs):
     object_type = kwargs.get("object_type", "asset")
     objects = kwargs.get("objects") or kwargs.get("ids", []) #TODO: ids is deprecated. use objects instead
     result_type = kwargs.get("result", False)
+    result_format = kwargs.get("result_format", False)
     db          = kwargs.get("db", DB())
     id_view     = kwargs.get("id_view", 0)
     user        = kwargs.get("user", anonymous)
@@ -121,14 +122,26 @@ def api_get(**kwargs):
             "count" : 0
         }
 
+    rformat = None
+    if result_format:
+        rformat = {"result" : result_format}
+
     if type(result_type) == list:
         result_format = []
         for i, key in enumerate(result_type):
             form = key.split("@")
             if len(form) == 2:
-                result_format.append(json.loads(form[1] or "{}"))
+                rf = json.loads(form[1] or "{}")
+                if rformat:
+                    rformat.update(rf)
+                    result_format.append(rformat)
+                else:
+                    result_format.append(rf)
             else:
-                result_format.append(None)
+                if rformat:
+                    result_format.append(rformat)
+                else:
+                    result_format.append(None)
             result_type[i] = form[0]
 
         for response, obj in get_objects(ObjectType, **kwargs):
