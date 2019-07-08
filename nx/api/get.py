@@ -25,7 +25,20 @@ def get_objects(ObjectType, **kwargs):
 
     if not order_trend.lower() in ["asc", "desc"]:
         order_trend = "ASC"
-    order = "meta->>'{}' {}".format(order_key, order_trend)
+
+    cast = None
+    if order_key in meta_types:
+        cls = meta_types[order_key]["class"]
+        if cls in [NUMERIC, DATETIME, TIMECODE]:
+            cast = "FLOAT"
+        elif cls in [INTEGER, COLOR]:
+            cast = "INTEGER"
+
+
+    if cast:
+        order = "CAST(meta->>'{}' AS {}) {}".format(order_key, cast, order_trend)
+    else:
+        order = "meta->>'{}' {}".format(order_key, order_trend)
 
 
 
@@ -96,6 +109,7 @@ def api_get(**kwargs):
     objects = kwargs.get("objects") or kwargs.get("ids", []) #TODO: ids is deprecated. use objects instead
     result_type = kwargs.get("result", False)
     result_format = kwargs.get("result_format", False)
+    result_lang = kwargs.get("language", config.get("language", "en"))
     db          = kwargs.get("db", DB())
     id_view     = kwargs.get("id_view", 0)
     user        = kwargs.get("user", anonymous)
@@ -124,7 +138,10 @@ def api_get(**kwargs):
 
     rformat = None
     if result_format:
-        rformat = {"result" : result_format}
+        rformat = {
+                "result" : result_format,
+                "language" : result_lang
+            }
 
     if type(result_type) == list:
         result_format = []
