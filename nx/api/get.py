@@ -9,7 +9,6 @@ def get_objects(ObjectType, **kwargs):
     raw_conds   = kwargs.get("conds", [])
     fulltext    = kwargs.get("fulltext", False)
     result_type = kwargs.get("result", False)
-    do_count    = kwargs.get("count", False)
     limit       = kwargs.get("limit", False)
     offset      = kwargs.get("offset", False)
     order       = kwargs.get("order", "ctime desc")
@@ -50,8 +49,7 @@ def get_objects(ObjectType, **kwargs):
         return
 
 
-    view_count = False
-    if id_view and id_view in config["views"]:
+    if id_view and id_view in config["views"] and ObjectType.object_type_id == ASSET:
         view_config = config["views"][id_view]
         for key, col in [
                     ["folders", "id_folder"],
@@ -76,6 +74,8 @@ def get_objects(ObjectType, **kwargs):
         else:
             conds.append("meta->>"+cond)
 
+    view_count = False
+    #TODO: cache view count result?
     if fulltext:
         do_count = True
         ft = slugify(fulltext, make_set=True)
@@ -105,14 +105,15 @@ def get_objects(ObjectType, **kwargs):
 
 
 def api_get(**kwargs):
-    object_type = kwargs.get("object_type", "asset")
-    objects = kwargs.get("objects") or kwargs.get("ids", []) #TODO: ids is deprecated. use objects instead
-    result_type = kwargs.get("result", False)
+    db            = kwargs.get("db", DB())
+    user          = kwargs.get("user", anonymous)
+
+    object_type   = kwargs.get("object_type", "asset")
+    objects       = kwargs.get("objects") or kwargs.get("ids", []) #TODO: ids is deprecated
+    result_type   = kwargs.get("result", False)
     result_format = kwargs.get("result_format", False)
-    result_lang = kwargs.get("language", config.get("language", "en"))
-    db          = kwargs.get("db", DB())
-    id_view     = kwargs.get("id_view", 0)
-    user        = kwargs.get("user", anonymous)
+    result_lang   = kwargs.get("language", config.get("language", "en"))
+    id_view       = kwargs.get("id_view", 0)
     kwargs["conds"] = kwargs.get("conds", [])
     kwargs["limit"] = kwargs.get("limit", 1000)
 
