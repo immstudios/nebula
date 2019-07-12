@@ -33,6 +33,11 @@ def api_set(**kwargs):
     changed_objects = []
     affected_bins = []
 
+    if "_password" in data:
+        hpass = get_hash(data["_password"])
+        del(data["_password"])
+        data["password"] = hpass
+
     for id_object in objects:
         obj = object_type_class(id_object, db=db)
         changed = False
