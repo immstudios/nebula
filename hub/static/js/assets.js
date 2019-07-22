@@ -16,17 +16,17 @@ $(document).ready(function(){
         do_search();
     });
 
-    $(".select-view-link").click(function(){
+    $(".select-view-link").click(function(event){
         event.preventDefault();
         $("#select-view").val($(this).attr("data-href"));
         do_search();
     });
 
-    $("#select-page").change(function(){
+    $("#select-page").change(function(event){
         do_search();
     });
 
-    $("#input-query").keypress(function( event ) {
+    $("#input-query").keypress(function(event) {
         if ( event.which == 13 ) {
             event.preventDefault();
             do_search();

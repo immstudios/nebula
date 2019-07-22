@@ -174,7 +174,7 @@
 
                 {% elif key_class in (9, 10) %} {# select #}
                     <select name="{{ key }}" class="form-control selectpicker" id="input-key-{{ loop.index }}" {% if key_class == 10 %}multiple{% endif %}>
-                    {% for r in page.asset.show(key, full=True) %}
+                    {% for r in page.asset.show(key, result="full") %}
                         <option
                             value="{{ r.value }}"
                             {% if r.selected %} selected{% endif %}
@@ -182,7 +182,7 @@
                             title="{{ r.alias }}"
                             class="dropdown-menu-level-{{ r.get("indent", 0) }} {% if r.role == "header"%}dropdown-menu-header{% endif %}"
                             >{{ r.alias }}</option>
-                    {% endfor %}
+                        {% endfor %}
                     </select>
 
                 {% elif key_class == 10 %} {# list #}
