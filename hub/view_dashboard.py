@@ -72,7 +72,7 @@ class ViewDashboard(CherryAdminView):
 
         self["name"] = "dashboard"
         self["title"] = "Dashboard"
-        self["js"] = ["/static/js/dashboard.js"]
+        self["js"] = [] # ["/static/js/dashboard.js"]
         self["hosts"] = hosts
         self["storages"] = storage_info
         self["object_counts"] = object_counts

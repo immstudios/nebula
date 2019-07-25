@@ -30,7 +30,7 @@
     </head>
     <body id="{{ page.name }}">
 
-        {% if page.name != "login" %}
+        {% if user.id %}
             {% include "includes/navbar.html" %}
         {% endif %}
 

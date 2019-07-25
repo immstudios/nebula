@@ -11,33 +11,37 @@ def get_objects(ObjectType, **kwargs):
     result_type = kwargs.get("result", False)
     limit       = kwargs.get("limit", False)
     offset      = kwargs.get("offset", False)
-    order       = kwargs.get("order", "ctime desc")
+    order       = kwargs.get("order", False)
     id_view     = kwargs.get("id_view", False)
     objects     = kwargs.get("objects", [])
 
 
-    try:
-        order_key, order_trend = order.split(" ")
-    except Exception:
-        order_key = order
-        order_trend = "ASC"
+    if order:
+        try:
+            order_key, order_trend = order.split(" ")
+        except Exception:
+            order_key = order
+            order_trend = "ASC"
 
-    if not order_trend.lower() in ["asc", "desc"]:
-        order_trend = "ASC"
-
-    cast = None
-    if order_key in meta_types:
-        cls = meta_types[order_key]["class"]
-        if cls in [NUMERIC, DATETIME, TIMECODE]:
-            cast = "FLOAT"
-        elif cls in [INTEGER, COLOR]:
-            cast = "INTEGER"
+        if not order_trend.lower() in ["asc", "desc"]:
+            order_trend = "ASC"
 
 
-    if cast:
-        order = "CAST(meta->>'{}' AS {}) {}".format(order_key, cast, order_trend)
-    else:
-        order = "meta->>'{}' {}".format(order_key, order_trend)
+        if order_key in ObjectType.db_cols + ["id"]:
+            order = "{} {}".format(order_key, order_trend)
+        else:
+            cast = None
+            if order_key in meta_types:
+                cls = meta_types[order_key]["class"]
+                if cls in [NUMERIC, DATETIME, TIMECODE]:
+                    cast = "FLOAT"
+                elif cls in [INTEGER, COLOR]:
+                    cast = "INTEGER"
+
+            if cast:
+                order = "CAST(meta->>'{}' AS {}) {}".format(order_key, cast, order_trend)
+            else:
+                order = "meta->>'{}' {}".format(order_key, order_trend)
 
 
 
@@ -74,14 +78,25 @@ def get_objects(ObjectType, **kwargs):
         else:
             conds.append("meta->>"+cond)
 
-    view_count = False
-    #TODO: cache view count result?
+
+    view_count = 0
     if fulltext:
         do_count = True
-        ft = slugify(fulltext, make_set=True)
-        for word in ft:
-            conds.append("id IN (SELECT id FROM ft WHERE object_type={} AND value LIKE '{}%')".format(ObjectType.object_type_id, word))
+        if ":" in fulltext:
+            key, value = fulltext.split(":")
+            key = key.strip()
+            value = value.strip().lower()
+            conds.append("meta->>'{}' ILIKE '{}'".format(key, value))
+        else:
+            ft = slugify(fulltext, make_set=True)
+            for word in ft:
+                conds.append("id IN (SELECT id FROM ft WHERE object_type={} AND value LIKE '{}%')".format(ObjectType.object_type_id, word))
     else:
+        try:
+            view_count = int(cache.load("view-count-{}".format(id_view)))
+        except:
+            cache.delete("view-count-{}".format(id_view))
+            view_count = False
         if view_count:
             do_count = False
         else:
@@ -98,8 +113,12 @@ def get_objects(ObjectType, **kwargs):
     logging.debug("Executing get query:", q)
     db.query(q)
 
+    count = 0
     for id, meta, count in db.fetchall():
         yield {"count": count or view_count}, ObjectType(meta=meta, db=db)
+
+    if count:
+        cache.save("view-count-{}".format(id_view), count)
 
 
 
@@ -186,6 +205,7 @@ def api_get(**kwargs):
             result["count"] |= response["count"]
             result["data"].append(obj.meta)
 
+    result["count"] = min(result["count"], 10000)
     #
     # response
     #

@@ -36,12 +36,13 @@ class ViewAssets(CherryAdminView):
                 id_view = id_view,
                 fulltext=query or False,
                 count=True,
-                order="ctime DESC",
+                order="id DESC",
                 limit=RECORDS_PER_PAGE,
                 offset=(current_page - 1) * RECORDS_PER_PAGE
             )
 
         page_count = int(math.ceil(assets["count"] / RECORDS_PER_PAGE)) + 1
+        page_count = min(page_count, 100) # It does not make much chance to have more than 100 pages
 
         if current_page > page_count:
             current_page = 1
@@ -55,3 +56,5 @@ class ViewAssets(CherryAdminView):
         self["page_count"]   = page_count
         self["columns"]      = view["columns"]
         self["assets"]       = [Asset(meta=meta) for meta in assets["data"]]
+
+        #self.context.message(assets["message"])
