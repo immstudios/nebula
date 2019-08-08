@@ -28,6 +28,13 @@ $.fn.selectpicker.Constructor.BootstrapVersion = '4';
 })(window, document);
 
 
+function show_loader(){
+    $("#loader").fadeOut("fast");
+}
+
+function hide_loader(){
+    $("#loader").fadeOut("fast");
+}
 
 $(document).ready(function(){
     setTimeout(function() {
@@ -40,6 +47,20 @@ $(document).ready(function(){
         $(".alert-danger").alert('close');
     }, 10000);
 
-    $(".input-timecode").inputmask({"mask": "99:99:99:99", "insertMode" : false});
+    $("a").click(function(event){
+        show_loader();
+    });
 
+    $(".input-timecode").inputmask({"mask": "99:99:99:99", "insertMode" : false});
 });
+
+
+
+
+
+
+$(window).on("load", function() {
+    hide_loader();
+});
+
+

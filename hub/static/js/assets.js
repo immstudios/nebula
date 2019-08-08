@@ -1,9 +1,10 @@
 function do_search(){
+    console.log("search");
+    show_loader();
     $("#form-search").submit();
 }
 
 $(document).ready(function(){
-
 
     $("#btn-clear").click(function(event){
         event.preventDefault();
@@ -36,7 +37,6 @@ $(document).ready(function(){
     $("#browser-body").on("click", "tr[data-href]", function() {
         window.location.href = "/detail/" + $(this).attr("data-href");
     });
-
 
 });
 

@@ -102,7 +102,7 @@ class ViewDetail(CherryAdminView):
                 self["new_asset"] = True
             else:
                 self["asset"] = False
-                return
+                raise cherrypy.HTTPError(status=404, message="Asset not found")
         else:
             asset = Asset(id_asset, db=db)
 

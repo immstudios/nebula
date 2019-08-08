@@ -1,0 +1,14 @@
+{% macro card(title='', icon='') -%}
+
+<div class="card">
+    {% if title %}
+    <div class="card-header">
+        {{ title }}
+    </div>
+    {% endif %}
+  <div class="card-body">
+      {{ caller() }}
+  </div>
+</div>
+
+{%- endmacro %}

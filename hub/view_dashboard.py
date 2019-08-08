@@ -53,7 +53,9 @@ class ViewDashboard(CherryAdminView):
                     "mem_total" : status["mem"][0],
                     "mem_free" : status["mem"][1],
                     "swp_total" : status["swp"][0],
-                    "swp_free" : status["swp"][1]
+                    "swp_free" : status["swp"][1],
+                    "root_total" : status["rfs"][0],
+                    "root_free" : status["rfs"][1],
                 }
 
             hosts[hostname] = host_info

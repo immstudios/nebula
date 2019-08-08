@@ -5,45 +5,44 @@
 
 {% block content %}
 <div class="row">
+
+
 <div class="col">
-    <div class="panel panel-default">
-        <div class="panel-heading">Objects</div>
-        <div class="panel-body">
-            <div class="list-group">
-            <div class="list-group-item">
-            {% for object_type in page.object_counts  %}
-            <div class="row-content">
-                {{ object_type }}&nbsp;
-                <span class="badge">{{ "{0:,}".format(page.object_counts[object_type]) }}</span>
-            </div>
-            {% endfor %}
-            </div>
-            </div>
+
+{% call macro.card('Objects') %}
+<div class="list-group">
+    <div class="list-group-item">
+        {% for object_type in page.object_counts  %}
+        <div class="row-content">
+            {{ object_type }}&nbsp;
+            <span class="badge">{{ "{0:,}".format(page.object_counts[object_type]) }}</span>
         </div>
+        {% endfor %}
     </div>
 </div>
+{% endcall %}
 
 
+</div>
 <div class="col">
-    <div class="panel panel-default">
-        <div class="panel-heading">Storage utilization</div>
-        <div class="panel-body">
-            <div class="list-group">
-                {% for storage in page.storages %}
-                <div class="list-group-item">
-                    <div class="row-content">
-                        <p class="list-group-item-text">
-                             <b>{{ storage.title }}</b> : {{ storage["free"] | filesizeformat }} of {{ storage["total"] | filesizeformat }} free.</small>
-                        </p>
-                        <div class="progress">
-                            <div class="progress-bar" style="width:{{ 100*((storage["total"]-storage["free"])/storage["total"] ) }}%"></div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
+
+{% call macro.card('Storage utilization') %}
+<div class="list-group">
+    {% for storage in page.storages %}
+    <div class="list-group-item">
+        <div class="row-content">
+            <p class="list-group-item-text">
+                <b>{{ storage.title }}</b> : {{ storage["free"] | filesizeformat }} of {{ storage["total"] | filesizeformat }} free.</small>
+            </p>
+            <div class="progress">
+                <div class="progress-bar" style="width:{{ 100*((storage["total"]-storage["free"])/storage["total"] ) }}%"></div>
             </div>
         </div>
     </div>
+    {% endfor %}
+</div>
+{% endcall %}
+
 </div>
 
 </div>
@@ -54,8 +53,8 @@
 <div class="row">
 {% for hostname in page.hosts %}{% set host = page.hosts[hostname] %}
 <div class="col">
-    <div class="panel panel-default">
-        <div class="panel-heading">{{ hostname }}</div>
+{% call macro.card(hostname) %}
+
         <p class="list-group-item-text">
             <small>CPU</small>
             <div class="progress">
@@ -76,7 +75,13 @@
             </div>
         </p>
         {% endif %}
-    </div>
+        <p class="list-group-item-text">
+        <small>Root FS ({{ host.root_free | filesizeformat }} of {{ host.root_total | filesizeformat }} free)</small>
+            <div class="progress">
+                <div class="progress-bar" style="width : {{ 100*((host.root_total - host.root_free) / host.root_total) }}%"></div>
+            </div>
+        </p>
+{% endcall %}
 </div>
 {% endfor %}
 
