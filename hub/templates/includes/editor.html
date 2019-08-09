@@ -40,9 +40,7 @@
                 name="{{ key }}"
                 class="form-control"
                 id="input_key-{{ loop.index }}"
-                rows="3">
-                    {{ page.asset[key]  }}
-            </textarea>
+                rows="8">{{ page.asset[key] }}</textarea>
 
         {% elif key_class == 2 %} {# integer #}
 

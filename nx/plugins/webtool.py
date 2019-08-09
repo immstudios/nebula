@@ -3,6 +3,7 @@ __all__ = ["WebToolPlugin"]
 import os
 
 from nx import *
+from nx.plugins.common import *
 
 
 class WebToolPlugin(object):

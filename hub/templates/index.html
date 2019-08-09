@@ -1,5 +1,6 @@
 {% extends "_base.html" %}
 
+
 {% block header %}
 {% endblock %}
 
@@ -8,79 +9,53 @@
 
 
 <div class="col">
-
-{% call macro.card('Objects') %}
-<div class="list-group">
-    <div class="list-group-item">
-        {% for object_type in page.object_counts  %}
-        <div class="row-content">
-            {{ object_type }}&nbsp;
-            <span class="badge">{{ "{0:,}".format(page.object_counts[object_type]) }}</span>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-{% endcall %}
-
-
-</div>
-<div class="col">
-
-{% call macro.card('Storage utilization') %}
-<div class="list-group">
-    {% for storage in page.storages %}
-    <div class="list-group-item">
-        <div class="row-content">
-            <p class="list-group-item-text">
-                <b>{{ storage.title }}</b> : {{ storage["free"] | filesizeformat }} of {{ storage["total"] | filesizeformat }} free.</small>
-            </p>
-            <div class="progress">
-                <div class="progress-bar" style="width:{{ 100*((storage["total"]-storage["free"])/storage["total"] ) }}%"></div>
-            </div>
-        </div>
+{% call macro.card('Objects', 'fas fa-cubes') %}
+    {% for object_type in page.object_counts  %}
+    <div class="row-content">
+        {{ object_type }}&nbsp;
+        <span class="badge">{{ "{0:,}".format(page.object_counts[object_type]) }}</span>
     </div>
     {% endfor %}
-</div>
 {% endcall %}
+</div>
+
+<div class="col">
+{% call macro.card('Storage utilization', 'fas fa-database') %}
+{% for storage in page.storages %}
+    <p>
+        {{ storage.title }} ({{ storage["free"] | filesizeformat }} of {{ storage["total"] | filesizeformat }} free)
+        {{ macro.sysload_bar(storage["total"], storage["free"]) }}
+    </p>
+{% endfor %}
+{% endcall %}
+</div>
+
 
 </div>
 
-</div>
-
-
-<hr>
 
 <div class="row">
 {% for hostname in page.hosts %}{% set host = page.hosts[hostname] %}
-<div class="col">
-{% call macro.card(hostname) %}
-
-        <p class="list-group-item-text">
-            <small>CPU</small>
-            <div class="progress">
-                <div class="progress-bar" style="width : {{ host.cpu }}%"></div>
-            </div>
-        </p>
-        <p class="list-group-item-text">
-        <small>MEM ({{ host.mem_free | filesizeformat }} of {{ host.mem_total | filesizeformat }} free)</small>
-            <div class="progress">
-                <div class="progress-bar" style="width : {{ 100*((host.mem_total - host.mem_free) / host.mem_total) }}%"></div>
-            </div>
-        </p>
-        {% if host.swp_total %}
-        <p class="list-group-item-text">
-            <small>SWP ({{ host.swp_free | filesizeformat }} of {{ host.swp_total | filesizeformat }} free)</small>
-            <div class="progress">
-                <div class="progress-bar" style="width : {{ 100*((host.swp_total - host.swp_free) / host.swp_total) }}%"></div>
-            </div>
-        </p>
-        {% endif %}
-        <p class="list-group-item-text">
-        <small>Root FS ({{ host.root_free | filesizeformat }} of {{ host.root_total | filesizeformat }} free)</small>
-            <div class="progress">
-                <div class="progress-bar" style="width : {{ 100*((host.root_total - host.root_free) / host.root_total) }}%"></div>
-            </div>
-        </p>
+<div class="col-lg-3 col-md-6 col-sm-12">
+{% call macro.card(hostname, 'fas fa-server') %}
+    <p>
+        CPU
+        {{ macro.sysload_bar(host.cpu) }}
+    </p>
+    <p>
+        MEM ({{ host.mem_free | filesizeformat }} of {{ host.mem_total | filesizeformat }} free)
+        {{ macro.sysload_bar(host.mem_total, host.mem_free) }}
+    </p>
+    {% if host.swp_total and host.swp_free < host.swp_total %}
+    <p>
+        SWP ({{ host.swp_free | filesizeformat }} of {{ host.swp_total | filesizeformat }} free)
+        {{ macro.sysload_bar(host.swp_total, host.swp_free) }}
+    </p>
+    {% endif %}
+    <p>
+        Root FS ({{ host.root_free | filesizeformat }} of {{ host.root_total | filesizeformat }} free)
+        {{ macro.sysload_bar(host.root_total, host.root_free) }}
+    </p>
 {% endcall %}
 </div>
 {% endfor %}

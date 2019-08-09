@@ -34,7 +34,7 @@
 
         {% if user.id %}
             {% include "includes/navbar.html" %}
-            {% block header %}<h1>{{ page.title }}</h1>{% endblock %}
+            {% block header %}{% endblock %}
         {% endif %}
 
         {% if page.name != "error" %}

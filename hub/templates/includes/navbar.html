@@ -4,17 +4,24 @@
         <img src="/static/img/logo-wide.svg">
     </a>
 
-
     <ul class="navbar-nav mr-auto">
         <li class="nav-item">
             <a class="nav-link{% if page.name == "assets" %} active{% endif %}" href="/assets">Assets</a>
         </li>
+
         <li class="nav-item">
             <a class="nav-link{% if page.name == "jobs" %} active{% endif %}" href="/jobs">Jobs</a>
         </li>
+
         <li class="nav-item">
             <a class="nav-link{% if page.name == "services" %} active{% endif %}" href="/services">Services</a>
         </li>
+
+        {% if user.is_admin %}
+        <li class="nav-item">
+            <a class="nav-link{% if page.name == "settings" %} active{% endif %}" href="/settings">Settings</a>
+        </li>
+        {% endif %}
 
         {% if site.webtools.links %}
         <li class="nav-item dropdown">
@@ -27,13 +34,6 @@
             </div>
         </li>
         {% endif %}
-
-        {% if user.is_admin %}
-        <li class="nav-item">
-            <a class="nav-link{% if page.name == "settings" %} active{% endif %}" href="/settings">Settings</a>
-        </li>
-        {% endif %}
-
     </ul>
 
 

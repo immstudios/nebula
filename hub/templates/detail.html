@@ -5,7 +5,7 @@
     <ul class="navbar-nav mr-auto">
         <li class="nav-item">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" title="Asset folder">
-                {{ site.folders[page.id_folder]["title"] }}
+                <i class="fas fa-square" style="color: #{{ "%06x" % site.folders[page.id_folder].color }};"></i>&nbsp;{{ site.folders[page.id_folder]["title"] }}
             </a>
             <div class="dropdown-menu">
                 {% for id_folder in site.folders %}
@@ -14,6 +14,7 @@
                     {% else %}
                         <a class="dropdown-item" href="/detail/{{ page.asset.id }}?folder_change={{ id_folder }}">
                     {% endif%}
+                <i class="fas fa-square" style="color: #{{ "%06x" % site.folders[id_folder].color }};"></i>&nbsp;
                         {{ site.folders[id_folder]["title"] }}
                     </a>
                 {% endfor %}
