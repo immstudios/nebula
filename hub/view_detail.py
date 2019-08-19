@@ -86,7 +86,10 @@ class ViewDetail(CherryAdminView):
     def build(self, *args, **kwargs):
         self["name"] = "detail"
         self["title"] = "Asset detail"
-        self["js"] = ["/static/js/detail.js"]
+        self["js"] = [
+                "https://static.nebulabroadcast.com/nebula/js/vendor/resumable.js",
+                "/static/js/detail.js"
+                ]
 
         try:
             id_asset = int(args[-1].split("-")[0])

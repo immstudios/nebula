@@ -7,6 +7,7 @@
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" title="Asset folder">
                 <i class="fas fa-square" style="color: #{{ "%06x" % site.folders[page.id_folder].color }};"></i>&nbsp;{{ site.folders[page.id_folder]["title"] }}
             </a>
+            {% if user.has_right("asset_edit", page.asset["id_folder"]) %}
             <div class="dropdown-menu">
                 {% for id_folder in site.folders %}
                     {% if page.new_asset %}
@@ -19,6 +20,7 @@
                     </a>
                 {% endfor %}
             </div>
+            {% endif %}
         </li>
         <li class="nav-item" style="margin-left: 15px;">
             <span class="navbar-text mx-auto">{{ page.title }}</span>
@@ -35,20 +37,23 @@
                 title="Duration"
                 id="input-duration"
                 value="{{ page.asset.duration | s2tc(page.asset.fps) }}"
-                {% if page.asset.status != 0 and not page.new_asset %} disabled {% endif %}
+                {% if (page.asset.status != 0 and not page.new_asset) or (not user.has_right("asset_edit", page.asset["id_folder"])) %} disabled {% endif %}
                 >
         </li>
 
-        <li class="nav-item">&nbsp;</li> {# add some space between duration and qc buttons #}
+        <li class="nav-item">&nbsp;</li> {# add some space between duration and  buttons #}
 
+        {# UPLOAD #}
+        {% if site.upload_target and page.asset["media_type"] == 1 and user.has_right("asset_edit", page.asset["id_folder"] )%}
         <li class="nav-item">
-            <div class="btn-group" role="group" aria-label="Basic example">
-                <button type="button" class="btn btn-qcstate" data-href="4" title="Approve"><i class="{% if page.asset["qc/state"] == 4 %}fas{% else %}far{% endif %} fa-flag text-success"></i></button>
-                <button type="button" class="btn btn-qcstate" data-href="0" title="Reset"><i class="{% if page.asset["qc/state"] not in [3, 4] %}fas{% else %}far{% endif %} fa-flag text-secondary"></i></button>
-                <button type="button" class="btn btn-qcstate" data-href="3" title="Reject"><i class="{% if page.asset["qc/state"] == 3 %}fas{% else %}far{% endif %} fa-flag text-danger"></i></button>
-            </div>
+            <a href="#" class="btn" title="Upload asset" id="button-upload">
+                <i class="fas fa-upload"></i>
+            </a>
         </li>
+        {% endif %}
 
+
+        {# ACTIONS #}
         <li class="nav-item">
             <div class="btn-group" role="group">
                 <a href="#" class="btn dropdown-toggle" data-toggle="dropdown" title="Actions">
@@ -75,6 +80,16 @@
             </form>
         </li>
 
+
+        {% if user.has_right("asset_edit", page.asset["id_folder"] )%}
+        <li class="nav-item">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-qcstate" data-href="4" title="Approve"><i class="{% if page.asset["qc/state"] == 4 %}fas{% else %}far{% endif %} fa-flag text-success"></i></button>
+                <button type="button" class="btn btn-qcstate" data-href="0" title="Reset"><i class="{% if page.asset["qc/state"] not in [3, 4] %}fas{% else %}far{% endif %} fa-flag text-secondary"></i></button>
+                <button type="button" class="btn btn-qcstate" data-href="3" title="Reject"><i class="{% if page.asset["qc/state"] == 3 %}fas{% else %}far{% endif %} fa-flag text-danger"></i></button>
+            </div>
+        </li>
+
         <li class="nav-item">
             <a href="#" class="btn" title="Clone asset" id="button-clone">
                 <i class="fas fa-clone"></i>
@@ -92,6 +107,7 @@
                 <i class="far fa-save"></i>
             </a>
         </li>
+        {% endif %}
     </ul>
 </nav>
 
@@ -107,6 +123,18 @@
 <script>
     var id_asset = {{ page.asset.id or 0 }};
 </script>
+
+<div class="container">
+<div id="upload-status" class="alert alert-info" role="alert" style="display:none;">
+    <p>
+        <span id="upload-status-text"></span>
+    </p>
+    <div id="upload-progress" class="progress">
+        <div class="progress-bar" role="progressbar"></div>
+    </div>
+</div>
+</div>
+
 
 <ul class="nav nav-tabs" id=tab-nav-detail" role="tablist">
     <li class="nav-item">
@@ -157,6 +185,5 @@
         </div>
     </div>
 </div>
-
 
 {% endblock %}

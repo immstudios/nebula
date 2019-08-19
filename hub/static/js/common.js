@@ -37,16 +37,6 @@ function hide_loader(){
 }
 
 $(document).ready(function(){
-    setTimeout(function() {
-        $(".alert-info").alert('close');
-        }, 2000);
-    setTimeout(function() {
-        $(".alert-warning").alert('close');
-    }, 5000);
-    setTimeout(function() {
-        $(".alert-danger").alert('close');
-    }, 10000);
-
     $("a").click(function(event){
         show_loader();
     });
@@ -56,11 +46,6 @@ $(document).ready(function(){
 
 
 
-
-
-
 $(window).on("load", function() {
     hide_loader();
 });
-
-
