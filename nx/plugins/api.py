@@ -10,7 +10,7 @@ class APIPlugin(object):
         self.payload = self.main(**kwargs)
         return self
 
-    def auth(self, user):
+    def auth(self, user, **kwargs):
         return bool(user.id)
 
     def main(self, **kwargs):

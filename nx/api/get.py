@@ -14,7 +14,14 @@ def get_objects(ObjectType, **kwargs):
     order       = kwargs.get("order", False)
     id_view     = kwargs.get("id_view", False)
     objects     = kwargs.get("objects", [])
+    id          = kwargs.get("id")
 
+    if not objects:
+        if id:
+            try:
+                objects = [int(id)]
+            except ValueError:
+                return NebulaResponse(400, "id must be integer")
 
     if order:
         try:
@@ -128,13 +135,9 @@ def api_get(**kwargs):
     user          = kwargs.get("user", anonymous)
 
     object_type   = kwargs.get("object_type", "asset")
-    objects       = kwargs.get("objects") or kwargs.get("ids", []) #TODO: ids is deprecated
     result_type   = kwargs.get("result", False)
     result_format = kwargs.get("result_format", False)
     result_lang   = kwargs.get("language", config.get("language", "en"))
-    id_view       = kwargs.get("id_view", 0)
-    kwargs["conds"] = kwargs.get("conds", [])
-    kwargs["limit"] = kwargs.get("limit", 1000)
 
     if not user:
         return NebulaResponse(ERROR_UNAUTHORISED)
@@ -194,13 +197,13 @@ def api_get(**kwargs):
 
 
     elif result_type == "ids":
-        # Result is just array of matching object IDs
+        # Result is an array of matching object IDs
         for response, obj in get_objects(ObjectType, **kwargs):
             result["count"] |= response["count"]
             result["data"].append(obj.id)
 
     else:
-        # Result is array of full asset metadata sets
+        # Result is an array of asset metadata sets
         for response, obj in get_objects(ObjectType, **kwargs):
             result["count"] |= response["count"]
             result["data"].append(obj.meta)
