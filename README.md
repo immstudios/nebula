@@ -1,7 +1,8 @@
 Nebula
 ======
 
-Nebula is a media asset management and workflow automation system for TV and radio broadcast.
+Nebula is an open source broadcast automation and media asset management system for television, radio and VOD platforms.
+Since 2012 Nebula has proven stable and reliable software in 24/7 broadcast environment and it is now used by TV and production companies worldwide.
 
 Key features
 ------------
@@ -12,6 +13,7 @@ Key features
  - linear playout control
  - web and social publishing
  - statistics, reporting
+ - extensible using plugins, scripts and custom services
 
 Installation
 ------------
