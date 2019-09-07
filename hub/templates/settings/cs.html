@@ -1,0 +1,34 @@
+
+{% if page.cs %}
+<div class="shadow-sm text-center">
+    <h4 >{{ page.cs }}</h4>
+</div>
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Value</th>
+            <th>Alias</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for value, settings in page.data %}
+        <tr>
+            <td>{{ value }}</td>
+            <td>{{ settings.get("aliases", {"en" : value })["en"] }}</td>
+            <td>{{ settings.get("description", {"en" : ""})["en"] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% else %}
+
+<ul>
+        {% for cs in page.data %}
+        <li>
+            <a href="?cs={{ cs }}">{{ cs }}</a>
+        </li>
+        {% endfor %}
+</ul>
+{% endif %}

@@ -68,7 +68,6 @@ def load_settings(force=False):
         config["actions"][id] = {
                     "title" : title,
                     "service_type" : service_type,
-                    "title" : title
                 }
 
     config["services"] = {}
