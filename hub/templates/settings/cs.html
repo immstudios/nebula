@@ -24,11 +24,13 @@
 
 {% else %}
 
-<ul>
+<table class="table">
+    <tbody>
         {% for cs in page.data %}
-        <li>
-            <a href="?cs={{ cs }}">{{ cs }}</a>
-        </li>
+        <tr onclick="location.href='?cs={{ cs }}'">
+            <td>{{ cs }}</td>
+        </tr>
         {% endfor %}
-</ul>
+    </tbody>
+</table>
 {% endif %}
