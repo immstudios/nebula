@@ -29,6 +29,8 @@ def load_settings(force=False):
 
     config["storages"] = {}
     for id, settings in db.fetchall():
+        if id in config.get("storages_blacklist", []):
+            continue
         config["storages"][id] = settings
 
     config["playout_channels"] = {}
