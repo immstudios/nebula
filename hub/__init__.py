@@ -89,6 +89,7 @@ hub_config = {
         "user_context_helper" : user_context_helper,
         "sessions_dir" : os.path.join("/tmp", config["site_name"] + "-sessions"),
         "sessions_timeout" : 60*24*120,
+        "hash_salt" : config.get("hash_salt", "nebulaissalty"),
         "blocking" : True,
         "minify_html" : True,
         "log_screen" : False,
