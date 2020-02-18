@@ -9,7 +9,7 @@ from .base_service import *
 from .plugins import *
 
 
-def load_settings(force=False):
+def load_settings(*args, **kwargs):
     global config
     # This is the first time we are connecting DB
     # so error handling should be here
@@ -26,7 +26,6 @@ def load_settings(force=False):
         config[key] = value
 
     db.query("SELECT id, settings FROM storages")
-
     config["storages"] = {}
     for id, settings in db.fetchall():
         if id in config.get("storages_blacklist", []):
