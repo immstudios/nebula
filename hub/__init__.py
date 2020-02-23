@@ -6,6 +6,7 @@ __all__ = [
 from nebula import *
 
 logging.user = "hub"
+config["mc_thread_safe"] = True
 
 from cherryadmin import CherryAdmin
 

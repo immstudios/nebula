@@ -40,7 +40,6 @@ class ViewProfile(CherryAdminView):
                 user.save()
                 if self["user"].id == user.id:
                     self.context["user"] = user.meta
-                    cherrypy.session["user_data"] = user.meta
                 self.context.message("User profile saved")
 
 
