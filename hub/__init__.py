@@ -42,7 +42,10 @@ def login_helper(login, password):
     user = get_user(login, password)
     if not user:
         return False
-    return user.meta
+    meta = user.meta
+    if "password" in meta:
+        del(meta["password"])
+    return meta
 
 class SiteContext(object):
     context = {
