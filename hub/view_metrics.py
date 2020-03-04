@@ -17,11 +17,11 @@ class ViewMetrics(CherryAdminRawView):
         for hostname, last_seen, status in db.fetchall():
             if "cpu" in status:
                 cpu.append([hostname, status["cpu"]])
-            if "mem" in status:
+            if status.get("mem", [0,0])[0]:
                 mem.append([hostname, status["mem"][0], status["mem"][1]])
-            if "swp" in status:
+            if status.get("swp", [0,0])[0]:
                 swp.append([hostname, status["swp"][0], status["swp"][1]])
-            if "rfs" in status:
+            if status.get("rfs", [0,0])[0]:
                 rfs.append([hostname, status["rfs"][0], status["rfs"][1]])
             for storage in status.get("stor",[]):
                 if storage["id"] in stor:
