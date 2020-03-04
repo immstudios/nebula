@@ -16,6 +16,7 @@ from .view_dashboard import ViewDashboard
 from .view_assets import ViewAssets
 from .view_detail import ViewDetail
 from .view_jobs import ViewJobs
+from .view_metrics import ViewMetrics
 from .view_tool import ViewTool
 from .view_services import ViewServices
 from .view_settings import ViewSettings
@@ -102,6 +103,7 @@ hub_config = {
                 "assets"   : ViewAssets,
                 "detail"   : ViewDetail,
                 "jobs"     : ViewJobs,
+                "metrics"  : ViewMetrics,
                 "tool"     : ViewTool,
                 "services" : ViewServices,
                 "settings" : ViewSettings,
