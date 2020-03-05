@@ -3,9 +3,9 @@ from .common import *
 def passwd(*args):
     print ()
     try:
-        login = input("Login (press enter to keep unchanged): ").strip()
+        login = input("Login: ").strip()
         password = input("Password (will be echoed): ").strip()
-        is_admin = input("Is it admin (yes/no): ").strip()
+        is_admin = input("Admin (yes/no): ").strip()
     except KeyboardInterrupt:
         print ()
         logging.warning("Interrupted by user")
