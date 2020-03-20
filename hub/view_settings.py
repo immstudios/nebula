@@ -122,6 +122,29 @@ def get_users_ctx(ctx, **kwargs):
     ctx["title"] = "Users"
 
 
+def get_sessions_ctx(ctx, **kwargs):
+    print(kwargs)
+    if kwargs.get("delsession"):
+        spath = os.path.join(
+                    ctx["settings"]["sessions_dir"],
+                    kwargs["delsession"]
+                )
+        if os.path.exists(spath):
+            os.remove(spath)
+
+    data = {}
+    for sfile in get_files(ctx["settings"]["sessions_dir"]):
+        d = json.load(sfile.open())
+        data[sfile.base_name] = {
+                "login" : d["user_data"].get("login"),
+                "valid_until" : d["ctime"] + (ctx["settings"]["sessions_timeout"]*60),
+                "ip" : d.get("ip"),
+                "user_agent" : d.get("user_agent")
+            }
+    ctx["data"] = data
+
+
+
 
 modules = collections.OrderedDict([
     ["settings",   {"title": "Settings", "context" : get_settings_ctx}],
@@ -134,13 +157,13 @@ modules = collections.OrderedDict([
     ["services",   {"title": "Services", "context" : get_services_ctx}],
     ["channels",   {"title": "Channels", "context" : get_channels_ctx}],
     ["users",      {"title": "Users", "context" : get_users_ctx}],
+    ["sessions",   {"title": "Sessions", "context" : get_sessions_ctx}],
     ])
 
 
 
 class ViewSettings(CherryAdminView):
     def build(self, *args, **kwargs):
-
         if args[-1] == "reload_settings":
             load_settings()
             webtools.load()
