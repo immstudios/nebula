@@ -123,14 +123,14 @@ def get_users_ctx(ctx, **kwargs):
 
 
 def get_sessions_ctx(ctx, **kwargs):
-    print(kwargs)
     if kwargs.get("delsession"):
         spath = os.path.join(
                     ctx["settings"]["sessions_dir"],
                     kwargs["delsession"]
                 )
-        if os.path.exists(spath):
-            os.remove(spath)
+        if len(kwargs["delsession"]) == 64:
+            if os.path.exists(spath):
+                os.remove(spath)
 
     data = {}
     for sfile in get_files(ctx["settings"]["sessions_dir"]):
