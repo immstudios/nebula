@@ -1,4 +1,5 @@
 from nebulacore import *
+from nebulacore.meta_utils import clear_cs_cache
 
 from .connection import *
 from .objects import *
@@ -57,6 +58,7 @@ def load_settings(*args, **kwargs):
         if not cst in config["cs"]:
             config["cs"][cst] = []
         config["cs"][cst].append([value, settings])
+    clear_cs_cache()
 
     config["views"] = {}
     db.query("SELECT id, settings FROM views")
@@ -87,6 +89,12 @@ def load_settings(*args, **kwargs):
     messaging.configure()
     cache.configure()
     load_common_scripts()
+
+    if logging.user == "hub":
+        messaging.send("config_changed")
     return True
+
+
+
 
 load_settings()

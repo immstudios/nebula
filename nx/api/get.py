@@ -1,3 +1,5 @@
+import string
+
 from nx import *
 
 __all__ = ["api_get", "get_objects"]
@@ -95,7 +97,7 @@ def get_objects(ObjectType, **kwargs):
             value = value.strip().lower()
             conds.append("meta->>'{}' ILIKE '{}'".format(key, value))
         else:
-            ft = slugify(fulltext, make_set=True)
+            ft = slugify(fulltext, make_set=True, slug_whitelist=string.ascii_letters+string.digits+"%")
             for word in ft:
                 conds.append("id IN (SELECT id FROM ft WHERE object_type={} AND value LIKE '{}%')".format(ObjectType.object_type_id, word))
     else:
