@@ -13,8 +13,16 @@ class ViewMetrics(CherryAdminRawView):
         mem = []
         swp = []
         rfs = []
+        boot_times = []
+        run_times = []
+        last_seens = []
         db.query("SELECT hostname, last_seen, status FROM hosts")
         for hostname, last_seen, status in db.fetchall():
+            if "boot_time" in status:
+                boot_times.append([hostname, status["boot_time"]])
+            if "run_time" in status:
+                run_times.append([hostname, status["run_time"]])
+            last_seens.append([hostname, last_seen])
             if "cpu" in status:
                 cpu.append([hostname, status["cpu"]])
             if status.get("mem", [0,0])[0]:
@@ -28,93 +36,116 @@ class ViewMetrics(CherryAdminRawView):
                     continue
                 stor[storage["id"]] = storage["title"], storage["total"], storage["free"]
 
+
         result = ""
-        result += "#HELP nebula_cpu Nebula node CPU usage\n"
-        result += "#TYPE nebula_cpu gauge\n"
+        for hostname, value in boot_times:
+            result += "nebula_uptime_seconds{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
+                    config["site_name"], hostname, int(time.time() - value)
+                    )
+
+        for hostname, value in run_times:
+            result += "nebula_runtime_seconds{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
+                    config["site_name"], hostname, int(time.time() - value)
+                    )
+
+        for hostname, value in last_seens:
+            result += "nebula_inactive_seconds{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
+                    config["site_name"], hostname, max(0,int(time.time() - value))
+                    )
+
         for hostname, value in cpu:
-            result += "nebula_cpu{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
+            result += "nebula_cpu_usage{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
                     config["site_name"], hostname, value
                     )
 
-        result += "#HELP nebula_mem Nebula node memory usage\n"
-        result += "#TYPE nebula_mem gauge\n"
         for hostname, total, free in mem:
-            result += "nebula_mem{{site_name=\"{}\", hostname=\"{}\", mode=\"total\"}} {}\n".format(
+            result += "nebula_memory_bytes_total{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
                     config["site_name"], hostname, total
                     )
-            result += "nebula_mem{{site_name=\"{}\", hostname=\"{}\", mode=\"free\"}} {}\n".format(
+            result += "nebula_memory_bytes_free{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
                     config["site_name"], hostname, free
                     )
-            result += "nebula_mem{{site_name=\"{}\", hostname=\"{}\", mode=\"usage\"}} {}\n".format(
+            result += "nebula_memory_usage{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
                     config["site_name"], hostname, 100*((total-free)/total)
                     )
 
-        if swp:
-            result += "#HELP nebula_swp Nebula node swap usage\n"
-            result += "#TYPE nebula_swp gauge\n"
-            for hostname, total, free in swp:
-                result += "nebula_swp{{site_name=\"{}\", hostname=\"{}\", mode=\"total\"}} {}\n".format(
-                        config["site_name"], hostname, total
-                        )
-                result += "nebula_swp{{site_name=\"{}\", hostname=\"{}\", mode=\"free\"}} {}\n".format(
-                        config["site_name"], hostname, free
-                        )
-                result += "nebula_swp{{site_name=\"{}\", hostname=\"{}\", mode=\"usage\"}} {}\n".format(
-                        config["site_name"], hostname, 100*((total-free)/total)
-                        )
+        for hostname, total, free in swp:
+            result += "nebula_swap_bytes_total{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
+                    config["site_name"], hostname, total
+                    )
+            result += "nebula_swap_bytes_free{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
+                    config["site_name"], hostname, free
+                    )
+            result += "nebula_swap_usage{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
+                    config["site_name"], hostname, 100*((total-free)/total)
+                    )
 
-        if rfs:
-            result += "#HELP nebula_rfs Nebula node root filesystem usage\n"
-            result += "#TYPE nebula_rfs gauge\n"
-            for hostname, total, free in rfs:
-                result += "nebula_rfs{{site_name=\"{}\", hostname=\"{}\", mode=\"total\"}} {}\n".format(
-                        config["site_name"], hostname, total
-                        )
-                result += "nebula_rfs{{site_name=\"{}\", hostname=\"{}\", mode=\"free\"}} {}\n".format(
-                        config["site_name"], hostname, free
-                        )
-                result += "nebula_rfs{{site_name=\"{}\", hostname=\"{}\", mode=\"usage\"}} {}\n".format(
-                        config["site_name"], hostname, 100*((total-free)/total)
-                        )
+        for hostname, total, free in rfs:
+            result += "nebula_rootfs_bytes_total{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
+                    config["site_name"], hostname, total
+                    )
+            result += "nebula_rootfs_bytes_free{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
+                    config["site_name"], hostname, free
+                    )
+            result += "nebula_rootfs_usage{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
+                    config["site_name"], hostname, 100*((total-free)/total)
+                    )
 
-        result += "#HELP nebula_storage Nebula storage usage\n"
-        result += "#TYPE nebula_storage gauge\n"
         for id_storage in stor:
             title, total, free = stor[id_storage]
-            result += "nebula_stor{{site_name=\"{}\", id=\"{}\", title=\"{}\", mode=\"total\"}} {}\n".format(
+            result += "nebula_storage_bytes_total{{site_name=\"{}\", id=\"{}\", title=\"{}\"}} {}\n".format(
                     config["site_name"], id_storage, title, total
                     )
-            result += "nebula_stor{{site_name=\"{}\", id=\"{}\", title=\"{}\", mode=\"free\"}} {}\n".format(
+            result += "nebula_storage_bytes_free{{site_name=\"{}\", id=\"{}\", title=\"{}\"}} {}\n".format(
                     config["site_name"], id_storage, title, free
                     )
-            result += "nebula_stor{{site_name=\"{}\", id=\"{}\", title=\"{}\", mode=\"usage\"}} {}\n".format(
+            result += "nebula_storage_usage{{site_name=\"{}\", id=\"{}\", title=\"{}\"}} {}\n".format(
                     config["site_name"], id_storage, title, 100*((total-free)/total)
                     )
 
-        result += "#HELP nebula_api_requests Nebula API requests\n"
-        result += "#TYPE nebula_api_requests counter\n"
         for user in request_stats:
             for method in request_stats[user]:
-                result += "nebula_api_requests{{site_name=\"{}\", user=\"{}\", method=\"{}\"}} {}\n".format(config["site_name"], user, method, request_stats[user][method])
+                result += "nebula_api_requests{{site_name=\"{}\", user=\"{}\", method=\"{}\"}} {}\n".format(
+                    config["site_name"], user, method, request_stats[user][method]
+                    )
 
 
-        result += "#HELP nebula_jobs Nebula jobs\n"
-        result += "#TYPE nebula_jobs gauge\n"
         db.query("select status, count(status) from jobs group by status;")
         for status, count in db.fetchall():
             status_label = [
-                        "pending",
-                        "in_progress",
-                        "completed",
-                        "failed",
-                        "aborted",
-                        "restart",
-                        "skipped"
+                        "Pending",
+                        "In progress",
+                        "Completed",
+                        "Failed",
+                        "Aborted",
+                        "Restart",
+                        "Skipped"
                     ][status]
             result += "nebula_jobs{{site_name=\"{}\", status=\"{}\", status_label=\"{}\"}} {}\n".format(
                     config["site_name"],
                     status, status_label, count
                     )
+
+
+        db.query("SELECT id, service_type, host, title, autostart, state, last_seen FROM services")
+        for id, stype, hostname, title, autostart, state, last_seen in db.fetchall():
+            result += "nebula_service_state{{site_name=\"{}\", hostname=\"{}\", id=\"{}\", title=\"{}\", service_type=\"{}\"}} {}\n".format(
+                        config["site_name"],
+                        hostname,
+                        id,
+                        title,
+                        stype,
+                        state
+                    )
+            result += "nebula_service_inactive_seconds{{site_name=\"{}\", hostname=\"{}\", id=\"{}\", title=\"{}\", service_type=\"{}\"}} {}\n".format(
+                        config["site_name"],
+                        hostname,
+                        id,
+                        title,
+                        stype,
+                        max(0,int(time.time() - last_seen))
+                    )
+
 
         self.is_raw = True
         self.body = result

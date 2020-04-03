@@ -8,6 +8,8 @@ from .agents import BaseAgent
 
 __all__ = ["SystemMonitor"]
 
+BOOT_TIME = psutil.boot_time()
+NEBULA_START_TIME = time.time()
 
 def update_host_info():
     hostname = config["host"]
@@ -32,7 +34,9 @@ def update_host_info():
             "mem" : [mem.total, mem.available],
             "swp" : [swp.total, swp.free],
             "rfs" : [root_fs.total, root_fs.free],
-            "stor" : stor
+            "stor" : stor,
+            "boot_time" : BOOT_TIME,
+            "start_time" : NEBULA_START_TIME,
         }
 
     db = DB()
