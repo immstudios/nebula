@@ -38,7 +38,8 @@ class StorageMonitor(BaseAgent):
                             logging.info ("{} is mounted and root is writable".format(storage))
                 continue
 
-            s,i,l = storage_status[id_storage]
+            s,i,l = storage_status.get(id_storage, [True, 2, 0])
+
             if not s and time.time() - l < i:
                 continue
 
