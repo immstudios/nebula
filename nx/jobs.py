@@ -292,7 +292,7 @@ def get_job(id_service, action_ids, db=False):
                 continue
         else:
             db.query("UPDATE jobs SET message='Waiting' WHERE id=%s", [id_job])
-            messaging.send("job_progress", id=id_job, id_asset=id_asset, id_action=id_action, status=status, progress=0, message="Waiting")
+            #messaging.send("job_progress", id=id_job, id_asset=id_asset, id_action=id_action, status=status, progress=0, message="Waiting")
             db.commit()
     return False
 
