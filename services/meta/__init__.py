@@ -98,7 +98,10 @@ class Service(BaseService):
                 asset["file/mtime"] = fmtime
                 asset.save(set_mtime=False, notify=False)
             else:
-                logging.info("{}: File size changed. Updating.".format(asset))
+                if asset["status"] in [RESET, RETRIEVING]:
+                    logging.info("{}: Metadata reset requested. Updating.".format(asset))
+                else:
+                    logging.info("{}: File has been changed. Updating.".format(asset))
 
                 keys = list(asset.meta.keys())
                 for key in keys:
