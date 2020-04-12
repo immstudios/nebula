@@ -2,6 +2,16 @@ from nebula import *
 from cherryadmin.stats import *
 from cherryadmin import CherryAdminRawView
 
+def render_metric(name, value, **tags):
+    result = "nebula_"
+    tags["site_name"] = config["site_name"]
+    result += name + "{"
+    result += ", ".join(["{}=\"{}\"".format(k, tags[k]) for k in tags ])
+    result += "}"
+    result += " " + str(value) + "\n"
+    return result
+
+
 class ViewMetrics(CherryAdminRawView):
     def auth(self):
         return True
@@ -13,16 +23,17 @@ class ViewMetrics(CherryAdminRawView):
         mem = []
         swp = []
         rfs = []
+        gpu = []
         boot_times = []
         run_times = []
         last_seens = []
         db.query("SELECT hostname, last_seen, status FROM hosts")
         for hostname, last_seen, status in db.fetchall():
+            last_seens.append([hostname, max(0, int(time.time() - last_seen))])
             if "boot_time" in status:
-                boot_times.append([hostname, status["boot_time"]])
+                boot_times.append([hostname, int(time.time() - status["boot_time"])])
             if "run_time" in status:
-                run_times.append([hostname, status["run_time"]])
-            last_seens.append([hostname, last_seen])
+                run_times.append([hostname, int(time.time() - status["run_time"])])
             if "cpu" in status:
                 cpu.append([hostname, status["cpu"]])
             if status.get("mem", [0,0])[0]:
@@ -31,6 +42,9 @@ class ViewMetrics(CherryAdminRawView):
                 swp.append([hostname, status["swp"][0], status["swp"][1]])
             if status.get("rfs", [0,0])[0]:
                 rfs.append([hostname, status["rfs"][0], status["rfs"][1]])
+            if status.get("gpu", None):
+                gpu.append([hostname, status["gpu"]])
+
             for storage in status.get("stor",[]):
                 if storage["id"] in stor:
                     continue
@@ -39,75 +53,53 @@ class ViewMetrics(CherryAdminRawView):
 
         result = ""
         for hostname, value in boot_times:
-            result += "nebula_uptime_seconds{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
-                    config["site_name"], hostname, int(time.time() - value)
-                    )
+            result += render_metric("uptime_seconds", value, hostname=hostname)
 
         for hostname, value in run_times:
-            result += "nebula_runtime_seconds{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
-                    config["site_name"], hostname, int(time.time() - value)
-                    )
+            result += render_metric("runtime_seconds", value, hostname=hostname)
 
         for hostname, value in last_seens:
-            result += "nebula_inactive_seconds{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
-                    config["site_name"], hostname, max(0,int(time.time() - value))
-                    )
+            result += render_metric("inactive_seconds", value, hostname=hostname)
 
         for hostname, value in cpu:
-            result += "nebula_cpu_usage{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
-                    config["site_name"], hostname, value
-                    )
+            result += render_metric("cpu_usage", value, hostname=hostname)
 
         for hostname, total, free in mem:
-            result += "nebula_memory_bytes_total{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
-                    config["site_name"], hostname, total
-                    )
-            result += "nebula_memory_bytes_free{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
-                    config["site_name"], hostname, free
-                    )
-            result += "nebula_memory_usage{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
-                    config["site_name"], hostname, 100*((total-free)/total)
-                    )
+            usage = round(100*((total-free)/total), 3)
+            result += render_metric("memory_bytes_total", total, hostname=hostname)
+            result += render_metric("memory_bytes_free", free, hostname=hostname)
+            result += render_metric("memory_usage", usage, hostname=hostname)
 
         for hostname, total, free in swp:
-            result += "nebula_swap_bytes_total{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
-                    config["site_name"], hostname, total
-                    )
-            result += "nebula_swap_bytes_free{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
-                    config["site_name"], hostname, free
-                    )
-            result += "nebula_swap_usage{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
-                    config["site_name"], hostname, 100*((total-free)/total)
-                    )
+            usage = round(100*((total-free)/total), 3)
+            result += render_metric("swap_bytes_total", total, hostname=hostname)
+            result += render_metric("swap_bytes_free", free, hostname=hostname)
+            result += render_metric("swap_usage", usage, hostname=hostname)
 
         for hostname, total, free in rfs:
-            result += "nebula_rootfs_bytes_total{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
-                    config["site_name"], hostname, total
-                    )
-            result += "nebula_rootfs_bytes_free{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
-                    config["site_name"], hostname, free
-                    )
-            result += "nebula_rootfs_usage{{site_name=\"{}\", hostname=\"{}\"}} {}\n".format(
-                    config["site_name"], hostname, 100*((total-free)/total)
-                    )
+            usage = round(100*((total-free)/total), 3)
+            result += render_metric("rootfs_bytes_total", total, hostname=hostname)
+            result += render_metric("rootfs_bytes_free", free, hostname=hostname)
+            result += render_metric("rootfs_usage", usage, hostname=hostname)
 
         for id_storage in stor:
             title, total, free = stor[id_storage]
-            result += "nebula_storage_bytes_total{{site_name=\"{}\", id=\"{}\", title=\"{}\"}} {}\n".format(
-                    config["site_name"], id_storage, title, total
-                    )
-            result += "nebula_storage_bytes_free{{site_name=\"{}\", id=\"{}\", title=\"{}\"}} {}\n".format(
-                    config["site_name"], id_storage, title, free
-                    )
-            result += "nebula_storage_usage{{site_name=\"{}\", id=\"{}\", title=\"{}\"}} {}\n".format(
-                    config["site_name"], id_storage, title, 100*((total-free)/total)
-                    )
+            usage = round(100*((total-free)/total), 3)
+            result += render_metric("storage_bytes_total", total, id=id_storage, title=title)
+            result += render_metric("storage_bytes_free", free, id=id_storage, title=title)
+            result += render_metric("storage_usage", usage, id=id_storage, title=title)
+
+        for hostname, gpustat in gpu:
+            for i, g in enumerate(gpustat):
+                usage = g["utilization"]
+                result += render_metric("gpu_usage", usage["gpu"], gpu_id=i, hostname=hostname)
+                result += render_metric("gpu_memory", usage["memory"], gpu_id=i, hostname=hostname)
+                result += render_metric("gpu_encoder", usage["encoder"], gpu_id=i, hostname=hostname)
+                result += render_metric("gpu_decoder", usage["decoder"], gpu_id=i, hostname=hostname)
 
         for user in request_stats:
             for method in request_stats[user]:
-                result += "nebula_api_requests{{site_name=\"{}\", user=\"{}\", method=\"{}\"}} {}\n".format(
-                    config["site_name"], user, method, request_stats[user][method]
-                    )
+                result += render_metric("api_requests", request_stats[user][method], user=user, method=method)
 
 
         db.query("select status, count(status) from jobs group by status;")
@@ -121,30 +113,14 @@ class ViewMetrics(CherryAdminRawView):
                         "Restart",
                         "Skipped"
                     ][status]
-            result += "nebula_jobs{{site_name=\"{}\", status=\"{}\", status_label=\"{}\"}} {}\n".format(
-                    config["site_name"],
-                    status, status_label, count
-                    )
+            result += render_metric("jobs", count, status=status, status_label=status_label)
 
 
         db.query("SELECT id, service_type, host, title, autostart, state, last_seen FROM services")
         for id, stype, hostname, title, autostart, state, last_seen in db.fetchall():
-            result += "nebula_service_state{{site_name=\"{}\", hostname=\"{}\", id=\"{}\", title=\"{}\", service_type=\"{}\"}} {}\n".format(
-                        config["site_name"],
-                        hostname,
-                        id,
-                        title,
-                        stype,
-                        state
-                    )
-            result += "nebula_service_inactive_seconds{{site_name=\"{}\", hostname=\"{}\", id=\"{}\", title=\"{}\", service_type=\"{}\"}} {}\n".format(
-                        config["site_name"],
-                        hostname,
-                        id,
-                        title,
-                        stype,
-                        max(0,int(time.time() - last_seen))
-                    )
+            inactive = max(0,int(time.time() - last_seen))
+            result += render_metric("service_state", state, hostname=hostname, id=id, title=title, service_type=stype)
+            result += render_metric("service_inactive_seconds", inactive, hostname=hostname, id=id, title=title, service_type=stype)
 
 
         self.is_raw = True
