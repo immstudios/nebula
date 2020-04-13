@@ -70,11 +70,18 @@ if __name__ == "__main__":
 
         if not os.path.isdir("/etc/cron.d"):
             os.makedirs("/etc/cron.d")
-        if (not os.path.exists(cron_file)) or os.path.getmtime(cron_file) < os.path.getmtime(cron_source):
-            logging.info("Installing new crontab")
-            src = open(cron_source).read()
-            with open(cron_file, "w") as f:
-                f.write(src)
+
+        if not os.path.exists(cron_file):
+            pass
+        elif os.path.getmtime(cron_file) < os.path.getmtime(cron_source):
+            pass
+        else:
+            return True
+
+        logging.info("Installing new crontab")
+        src = open(cron_source).read()
+        with open(cron_file, "w") as f:
+            f.write(src)
         return True
 
     def del_cron():
