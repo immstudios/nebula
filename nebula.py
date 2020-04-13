@@ -46,16 +46,7 @@ if __name__ == "__main__":
     from nx.service_monitor import ServiceMonitor
     from nx.system_monitor import SystemMonitor
 
-
-    def are_running(agents):
-        return any([agent.is_running for agent in agents])
-
-    def shutdown(agents):
-        logging.info("Shutting down agents")
-        for agent in agents:
-            agent.shutdown()
-        while are_running(agents):
-            time.sleep(.5)
+    # Crontab sync
 
     cron_file = "/etc/cron.d/nebula"
 
@@ -89,7 +80,17 @@ if __name__ == "__main__":
             logging.info("Removing crontab")
             os.remove(cron_file)
 
+    # Agents
 
+    def are_running(agents):
+        return any([agent.is_running for agent in agents])
+
+    def shutdown(agents):
+        logging.info("Shutting down agents")
+        for agent in agents:
+            agent.shutdown()
+        while are_running(agents):
+            time.sleep(.5)
 
     agents = []
     for Agent in [StorageMonitor, ServiceMonitor, SystemMonitor]:
@@ -100,6 +101,8 @@ if __name__ == "__main__":
             shutdown(agents)
             critical_error("Unable to start {}".format(Agent.__name__))
 
+    # Main loop
+
     while True:
         try:
             sync_cron() or del_cron()
@@ -109,6 +112,8 @@ if __name__ == "__main__":
         except Exception:
             log_traceback()
             time.sleep(10)
+
+    # Shutdown (CTRL+C)
 
     print()
     try:

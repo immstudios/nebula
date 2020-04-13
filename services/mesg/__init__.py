@@ -11,6 +11,19 @@ from nebula import *
 
 logging.handlers = []
 
+
+def log_clean_up(log_dir, ttl=30):
+    ttl_sec = ttl * 3600 * 24
+    for f in get_files(log_dir, exts=["txt"]):
+        if f.mtime < time.time() - ttl_sec:
+            try:
+                os.remove(f.path)
+            except Exception:
+                log_traceback("Unable to remove old log file")
+            else:
+                logging.debug("Removed old log file {}".format(f.base_name))
+
+
 def format_log_message(message):
     try:
         log = "{}\t{}\t{}@{}\t{}\n".format(
@@ -108,6 +121,15 @@ class Service(BaseService):
                 logging.error("{} is not a directory. Logs will not be saved".format(log_dir))
                 self.log_dir = None
 
+        log_ttl = self.settings.find("log_ttl")
+        if log_ttl is None or not log_ttl.text:
+            self.log_ttl = None
+        else:
+            try:
+                self.log_ttl = int(log_ttl.text)
+            except ValueError:
+                log_traceback()
+                self.log_ttl = None
 
         thread.start_new_thread(self.listen, ())
         thread.start_new_thread(self.process, ())
@@ -117,6 +139,9 @@ class Service(BaseService):
         if len(self.queue) > 100:
             logging.warning("Truncating message queue")
             self.queue = self.queue[80:]
+
+        if self.log_dir and self.log_ttl:
+           log_clean_up(self.log_dir, self.log_ttl)
 
 
     def listen(self):
