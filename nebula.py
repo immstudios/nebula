@@ -48,12 +48,7 @@ if __name__ == "__main__":
 
 
     def are_running(agents):
-        for agent in agents:
-            if agent.is_running:
-                break
-        else:
-            return False
-        return True
+        return any([agent.is_running for agent in agents])
 
     def shutdown(agents):
         logging.info("Shutting down agents")
@@ -62,38 +57,45 @@ if __name__ == "__main__":
         while are_running(agents):
             time.sleep(.5)
 
-    agents = []
+    cron_file = "/etc/cron.d/nebula"
 
+    def sync_cron():
+        plugin_path = get_plugin_path("cron")
+        if not plugin_path:
+            return False
+
+        cron_source = os.path.join(plugin_path, config["host"])
+        if not os.path.exists(cron_source):
+            return False
+
+        if not os.path.isdir("/etc/cron.d"):
+            os.makedirs("/etc/cron.d")
+        if (not os.path.exists(cron_file)) or os.path.getmtime(cron_file) < os.path.getmtime(cron_source):
+            logging.info("Installing new crontab")
+            src = open(cron_source).read()
+            with open(cron_file, "w") as f:
+                f.write(src)
+        return True
+
+    def del_cron():
+        if os.path.exists(cron_file):
+            logging.info("Removing crontab")
+            os.remove(cron_file)
+
+
+
+    agents = []
     for Agent in [StorageMonitor, ServiceMonitor, SystemMonitor]:
         try:
             agents.append(Agent())
-        except:
+        except Exception:
             log_traceback()
             shutdown(agents)
             critical_error("Unable to start {}".format(Agent.__name__))
 
     while True:
         try:
-
-            cron_target = "/etc/cron.d/nebula"
-            delcron = True
-            # Update crontab
-            plugin_path = get_plugin_path("cron")
-            if plugin_path:
-                cron_source = os.path.join(plugin_path, config["host"])
-                if os.path.exists(cron_source):
-                    delcron = False
-                    if not os.path.isdir("/etc/cron.d"):
-                        os.makedirs("/etc/cron.d")
-                    if (not os.path.exists(cron_target)) or os.path.getmtime(cron_target) < os.path.getmtime(cron_source):
-                        logging.info("Installing new crontab")
-                        src = open(cron_source).read()
-                        with open(cron_target, "w") as f:
-                            f.write(src)
-            if delcron and os.path.exists(cron_target):
-                logging.info("Removing crontab")
-                os.remove(cron_target)
-
+            sync_cron() or del_cron()
             time.sleep(10)
         except KeyboardInterrupt:
             break
