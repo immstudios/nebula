@@ -29,8 +29,8 @@ for installation scripts and instructions.
 After initial setup, use `make install` to create symlinks for command line utilities
 and create your first user using `./manage.py adduser` command.
 
-During the setup, it is recommended to run `./manage.py run hub` and `./nebula.py` commands in
-GNU `screen` to see potential errors, but `make install` also creates `nebula` and `nebula-hub`
+During the setup, we recommended running `./manage.py run hub` and `./nebula.py` commands in
+GNU screen to see potential errors, but `make install` also creates **nebula** and **nebula-hub**
 systemd units (disabled by default), which you may use to run the software in production.
 
  - systemd units assume nebula is installed in `/opt/nebula/`
