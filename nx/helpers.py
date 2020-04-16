@@ -49,7 +49,7 @@ def asset_by_full_path(path, db=False):
 def meta_exists(key, value, db=False):
     if not db:
         db = DB()
-    db.query("SELECT id, meta FROM assets WHERE meta->>'%s' = '%s'", [key, value])
+    db.query("SELECT id, meta FROM assets WHERE meta->>%s = %s", [str(key), str(value)])
     for id, meta in db.fetchall():
         return Asset(meta=meta, db=db)
     return False
