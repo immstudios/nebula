@@ -55,7 +55,7 @@ class ViewProfile(CherryAdminView):
                 ["rundown_edit",    "Edit rundown", "playout_channels"],
                 ["scheduler_view",  "View scheduler", "playout_channels"],
                 ["scheduler_edit",  "Modify scheduler", "playout_channels"],
-                ["job_control",     "Control jobs", "action"],
+                ["job_control",     "Control jobs", "actions"],
                 ["service_control", "Control services", "services"],
                 ["mcr",             "Control playout", "playout_channels"],
             ]

@@ -91,7 +91,7 @@
                     Full access
                     </span>
                 {% elif not page.user["can/"+right] %}
-                    <span class="badge badge-danger">No access</span>
+                    <span class="badge badge-danger" style="width: auto;">No access</span>
                 {% else %}
                     {% for k in site[subset] %}
                         {% if page.user.has_right(right, k) %}
