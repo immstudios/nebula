@@ -7,7 +7,7 @@ NEBULA
 ![Python version](https://img.shields.io/badge/python-3.7-blue?style=for-the-badge)
 
 Nebula is an open source broadcast automation and media asset management system for television, radio and VOD platforms.
-Since 2012 Nebula has proven stable and reliable software in 24/7 broadcast environment and it is now used by TV and production companies worldwide.
+Since 2012 Nebula has proven stable and reliable software in 24/7 broadcast environment and it is now used by TV and production companies worldwide. We put great emphasis on simplicity, modularity and speed.
 
 Key features
 ------------
@@ -26,17 +26,15 @@ Installation
 See [nebula-setup](https://github.com/nebulabroadcast/nebula-setup)
 for installation scripts and instructions.
 
-After initial setup, use `make install` to create symlinks for command line utilities
-and create your first user using `./manage.py adduser` command.
-
-During the setup, we recommended running `./manage.py run hub` and `./nebula.py` commands in
-GNU screen to see potential errors, but `make install` also creates **nebula** and **nebula-hub**
-systemd units (disabled by default), which you may use to run the software in production.
-
+ - After initial setup, use `make install` to create symlinks for command line utilities
+ - Create your first user using `./manage.py adduser` command.
+ - During the setup, we recommended running `./manage.py run hub` and `./nebula.py` 
+   commands in GNU screen to track down possible errors
+ - `make install` also creates *nebula* and *nebula-hub* systemd units (disabled by default), 
+   which you should use to run the software in production.
  - systemd units assume nebula is installed in `/opt/nebula/`
  - `nebula` service waits 30 seconds before it is started by systemd
-
-To view a nebula log in realtime, use `nxl` command.
+ - To view a nebula log in realtime, use `nxl` command.
 
 Need help?
 ----------
