@@ -66,28 +66,6 @@ class Service(BaseService):
         self.queue = []
         self.last_message = 0
 
-        self.sock = socket.socket(
-                socket.AF_INET,
-                socket.SOCK_DGRAM,
-                socket.IPPROTO_UDP
-            )
-        self.sock.setsockopt(
-                socket.SOL_SOCKET,
-                socket.SO_REUSEADDR,
-                1
-            )
-        self.sock.bind(("0.0.0.0", int(config["seismic_port"])))
-        self.sock.setsockopt(
-                socket.IPPROTO_IP,
-                socket.IP_MULTICAST_TTL,
-                255
-            )
-        self.sock.setsockopt(
-                socket.IPPROTO_IP,
-                socket.IP_ADD_MEMBERSHIP,
-                socket.inet_aton(config["seismic_addr"]) + socket.inet_aton("0.0.0.0")
-            )
-        self.sock.settimeout(1)
 
         #
         # Message relays
@@ -145,6 +123,43 @@ class Service(BaseService):
 
 
     def listen(self):
+        self.sock = socket.socket(
+                socket.AF_INET,
+                socket.SOCK_DGRAM,
+                socket.IPPROTO_UDP
+            )
+        self.sock.setsockopt(
+                socket.SOL_SOCKET,
+                socket.SO_REUSEADDR,
+                1
+            )
+
+        try:
+            firstoctet = int(config["seismic_addr"].split(".")[0])
+            is_multicast = firstoctet >= 224
+        except ValueError:
+            is_multicast = False
+
+
+        if is_multicast:
+            logging.info("Starting multicast listener {}:{}".format(config["seismic_addr"], config["seismic_port"]))
+            self.sock.bind(("0.0.0.0", int(config["seismic_port"])))
+            self.sock.setsockopt(
+                    socket.IPPROTO_IP,
+                    socket.IP_MULTICAST_TTL,
+                    255
+                )
+            self.sock.setsockopt(
+                    socket.IPPROTO_IP,
+                    socket.IP_ADD_MEMBERSHIP,
+                    socket.inet_aton(config["seismic_addr"]) + socket.inet_aton("0.0.0.0")
+                )
+        else:
+            logging.info("Starting unicast listener {}:{}".format(config["seismic_addr"], config["seismic_port"]))
+            self.sock.bind((config["seismic_addr"], int(config["seismic_port"])))
+
+        self.sock.settimeout(1)
+
         while True:
             try:
                 data, addr = self.sock.recvfrom(4092)
