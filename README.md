@@ -33,7 +33,7 @@ for installation scripts and instructions.
  - `make install` also creates *nebula* and *nebula-hub* systemd units (disabled by default), 
    which you should use to run the software in production.
  - systemd units assume nebula is installed in `/opt/nebula/`
- - `nebula` service waits 30 seconds before it is started by systemd
+ - keep in mind that *nebula* service waits 30 seconds before it is started by systemd
  - To view a nebula log in realtime, use `nxl` command.
 
 Need help?
