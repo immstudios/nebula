@@ -14,6 +14,15 @@ DEFAULT_STATUS = {
         }
 
 class Service(BaseService):
+    def create_controller(self):
+        engine = self.channel_config.get("engine")
+        if engine == "vlc":
+            # Delay import since libvlc might not be available.
+            from .vlc_controller import VlcController
+            return VlcController(self)
+        else:
+            return CasparController(self)
+
     def on_init(self):
         if not config["playout_channels"]:
             logging.error("No playout channel configured")
@@ -28,11 +37,7 @@ class Service(BaseService):
 
         self.channel_config = config["playout_channels"][self.id_channel]
 
-        self.caspar_host         = self.channel_config.get("caspar_host", "localhost")
-        self.caspar_port         = int(self.channel_config.get("caspar_port", 5250))
-        self.caspar_channel      = int(self.channel_config.get("caspar_channel", 1))
-        self.caspar_feed_layer   = int(self.channel_config.get("caspar_feed_layer", 10))
-        self.fps                 = float(self.channel_config.get("fps", 25.0))
+        self.fps = float(self.channel_config.get("fps", 25.0))
 
         self.current_asset = Asset()
         self.current_event = Event()
@@ -44,7 +49,7 @@ class Service(BaseService):
         self.status_key = "playout_status/{}".format(self.id_channel)
 
         self.plugins = PlayoutPlugins(self)
-        self.controller = CasparController(self)
+        self.controller = self.create_controller()
         self.last_info = 0
 
         try:
