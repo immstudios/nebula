@@ -112,7 +112,13 @@ class Service(BaseService):
         asset = item.asset
         playout_status = asset.get(self.status_key, DEFAULT_STATUS)["status"]
 
-        if playout_status not in [ONLINE, CREATING, UNKNOWN]:
+        kwargs['fname'] = None
+        if playout_status in [ONLINE, CREATING, UNKNOWN]:
+            kwargs['fname'] = asset.get_playout_name(self.id_channel)
+            kwargs['full_path'] = asset.get_playout_full_path(self.id_channel)
+        elif self.channel_config.get('allow_remote') and asset['status'] in (ONLINE,):
+            kwargs['fname'] = kwargs['full_path'] = asset.file_path
+        else:
             return NebulaResponse(404, "Unable to cue {} playout file ".format(get_object_state_name(playout_status)))
 
         kwargs["mark_in"] = item["mark_in"]
@@ -126,7 +132,7 @@ class Service(BaseService):
         kwargs["loop"] = bool(item["loop"])
 
         self.cued_live = False
-        return self.controller.cue(asset.get_playout_name(self.id_channel), item,  **kwargs)
+        return self.controller.cue(item=item,  **kwargs)
 
 
     def cue_forward(self, **kwargs):

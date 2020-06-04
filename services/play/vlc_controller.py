@@ -14,18 +14,17 @@ from nebula import *
 
 
 class VlcMedia(object):
-    def __init__(self, instance, fname, item, **kwargs):
+    def __init__(self, instance, full_path, item, **kwargs):
         self.auto       = kwargs.get("auto", True)
-        layer      = kwargs.get("layer", self.caspar_feed_layer)
         loop       = kwargs.get("loop", False)
         self.mark_in    = item.mark_in()
         self.mark_out   = item.mark_out()
 
         self.item = item
-        self.fname = fname
+        self.fname = full_path
 
         self.parsed = False
-        self.media = self.instance.media_new(fname)
+        self.media = instance.media_new(self.fname)
         if loop:
             self.media.add_option(":repeat")
         # NB: Times are input as float seconds, but all other VLC functions use milliseconds.
@@ -176,15 +175,15 @@ class VlcController(object):
             log_traceback("Playout on_main failed")
 
 
-    def cue(self, fname, item, **kwargs):
-        self.cued = VlcMedia(self.instance, fname, item, **kwargs)
+    def cue(self, item, full_path, **kwargs):
+        self.cued = VlcMedia(self.instance, full_path, item, **kwargs)
         layer      = kwargs.get("layer", self.caspar_feed_layer)
         play       = kwargs.get("play", False)
 
         if play:
             return self.take()
 
-        message = "Cued item {} ({})".format(self.cued_item, fname)
+        message = "Cued item {} ({})".format(self.cued_item, full_path)
 
         return NebulaResponse(200, message)
 
