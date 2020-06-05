@@ -109,9 +109,15 @@ class Service(BaseService):
                 log_traceback()
                 self.log_ttl = None
 
+        self.session = requests.Session()
+
         thread.start_new_thread(self.listen, ())
         thread.start_new_thread(self.process, ())
 
+
+    def shutdown(self, *args, **kwargs):
+        self.session.close()
+        super().shutdown(*args, **kwargs)
 
     def on_main(self):
         if len(self.queue) > 100:
@@ -210,7 +216,7 @@ class Service(BaseService):
         message = message.replace("\n", "") + "\n" # one message per line
         for relay in self.relays:
             try:
-                result = requests.post(relay, message.encode("ascii"), timeout=.5)
+                result = self.session.post(relay, message.encode("ascii"), timeout=.5)
             except:
                 logging.error("Unable to send message to relay", relay)
                 continue
