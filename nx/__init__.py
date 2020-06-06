@@ -1,5 +1,5 @@
 from nebulacore import *
-from nebulacore.meta_utils import clear_cs_cache
+from nebulacore.metadata import clear_cs_cache
 
 from .connection import *
 from .objects import *
