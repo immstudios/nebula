@@ -52,7 +52,8 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
 
             ORDER BY
                 e.start ASC,
-                i.position ASC
+                i.position ASC,
+                i.id ASC
             """, (id_channel, start_time, end_time))
 
     current_event_id = None
