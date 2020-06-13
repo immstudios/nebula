@@ -232,12 +232,17 @@ class Job():
 
 
 
-
 def get_job(id_service, action_ids, db=False):
     assert type(action_ids) == list, "action_ids must be list of integers"
     if not action_ids:
         return False
     db = db or DB()
+
+    running_jobs_count = {}
+    db.query("select id_action, count(id) from jobs where status=1 group by id_action")
+    for id_action, cnt in db.fetchall():
+        running_jobs_count[id_action] = cnt
+
     q = """
         SELECT id, id_action, id_asset, id_user, settings, priority, retries, status FROM jobs
         WHERE
@@ -258,6 +263,17 @@ def get_job(id_service, action_ids, db=False):
         job.priority = priority
         job.retries = retries
         job.id_user = id_user
+
+        max_running_jobs = action.settings.attrib.get("max_jobs", 0)
+        try:
+            max_running_jobs = int(max_running_jobs)
+        except ValueError:
+            max_running_jobs = 0
+        if max_running_jobs:
+            running_jobs = running_jobs_count.get(id_action, 0)
+            if running_jobs >= max_running_jobs:
+                continue # Maximum allowed jobs already running. skip
+
         for pre in action.settings.findall("pre"):
             if pre.text:
                 try:
