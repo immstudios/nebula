@@ -76,6 +76,9 @@
                 </a>
             </th>
         {% endfor %}
+        {% if page.show_jobs %}
+            <th style="width:1px;">&nbsp;</th>
+        {% endif %}
         </tr>
     </thead>
 
@@ -87,6 +90,11 @@
             {% include "includes/cellformat.html" %}
             </td>
         {% endfor %}
+        {% if page.show_jobs %}
+            <td>
+                <a class="btn" href="/jobs?id_asset={{ asset.id }}" title="Show jobs"><i class="fas fa-cogs"></i></a>
+            </td>
+        {% endif %}
         </tr>
     {% endfor %}
     </tbody>

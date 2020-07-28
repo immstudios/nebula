@@ -120,6 +120,11 @@ $(document).ready(function() {
         $("#form-search").submit
     });
 
+    $(".btn-sendto").click(function() {
+        $("#input-id-action").val($(this).attr("data-href"));
+        $("#form-sendto").submit();
+    });
+
     load_jobs();
 
     notify = new seismicNotify(site_name, seismic_handler);

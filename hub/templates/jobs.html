@@ -3,15 +3,46 @@
 {% block header %}
 <nav id="page-nav" class="navbar navbar-dark navbar-expand fixed-top">
     <ul class="navbar-nav mr-auto">
-        <li class="nav-item">
-            <a href="/jobs/active" class="nav-link{% if page.mode == "active" %} active{% endif %}">Active</a>
-        </li>
-        <li class="nav-item">
-            <a href="/jobs/finished" class="nav-link{% if page.mode == "finished" %} active{% endif %}">Finished</a>
-        </li>
-        <li class="nav-item">
-            <a href="/jobs/failed" class="nav-link{% if page.mode == "failed" %} active{% endif %}">Failed</a>
-        </li>
+        {% if page.query %}
+            <span class="navbar-text">Jobs matching "{{ page.query }}"</span>
+        {% elif page.id_asset%}
+
+
+            {% if page.actions%}
+                <li class="nav-item">
+                    <div class="btn-group" role="group">
+                        <a href="#" class="btn dropdown-toggle" data-toggle="dropdown" title="Send to...">
+                            <i class="fas fa-cogs"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-left">
+                            <h6 class="dropdown-header">Send to...</h6>
+                            {% for id_action, action_title  in page.actions %}
+                                <a class="dropdown-item btn-sendto" href="#" data-href="{{ id_action }}">
+                                    {{ action_title }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <form action="/jobs" method="POST" id="form-sendto">
+                        <input type="hidden" name="id_asset" id="input-id-asset" value="{{ page.asset.id }}">
+                        <input type="hidden" name="id_action" id="input-id-action" value="">
+                    </form>
+                </li>
+            {% endif %}
+
+            <span class="navbar-text">Jobs of {{ page.asset }}</span>
+
+        {% else %}
+            <li class="nav-item">
+                <a href="/jobs/active" class="nav-link{% if page.mode == "active" %} active{% endif %}">Active</a>
+            </li>
+            <li class="nav-item">
+                <a href="/jobs/finished" class="nav-link{% if page.mode == "finished" %} active{% endif %}">Finished</a>
+            </li>
+            <li class="nav-item">
+                <a href="/jobs/failed" class="nav-link{% if page.mode == "failed" %} active{% endif %}">Failed</a>
+            </li>
+        {% endif %}
     </ul>
 
     <ul class="navbar-nav ml-auto">
