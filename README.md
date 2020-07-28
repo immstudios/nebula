@@ -43,10 +43,10 @@ Command line
  - `nxl` real-time log viewer
  - `nxadduser` add a new user to the system
  - `nxpasswd` change user password
- - `nxa` asset browser
+ - `nxa {id_view:int} {search_query:string}` asset browser
  - `nxj` jobs monitor
- - `nxs` services list. Syntax `nxs {[command:start|stop|auto|noauto] id_service:int}`
- - `nxt` plug-in runner
+ - `nxs {[command:start|stop|auto|noauto] id_service:int}` services monitor and control panel
+ - `nxt [tool_name:string]` plug-in runner
 
 Need help?
 ----------
