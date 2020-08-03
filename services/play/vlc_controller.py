@@ -42,10 +42,15 @@ class VlcMedia(object):
 
         # TODO: set self.fname from self.media.get_mrl()?
 
+    def __del__(self):
+        self.media.release()
+
     def parse_callback(self, event):
         self.parsed = True
         # TODO: Provide a way to block on this and check if media.get_parsed_status() == MediaParsedStatus.done
-        print("parsed media", event)
+        logging.debug("parsed media", self.fname, event.u.new_status)
+        # Clean up event handler to prevent memory leak
+        self.media.event_manager().event_detach(vlc.EventType.MediaParsedChanged)
 
     @property
     def mark_in_ms(self):
