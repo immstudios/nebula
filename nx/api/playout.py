@@ -25,7 +25,7 @@ def api_playout(**kwargs):
     channel_config = config["playout_channels"][id_channel]
     engine = channel_config.get("engine", "dummy")
 
-    if engine == "casparcg":
+    if engine in ("casparcg", "vlc"):
         if not action in [
                 "cue",
                 "take",

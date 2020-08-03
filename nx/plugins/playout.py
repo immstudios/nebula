@@ -21,7 +21,6 @@ class PlayoutPluginSlot(object):
 class PlayoutPlugin(object):
     def __init__(self, service):
         self.service = service
-        self.id_layer = self.service.caspar_feed_layer + 1
         self.playout_dir = os.path.join(
                 storages[self.channel_config["playout_storage"]].local_path,
                 self.channel_config["playout_dir"]
@@ -85,6 +84,10 @@ class PlayoutPlugin(object):
             except Exception:
                 log_traceback()
             self.busy = False
+
+    @property
+    def id_layer(self):
+        return self.service.controller.caspar_feed_layer + 1
 
     def layer(self, id_layer=False):
         if not id_layer:
