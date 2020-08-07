@@ -76,7 +76,8 @@ class VlcController(object):
 
         self.instance = vlc.Instance(self.args)
         self.media_player = self.instance.media_player_new()
-        self.media_player.set_fullscreen(True)
+        if parent.channel_config.get("vlc_fullscreen", True):
+            self.media_player.set_fullscreen(True)
         self.media_player.event_manager().event_attach(
             vlc.EventType.MediaPlayerEndReached, self.next_item_callback)
         # MediaPlayerMediaChanged
