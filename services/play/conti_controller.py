@@ -34,22 +34,13 @@ class ContiController(object):
         self.parent = parent
         self.cueing = False
         self.request_time = time.time()
-        self.conti = NebulaConti(
-                None, 
-                playlist_length=2,
-                blocking=False,
-                outputs=[{
-                    "target" : "DeckLink Duo (1)",
-                    "params" : {
-                        "filter:v" : "setfield=tff",
-                        "f" : "decklink",
-                        "r" : "25",
-                        "s" : "1920x1080",
-                        "field_order" : "tt",
-                        "pix_fmt" : "uyvy422"
-                        }
-                    }]
-            )
+        settings = {
+            "playlist_length" : 2,
+            "blocking" : False,
+            "outputs" : self.parent.channel_config.get("conti_outputs", [])
+        }
+        settings.update(self.parent.channel_config.get("conti_settings", {}))
+        self.conti = NebulaConti(None, **settings)
         self.conti.parent = self
 
     @property
