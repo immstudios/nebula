@@ -26,16 +26,19 @@ from .view_profile import ViewProfile
 
 
 SITE_CSS = [
-        "https://static.nebulabroadcast.com/nebula/css/nebula.css",
+        "/static/css/nebula.css",
+        "/static/css/gijgo-core.css",
+        "/static/css/gijgo-datepicker.css",
     ]
 
 SITE_JS = [
-        "https://static.nebulabroadcast.com/nebula/js/vendor/jquery.min.js",
-        "https://static.nebulabroadcast.com/nebula/js/vendor/popper.min.js",
-        "https://static.nebulabroadcast.com/nebula/js/vendor/bootstrap.min.js",
-        "https://static.nebulabroadcast.com/nebula/js/vendor/bootstrap-select.min.js",
-        "https://static.nebulabroadcast.com/nebula/js/vendor/gijgo.min.js",
-        "https://static.nebulabroadcast.com/nebula/js/vendor/inputmask.min.js",
+        "/static/js/vendor/jquery.min.js",
+        "/static/js/vendor/bootstrap.bundle.min.js",
+        "/static/js/vendor/bootstrap-select.min.js",
+        "/static/js/vendor/gijgo-core.js",
+        "/static/js/vendor/gijgo-datepicker.js",
+        "/static/js/vendor/jquery.inputmask.min.js",
+
         "/static/js/common.js"
     ]
 
@@ -76,11 +79,11 @@ def user_context_helper(meta):
 
 static_dir = config.get(
         "hub_static_dir",
-        os.path.join(config["nebula_root"], "hub", "static")
+        os.path.join(config["nebula_root"], "vendor", "nebula-hub", "dist", "static")
     )
 templates_dir = config.get(
         "hub_templates_dir",
-        os.path.join(config["nebula_root"], "hub", "templates")
+        os.path.join(config["nebula_root"], "vendor", "nebula-hub", "dist", "templates")
     )
 
 hub_config = {

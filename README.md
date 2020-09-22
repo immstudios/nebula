@@ -28,15 +28,25 @@ Installation
 See [nebula-setup](https://github.com/nebulabroadcast/nebula-setup)
 for installation scripts and instructions.
 
- - After initial setup, use `make install` to create symlinks for command line utilities
- - Create your first user using `./manage.py adduser` command.
+ - After initial setup, use `make install` command to create symlinks for command-line utilities.
+ - Create your first user using `nxadduser` command.
  - During the setup, we recommended running `./manage.py run hub` and `./nebula.py` 
    commands in GNU screen to track down possible errors
  - `make install` also creates *nebula* and *nebula-hub* systemd units (disabled by default), 
    which you should use to run the software in production.
  - systemd units assume nebula is installed in `/opt/nebula/`
  - keep in mind that *nebula* service waits 30 seconds before it is started by systemd
- - To view a nebula log in realtime, use `nxl` command.
+ 
+Command line
+------------
+ 
+ - `nxl` real-time log viewer
+ - `nxadduser` add a new user to the system
+ - `nxpasswd` change user password
+ - `nxa {id_view:int} {search_query:string}` asset browser
+ - `nxj` jobs monitor
+ - `nxs {[command:start|stop|auto|noauto] id_service:int}` services monitor and control panel
+ - `nxt [tool_name:string]` plug-in runner
 
 Need help?
 ----------

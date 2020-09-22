@@ -130,5 +130,8 @@ class SystemMonitor(BaseAgent):
     def main(self):
         messaging.send("heartbeat")
         if time.time() - self.last_update > 5:
-            update_host_info()
+            try:
+                update_host_info()
+            except Exception:
+                log_traceback("Unable to update host info")
             self.last_update = time.time()
