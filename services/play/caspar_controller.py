@@ -253,6 +253,7 @@ class CasparController(object):
                     marks
                 )
 
+        self.cueing = fname
         result = self.query(q)
 
         if result.is_error:
@@ -265,7 +266,6 @@ class CasparController(object):
             self.cued_fname = fname
             self.cued_in    = mark_in*self.fps
             self.cued_out   = mark_out*self.fps
-            self.cueing     = fname
             message = "Cued item {} ({})".format(self.cued_item, fname)
 
         return NebulaResponse(result.response, message)

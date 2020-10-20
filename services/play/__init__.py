@@ -20,6 +20,9 @@ class Service(BaseService):
             # Delay import since libvlc might not be available.
             from .vlc_controller import VlcController
             return VlcController(self)
+        elif engine == "conti":
+            from .conti_controller import ContiController
+            return ContiController(self)
         else:
             return CasparController(self)
 
@@ -233,26 +236,22 @@ class Service(BaseService):
 
     @property
     def playout_status(self):
-
-        #TODO: Rewrite to be nice
-        data = {}
-        data["id_channel"]    = self.id_channel
-        data["current_item"]  = self.controller.current_item.id if self.controller.current_item else False
-        data["cued_item"]     = self.controller.cued_item.id if self.controller.cued_item else False
-        data["position"]      = self.controller.position
-        data["duration"]      = self.controller.duration
-        data["current_title"] = self.controller.current_item["title"] if self.controller.current_item else "(no clip)"
-        data["cued_title"]    = self.controller.cued_item["title"]    if self.controller.cued_item    else "(no clip)"
-        data["request_time"]  = self.controller.request_time
-        data["paused"]        = self.controller.paused
-        data["cueing"]        = self.controller.cueing
-        data["id_event"]      = self.current_event.id if self.current_event else False
-        data["fps"]           = self.fps
-        data["stopped"]       = False #TODO: deprecated. remove
-
-        data["current_fname"] = self.controller.current_fname
-        data["cued_fname"]    = self.controller.cued_fname
-        return data
+        return {
+            "id_channel"    : self.id_channel,
+            "current_item"  : self.controller.current_item.id if self.controller.current_item else False,
+            "cued_item"     : self.controller.cued_item.id if self.controller.cued_item else False,
+            "position"      : self.controller.position,
+            "duration"      : self.controller.duration,
+            "current_title" : self.controller.current_item["title"] if self.controller.current_item else "(no clip)",
+            "cued_title"    : self.controller.cued_item["title"]    if self.controller.cued_item    else "(no clip)",
+            "request_time"  : self.controller.request_time,
+            "paused"        : self.controller.paused,
+            "cueing"        : self.controller.cueing,
+            "id_event"      : self.current_event.id if self.current_event else False,
+            "fps"           : self.fps,
+            "current_fname" : self.controller.current_fname,
+            "cued_fname"    : self.controller.cued_fname,
+        }
 
 
     def on_progress(self):
