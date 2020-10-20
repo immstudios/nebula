@@ -86,6 +86,8 @@ templates_dir = config.get(
         os.path.join(config["nebula_root"], "vendor", "nebula-hub", "dist", "templates")
     )
 
+default_sessions_dir = os.path.join("/tmp", config["site_name"] + "-sessions")
+
 hub_config = {
         "host" : config.get("hub_host", "0.0.0.0"),
         "port" : config.get("hub_port", 8080),
@@ -95,7 +97,7 @@ hub_config = {
         "site_context_helper" : site_context_helper,
         "page_context_helper" : page_context_helper,
         "user_context_helper" : user_context_helper,
-        "sessions_dir" : os.path.join("/tmp", config["site_name"] + "-sessions"),
+        "sessions_dir" : config.get("hub_sessions_dir", default_sessions_dir),
         "sessions_timeout" : 60*24*120,
         "hash_salt" : config.get("hash_salt", "nebulaissalty"),
         "blocking" : True,
