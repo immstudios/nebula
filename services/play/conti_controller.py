@@ -4,8 +4,6 @@ import os
 import time
 import rex
 
-rex.require("https://github.com/immstudios/conti")
-
 from nebula import *
 from conti import *
 
@@ -27,7 +25,7 @@ class NebulaConti(Conti):
         self.parent.duration = self.current.duration * self.parent.fps
         self.parent.request_time = time.time()
         self.parent.parent.on_progress()
-    
+
 
 class ContiController(object):
     def __init__(self, parent):
