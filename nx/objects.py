@@ -77,7 +77,11 @@ class Asset(AssetMixIn, ServerObject):
         return "{}-{}".format(config["site_name"], self.id)
 
     def get_playout_storage(self, id_channel):
-        return config["playout_channels"][id_channel]["playout_storage"]
+        try:
+            return config["playout_channels"][id_channel]["playout_storage"]
+        except KeyError:
+            return None
+
 
     def get_playout_path(self, id_channel):
         return os.path.join(
@@ -86,8 +90,11 @@ class Asset(AssetMixIn, ServerObject):
             )
 
     def get_playout_full_path(self, id_channel):
+        id_storage = get_playout_storage(id_channel)
+        if not id_storage:
+            return None
         return os.path.join(
-                storages[self.get_playout_storage(id_channel)].local_path,
+                storages[id_storage].local_path,
                 self.get_playout_path(id_channel)
             )
 

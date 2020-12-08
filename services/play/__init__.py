@@ -115,13 +115,15 @@ class Service(BaseService):
         asset = item.asset
         playout_status = asset.get(self.status_key, DEFAULT_STATUS)["status"]
 
-        kwargs['fname'] = None
+        kwargs["fname"] = kwargs["full_path"] = None
         if playout_status in [ONLINE, CREATING, UNKNOWN]:
             kwargs['fname'] = asset.get_playout_name(self.id_channel)
             kwargs['full_path'] = asset.get_playout_full_path(self.id_channel)
-        elif self.channel_config.get('allow_remote') and asset['status'] in (ONLINE,):
+
+        if not kwargs["full_path"] and self.channel_config.get('allow_remote') and asset['status'] in (ONLINE,):
             kwargs['fname'] = kwargs['full_path'] = asset.file_path
-        else:
+
+        if not kwargs["full_path"]:
             return NebulaResponse(404, "Unable to cue {} playout file ".format(get_object_state_name(playout_status)))
 
         kwargs["mark_in"] = item["mark_in"]
