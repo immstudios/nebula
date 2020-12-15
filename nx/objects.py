@@ -90,7 +90,7 @@ class Asset(AssetMixIn, ServerObject):
             )
 
     def get_playout_full_path(self, id_channel):
-        id_storage = get_playout_storage(id_channel)
+        id_storage = self.get_playout_storage(id_channel)
         if not id_storage:
             return None
         return os.path.join(
