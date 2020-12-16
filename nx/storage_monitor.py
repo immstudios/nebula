@@ -58,6 +58,8 @@ class StorageMonitor(BaseAgent):
 
             if ismount(storage.local_path):
                 logging.goodnews("{} mounted successfully".format(storage))
+                if not id_storage in storage_status:
+                    storage_status[id_storage] = [True, 2, 0]
                 storage_status[id_storage][0] = True
                 storage_status[id_storage][1] = 2
             else:
