@@ -61,14 +61,16 @@ class CasparController(object):
     @property
     def position(self) -> float:
         """Time position (seconds) of the clip currently playing"""
-        return self.pos - self.current_item.mark_in()
+        if self.current_item:
+            return self.pos - self.current_item.mark_in()
+        return self.pos
 
     @property
     def duration(self) -> float:
         """Duration (seconds) of the clip currently playing"""
         if self.parent.current_live:
             return 0
-        return self.current_item.duration
+        return self.dur
 
     def connect(self):
         """Connect to a running CasparCG instance using AMCP protocol"""
@@ -108,7 +110,7 @@ class CasparController(object):
         self.paused = foreground.paused
         self.loop = foreground.loop
 
-#        if cued_fname and (not self.paused) and (pos == self.pos) and (not self.parent.current_live) and self.cued_item and (not self.cued_item["run_mode"]):
+#2        if cued_fname and (not self.paused) and (pos == self.pos) and (not self.parent.current_live) and self.cued_item and (not self.cued_item["run_mode"]):
 #            if self.stalled and self.stalled < time.time() - 5:
 #                logging.warning("Stalled for a long time")
 #                logging.warning("Taking stalled clip (pos: {})".format(self.pos))
@@ -128,19 +130,22 @@ class CasparController(object):
         #
 
         advanced = False
-        if (not cued_fname) and (current_fname) and not self.parent.cued_live:
-            if current_fname == self.cued_fname:
+        if self.parent.cued_live:
+            if (background.producer == "empty") and (foreground.producer != "empty") and not self.cueing:
                 self.current_item  = self.cued_item
-                self.current_fname = self.cued_fname
+                self.current_fname = "LIVE"
                 advanced = True
-            self.cued_item = False
+                self.cued_item = False
+                self.parent.on_live_enter()
 
-        elif (not current_fname) and (not cued_fname) and self.parent.cued_live:
-            self.current_item  = self.cued_item
-            self.current_fname = "LIVE"
-            advanced = True
-            self.cued_item = False
-            self.parent.on_live_enter()
+        else:
+            if (not cued_fname) and (current_fname):
+                if current_fname == self.cued_fname:
+                    self.current_item  = self.cued_item
+                    self.current_fname = self.cued_fname
+                    advanced = True
+                self.cued_item = False
+
 
 
         if advanced and not self.cueing:
@@ -160,10 +165,16 @@ class CasparController(object):
                 self.cued_item = self.cueing_item
                 self.cueing_item = False
                 self.cueing = False
+            elif self.parent.cued_live:
+                if background.producer != "empty":
+                    logging.goodnews(f"Cued {self.cueing}")
+                    self.cued_item = self.cueing_item
+                    self.cueing_item = False
+                    self.cueing = False
             else:
                 logging.debug(f"Waiting for cue {self.cueing}")
 
-        elif not self.cueing and self.cued_item and cued_fname and cued_fname != self.cued_fname:
+        elif not self.cueing and self.cued_item and cued_fname and cued_fname != self.cued_fname and not self.parent.cued_live:
             logging.error(f"Cue mismatch: IS: {cued_fname} SHOULDBE: {self.cued_fname}")
             self.cued_item = False
 
@@ -200,7 +211,7 @@ class CasparController(object):
         result = self.query(query)
 
         if result.is_error:
-            message = "Unable to cue \"{fname}\" {result.data}"
+            message = f"Unable to cue \"{fname}\" {result.data}"
             self.cued_item   = Item()
             self.cued_fname  = False
             self.cueing      = False
@@ -284,7 +295,12 @@ class CasparController(object):
         if key == "loop":
             do_loop = int(str(value) in ["1", "True", "true"])
             result = self.query(f"CALL {self.caspar_channel}-{self.caspar_feed_layer} LOOP {do_loop}")
-            return NebulaResponse(result.response, result.data)
+            if self.current_item and bool(self.current_item["loop"] != bool(do_loop)):
+                self.current_item["loop"] = bool(do_loop)
+                self.current_item.save(notify=False)
+                print(do_loop, bool(do_loop), bool(self.current_item["loop"]))
+                bin_refresh([self.current_item["id_bin"]], db=self.current_item.db)
+            return NebulaResponse(result.response, f"SET LOOP: {result.data}")
         else:
             return NebulaResponse(400)
 
