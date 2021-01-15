@@ -2,7 +2,7 @@ import string
 
 from nx import *
 
-__all__ = ["api_get", "get_objects"]
+__all__ = ["api_get", "api_browse", "get_objects"]
 
 def get_objects(ObjectType, **kwargs):
     """objects lookup function. To be used inside services"""
@@ -134,6 +134,35 @@ def get_objects(ObjectType, **kwargs):
     if count:
         cache.save("view-count-{}".format(id_view), count)
 
+
+def api_browse(**kwargs):
+    db = kwargs.get("db", DB())
+    user = kwargs.get("user", anonymous)
+
+    params = {
+            "id_view" : int(kwargs.get("v", min(config["views"].keys()))),
+            "limit" : int(kwargs.get("l", 50)),
+            "offset" : (max(0,int(kwargs.get("p", 1)) - 1))*50,
+            "fulltext" : kwargs.get("q", "")
+        }
+
+    result = {
+        "response" : 200,
+        "message" : "OK",
+        "data" : [],
+        "id_view" : params["id_view"],
+        "count" : 0
+    }
+
+    columns = config["views"][params["id_view"]]["columns"]
+
+    for response, obj in get_objects(Asset, **params):
+        result["count"] |= response["count"]
+        row = {"_id" : obj.id}
+        for col in columns:
+            row[col] = obj.show(col)
+        result["data"].append(row)
+    return result
 
 
 

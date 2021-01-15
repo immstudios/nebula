@@ -34,6 +34,7 @@ def api_playout(**kwargs):
                 "abort",
                 "freeze",
                 "retake",
+                "set",
                 "plugin_list",
                 "plugin_exec",
                 "stat",
