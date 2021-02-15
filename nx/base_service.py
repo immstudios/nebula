@@ -1,5 +1,5 @@
 from nebulacore import *
-from .connection import *
+from .db import DB
 
 __all__ = ["BaseService"]
 

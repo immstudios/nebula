@@ -4,7 +4,8 @@ import time
 from nebulacore import *
 from promexp import Promexp
 
-from .connection import *
+from .db import DB
+from .messaging import messaging
 from .agents import BaseAgent
 
 __all__ = ["SystemMonitor"]

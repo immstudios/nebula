@@ -4,7 +4,9 @@ import requests
 from email.mime.text import MIMEText
 
 from nebulacore import *
-from .connection import *
+
+from .db import DB
+from .messaging import messaging
 from .objects import *
 
 

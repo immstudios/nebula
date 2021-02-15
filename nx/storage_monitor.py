@@ -1,6 +1,6 @@
 from nebulacore import *
 
-from .connection import *
+from .db import DB
 from .agents import BaseAgent
 
 __all__ = ["StorageMonitor"]
