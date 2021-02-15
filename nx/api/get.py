@@ -231,6 +231,22 @@ def api_get(**kwargs):
                     row.append(obj.show(key, **form))
             result["data"].append(row)
 
+    elif result_type == "form":
+        for response, obj in get_objects(ObjectType, **kwargs):
+            result["count"] |= response["count"]
+            row = {
+                "id" : obj.id,
+                "id_folder" : obj["id_folder"],
+                "duration" : obj["duration"],
+                "mark_in" : obj["mark_in"],
+                "mark_out" : obj["mark_out"],
+                "form" : {}
+            }
+            for key, s in config["folders"][obj["id_folder"]]["meta_set"]:
+                row["form"][key] = obj.show(key, result="full")
+
+            result["data"].append(row)
+
 
     elif result_type == "ids":
         # Result is an array of matching object IDs

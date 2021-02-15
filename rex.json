@@ -7,5 +7,6 @@
     "https://github.com/immstudios/themis2" : {"python-path" : true},
     "https://github.com/immstudios/python-osc" : {"python-path" : true},
     "https://github.com/immstudios/nebula-hub" : {},
-    "https://github.com/immstudios/conti" : {"python-path" : true}
+    "https://github.com/immstudios/conti" : {"python-path" : true},
+    "https://github.com/immstudios/promexp" : {"python-path" : true}
 }
