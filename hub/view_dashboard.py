@@ -74,7 +74,7 @@ class ViewDashboard(CherryAdminView):
                 elif name in tagmap:
                     host_info[tagmap[name]] = value
             hosts[hostname] = host_info
-        storage_info = [{"id" : id, **d} for id, d in sinfo.items()]
+        storage_info = [{"id" : id, **d} for id, d in sinfo.items() if d.get("total") and d.get("free")]
 
         #
         # MAM statistics
