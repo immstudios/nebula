@@ -1,5 +1,6 @@
 import os
 import time
+import psycopg2
 
 from nebulacore import *
 from promexp import Promexp
@@ -56,7 +57,7 @@ class SystemMonitor(BaseAgent):
         db = DB()
         try:
             db.query("INSERT INTO hosts(hostname, last_seen) VALUES (%s, %s)", [config["host"], time.time()])
-        except IntegrityError:
+        except psycopg2.IntegrityError:
             pass
         else:
             db.commit()
