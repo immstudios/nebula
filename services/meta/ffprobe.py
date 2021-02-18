@@ -24,10 +24,8 @@ class FFProbe(Probe):
 
             # Do not update descriptive metadata
             elif meta_types[key]["ns"] == "m" and asset[key]:
-                logging.warning(f"skipping update {key} to {value}")
                 continue
 
-            logging.info(f"updating {key} to {value}")
             asset[key] = value
 
         return asset
