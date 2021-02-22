@@ -24,7 +24,7 @@ class Cache():
         self.site = config["site_name"]
         self.host = config.get("cache_host", "localhost")
         self.port = config.get("cache_port", 11211)
-        self.cstring = "{}:{}".format(self.host, self.port)
+        self.cstring = f"{self.host}:{self.port}"
         self.pool = False
         self.connect()
 
@@ -56,7 +56,7 @@ class Cache():
                 self.conn.set(str(key), str(value))
                 break
             except Exception:
-                log_traceback("Cache save failed ({})".format(key))
+                log_traceback(f"Cache save failed ({key})")
                 time.sleep(.1)
                 self.connect()
         else:
@@ -73,7 +73,7 @@ class Cache():
                 self.conn.delete(key)
                 break
             except Exception:
-                log_traceback("Cache delete failed ({})".format(key))
+                log_traceback(f"Cache delete failed ({key})")
                 time.sleep(.3)
                 self.connect()
         else:
@@ -105,7 +105,7 @@ class Cache():
                     mc.set(str(key), str(value))
                     break
                 except Exception:
-                    log_traceback("Cache save failed ({})".format(key))
+                    log_traceback(f"Cache save failed ({key})")
                     time.sleep(.3)
                     self.connect()
             else:
@@ -124,7 +124,7 @@ class Cache():
                     mc.delete(key)
                     break
                 except Exception:
-                    log_traceback("Cache delete failed ({})".format(key))
+                    log_traceback(f"Cache delete failed ({key})")
                     time.sleep(.3)
                     self.connect()
             else:

@@ -37,7 +37,7 @@ def get_objects(ObjectType, **kwargs):
 
 
         if order_key in ObjectType.db_cols + ["id"]:
-            order = "{} {}".format(order_key, order_trend)
+            order = f"{order_key} {order_trend}"
         else:
             cast = None
             if order_key in meta_types:
@@ -48,9 +48,9 @@ def get_objects(ObjectType, **kwargs):
                     cast = "INTEGER"
 
             if cast:
-                order = "CAST(meta->>'{}' AS {}) {}".format(order_key, cast, order_trend)
+                order = f"CAST(meta->>'{order_key}' AS {cast}) {order_trend}"
             else:
-                order = "meta->>'{}' {}".format(order_key, order_trend)
+                order = f"meta->>'{order_key}' {order_trend}"
 
 
 
@@ -72,7 +72,7 @@ def get_objects(ObjectType, **kwargs):
                 ]:
             if key in view_config and view_config[key]:
                 if len(view_config[key]) == 1:
-                    raw_conds.append("{}={}".format(col, view_config[key][0]))
+                    raw_conds.append(f"{col}={view_config[key][0]}")
                 else:
                     raw_conds.append("{} IN ({})".format(col, ",".join([str(v) for v in view_config[key]])))
         for cond in view_config.get("conds", []):

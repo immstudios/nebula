@@ -5,18 +5,17 @@ __all__ = ["BaseService"]
 
 class BaseService(object):
     def __init__(self, id_service, settings=False):
-        logging.debug("Initializing service")
+        logging.debug("Initializing service ID {id_service}")
         self.id_service = id_service
-        self.settings   = settings
+        self.settings = settings
         config["id_service"] = id_service
 
         try:
             self.on_init()
         except SystemExit:
-            pass
-            sys.exit(0)
-        except:
-            log_traceback("Unable to initialize service")
+            sys.exit(1)
+        except Exception:
+            log_traceback(f"Unable to initialize service ID {id_service}")
             self.shutdown()
         else:
             db = DB()

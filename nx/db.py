@@ -1,14 +1,12 @@
-__all__ = ["DB", "IntegrityError", "DataError"]
+__all__ = ["DB"]
 
 try:
     import psycopg2
-    from psycopg2 import IntegrityError, DataError
 except ImportError:
     log_traceback("Import error")
     critical_error("Unable to import psycopg2")
 
 from nebulacore import config
-
 
 class DB(object):
     def __init__(self, **kwargs):

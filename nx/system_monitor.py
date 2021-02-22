@@ -15,7 +15,6 @@ __all__ = ["SystemMonitor"]
 NEBULA_START_TIME = time.time()
 
 
-
 def update_host_info():
     hostname = config["host"]
 
@@ -37,7 +36,6 @@ def update_host_info():
             del (p.metrics.data[metric])
             p.metrics.add(f"shared_{mname}", value, **{"id" : id_storage, "title" : storages[id_storage].title})
 
-
     status = {
         "metrics" : p.metrics.dump()
     }
@@ -48,7 +46,6 @@ def update_host_info():
             [time.time(), json.dumps(status), hostname]
         )
     db.commit()
-
 
 
 class SystemMonitor(BaseAgent):

@@ -3,7 +3,7 @@ from nebulacore.base_objects import *
 
 from .db import DB
 from .cache import cache
-from .server_object import *
+from .server_object import ServerObject
 
 __all__ = ["Asset", "Item", "Bin", "Event", "User", "anonymous"]
 
@@ -75,7 +75,7 @@ class Asset(AssetMixIn, ServerObject):
         return self._proxy_path
 
     def get_playout_name(self, id_channel):
-        return "{}-{}".format(config["site_name"], self.id)
+        return f"{config['site_name']}-{self.id}"
 
     def get_playout_storage(self, id_channel):
         try:
@@ -162,7 +162,7 @@ class Bin(BinMixIn, ServerObject):
             try:
                 self._event = Event(meta=self.db.fetchall()[0][0])
             except IndexError:
-                logging.error("Unable to get {} event".format(self))
+                logging.error(f"Unable to get {self} event")
                 self._event = False
             except Exception:
                 log_traceback()
@@ -179,7 +179,7 @@ class Bin(BinMixIn, ServerObject):
         for item in self.items:
             duration += item.duration
         if duration != self.duration:
-            logging.debug("New duration of {} is {}".format(self, s2tc(duration)))
+            logging.debug(f"New duration of {self} is {s2tc(duration)}")
             self["duration"] = duration
         super(Bin, self).save(**kwargs)
 
