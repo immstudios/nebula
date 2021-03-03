@@ -4,7 +4,7 @@ from nebulacore import *
 from nebulacore.metadata import clear_cs_cache
 
 from .db import DB
-from .cache import cache
+from .cache import cache, Cache
 from .messaging import messaging
 
 from .objects import *
