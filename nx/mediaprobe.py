@@ -2,6 +2,7 @@ import os
 
 from nxtools import *
 from nxtools.media import *
+from nebulacore import *
 
 __all__ = ["mediaprobe"]
 
@@ -89,7 +90,6 @@ def find_start_timecode(dump):
             tc = tcp
             break
     return tc
-
 
 
 
@@ -187,7 +187,9 @@ def mediaprobe(source_file):
             "title" : ("title", None),
             "artist" : ("role/performer", None),
             "composer" : ("role/composer", None),
-            "album" : ("album", None)
+            "album" : ("album", None),
+            "genre" : ("genre", None),
+            "date" : ("year", lambda x: int(x) if len(str(x)) == 4 else 0)
         }
 
         for tag, value in format_info["tags"].items():

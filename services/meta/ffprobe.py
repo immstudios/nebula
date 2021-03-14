@@ -1,7 +1,31 @@
+import difflib
+
 from nx import *
 from nx.mediaprobe import mediaprobe
 
 from .common import Probe
+
+
+def string2cs(key, value):
+    logging.info(f"Parsing {key} value {value}")
+    cs = meta_types[key].cs
+    vslug = slugify(value, separator=" ")
+    best_match = None
+    max_ratio = 0
+    for ckey in cs.data:
+        cval = cs.alias(ckey, "en")
+        reflist = [v.strip() for v in cval.split("/")]
+        for m in reflist:
+            mslug = slugify(m, separator=" ")
+            r = difflib.SequenceMatcher(None, vslug, mslug).ratio()
+            if r < max_ratio:
+                continue
+            best_match = ckey
+            max_ratio = r
+
+    if max_ratio < .85:
+        return None
+    return best_match
 
 
 class FFProbe(Probe):
@@ -26,7 +50,15 @@ class FFProbe(Probe):
             elif meta_types[key]["ns"] == "m" and asset[key]:
                 continue
 
+            if key == "genre" and meta_types["genre"]["class"] == SELECT:
+                new_val = string2cs("genre", value)
+                if new_val is None:
+                    continue
+                asset["genre/original"] = value
+                value = new_val
+
             asset[key] = value
+
 
         return asset
 
