@@ -189,12 +189,13 @@ def mediaprobe(source_file):
             "composer" : ("role/composer", None),
             "album" : ("album", None),
             "genre" : ("genre", None),
+            "comment" : ("notes", None),
             "date" : ("year", lambda x: int(x) if len(str(x)) == 4 else 0)
         }
 
         for tag, value in format_info["tags"].items():
-            if tag in tag_map:
-                target_tag, transform = tag_map[tag]
+            if tag.lower() in tag_map:
+                target_tag, transform = tag_map[tag.lower()]
                 if transform == None:
                     transform = lambda x: x
                 meta[target_tag] = transform(value)
