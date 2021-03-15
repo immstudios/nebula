@@ -60,11 +60,8 @@ class Service(BaseService):
             self.shutdown(no_restart=True)
             return
 
-        try:
-            port = int(self.settings.find("port").text)
-        except:
-            port = 42100
-            logging.info(f"Using default port {port} for the HTTP interface.")
+        port = int(self.channel_config.get("controller_port", 42100))
+        logging.info(f"Using port {port} for the HTTP interface.")
 
         self.server = HTTPServer(('', port), PlayoutRequestHandler)
         self.server.service = self
