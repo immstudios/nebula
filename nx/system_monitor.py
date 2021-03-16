@@ -53,7 +53,7 @@ class SystemMonitor(BaseAgent):
         self.last_update = 0
         db = DB()
         try:
-            db.query("INSERT INTO hosts(hostname, last_seen) VALUES (%s, %s)", [config["host"], time.time()])
+            db.query("INSERT INTO hosts(hostname, last_seen) VALUES (%s, %s) ON CONFLICT DO NOTHING", [config["host"], time.time()])
         except psycopg2.IntegrityError:
             pass
         else:

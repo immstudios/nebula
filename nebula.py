@@ -46,6 +46,8 @@ if __name__ == "__main__":
     from nx.service_monitor import ServiceMonitor
     from nx.system_monitor import SystemMonitor
 
+    logging.user = "nebula"
+
     # Crontab sync
 
     cron_file = "/etc/cron.d/nebula"

@@ -5,7 +5,7 @@ __all__ = ["BaseService"]
 
 class BaseService(object):
     def __init__(self, id_service, settings=False):
-        logging.debug("Initializing service ID {id_service}")
+        logging.debug(f"Initializing service ID {id_service}")
         self.id_service = id_service
         self.settings = settings
         config["id_service"] = id_service
