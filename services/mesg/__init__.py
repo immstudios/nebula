@@ -1,48 +1,15 @@
 import time
 import socket
+import threading
 import requests
-
-try:
-    import thread
-except ImportError:
-    import _thread as thread
 
 from nebula import *
 
+from .loki import LokiLogger
+from .log import log_clean_up, format_log_message
+
+
 logging.handlers = []
-
-
-def log_clean_up(log_dir, ttl=30):
-    ttl_sec = ttl * 3600 * 24
-    for f in get_files(log_dir, exts=["txt"]):
-        if f.mtime < time.time() - ttl_sec:
-            try:
-                os.remove(f.path)
-            except Exception:
-                log_traceback("Unable to remove old log file")
-            else:
-                logging.debug("Removed old log file {}".format(f.base_name))
-
-
-def format_log_message(message):
-    try:
-        log = "{}\t{}\t{}@{}\t{}\n".format(
-                time.strftime("%H:%M:%S"),
-                {
-                    0 : "DEBUG    ",
-                    1 : "INFO     ",
-                    2 : "WARNING  ",
-                    3 : "ERROR    ",
-                    4 : "GOOD NEWS"
-                }[message.data["message_type"]],
-                message.data["user"],
-                message.host,
-                message.data["message"]
-            )
-    except Exception:
-        log_traceback()
-        return None
-    return log
 
 
 class SeismicMessage():
@@ -66,7 +33,6 @@ class Service(BaseService):
         self.queue = []
         self.last_message = 0
 
-
         #
         # Message relays
         #
@@ -83,6 +49,16 @@ class Service(BaseService):
         #
         # Logging
         #
+
+        # Loki
+
+        self.loki = None
+        for loki in self.settings.findall("loki"):
+            port = int(loki.attrib.get("port", 3100))
+            self.loki = LokiLogger(loki.text, port)
+            break
+
+        # Log to file
 
         log_dir = self.settings.find("log_dir")
         if log_dir is None or not log_dir.text:
@@ -111,8 +87,12 @@ class Service(BaseService):
 
         self.session = requests.Session()
 
-        thread.start_new_thread(self.listen, ())
-        thread.start_new_thread(self.process, ())
+
+        listen_thread = threading.Thread(target=self.listen, daemon=True)
+        listen_thread.start()
+
+        process_thread = threading.Thread(target=self.process, daemon=True)
+        process_thread.start()
 
 
     def shutdown(self, *args, **kwargs):
@@ -200,26 +180,30 @@ class Service(BaseService):
             self.last_message = time.time()
 
             if message.method != "log":
-                self.relay_message(message.json)
+                self.relay_message(message)
 
-            elif self.log_dir:
-                log = format_log_message(message)
-                if not log:
-                    continue
+            else:
+                if self.log_dir:
+                    log = format_log_message(message)
+                    if not log:
+                        continue
 
-                log_path = os.path.join(self.log_dir, time.strftime("%Y-%m-%d.txt"))
-                with open(log_path, "a") as f:
-                    f.write(log)
+                    log_path = os.path.join(self.log_dir, time.strftime("%Y-%m-%d.txt"))
+                    with open(log_path, "a") as f:
+                        f.write(log)
+
+                if self.loki:
+                    self.loki(message)
 
 
     def relay_message(self, message):
-        message = message.replace("\n", "") + "\n" # one message per line
+        mjson = message.json.replace("\n", "") + "\n" # one message per line
         for relay in self.relays:
             try:
-                result = self.session.post(relay, message.encode("ascii"), timeout=.5)
+                result = self.session.post(relay, mjson.encode("ascii"), timeout=.5)
             except:
-                logging.error("Unable to send message to relay", relay)
+                logging.error(f"Exception: Unable to relay message to {relay}")
                 continue
             if result.status_code >= 400:
-                logging.warning("Error {}: Unable to relay message to {}".format(result.status_code, relay))
+                logging.warning(f"Error {result.status_code}: Unable to relay message to {relay}")
                 continue
