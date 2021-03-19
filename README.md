@@ -102,7 +102,9 @@ Installation
 ------------
 
 See [nebula-setup](https://github.com/nebulabroadcast/nebula-setup)
-for installation scripts and instructions.
+for installation scripts and instructions. 
+If you already have a running instance and you are about to add another node, 
+you may use `support/install_prerequisites.sh` script to install required Python libraries and tools.
 
  - After initial setup, use `make install` command to create symlinks for command-line utilities.
  - Create your first user using `nxadduser` command.
