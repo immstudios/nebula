@@ -46,6 +46,8 @@ class Service(BaseService):
             url += "/msg_publish?id=" + config["site_name"]
             self.relays.append(url)
 
+        self.session = requests.Session()
+
         #
         # Logging
         #
@@ -85,10 +87,17 @@ class Service(BaseService):
                 log_traceback()
                 self.log_ttl = None
 
-        self.session = requests.Session()
+        #
+        # Listener
+        #
+
+        if config.get("seismic_mode") == "rabbitmq":
+            listener = self.listen_rabbit
+        else:
+            listener = self.listen_udp
 
 
-        listen_thread = threading.Thread(target=self.listen, daemon=True)
+        listen_thread = threading.Thread(target=listener, daemon=True)
         listen_thread.start()
 
         process_thread = threading.Thread(target=self.process, daemon=True)
@@ -108,24 +117,65 @@ class Service(BaseService):
            log_clean_up(self.log_dir, self.log_ttl)
 
 
-    def listen(self):
-        self.sock = socket.socket(
-                socket.AF_INET,
-                socket.SOCK_DGRAM,
-                socket.IPPROTO_UDP
-            )
-        self.sock.setsockopt(
-                socket.SOL_SOCKET,
-                socket.SO_REUSEADDR,
-                1
-            )
+    def handle_data(self, data):
+        try:
+            message = SeismicMessage(json.loads(decode_if_py3(data)))
+        except Exception:
+            logging.warning("Malformed seismic message detected", handlers=False)
+            print("\n")
+            print(data)
+            print("\n")
+            return
+        if message.site_name != config["site_name"]:
+            return
+        self.queue.append(message)
+
+
+    def listen_rabbit(self):
+        try:
+            import pika
+        except ModuleNotFoundError:
+            critical_error("'pika' module is not installed")
+
+        host = config.get("rabbitmq_host", "rabbitmq")
+        conparams = pika.ConnectionParameters(host=host)
+
+        while True:
+            try:
+                connection = pika.BlockingConnection(conparams)
+                channel = connection.channel()
+
+                result = channel.queue_declare(
+                    queue=config["site_name"],
+                    arguments={'x-message-ttl' : 1000}
+                )
+                queue_name = result.method.queue
+
+                logging.info("Listening on", queue_name)
+
+                channel.basic_consume(
+                    queue=queue_name,
+                    on_message_callback=lambda ch, method, properties, body: self.handle_data(body),
+                    auto_ack=True
+                )
+
+                channel.start_consuming()
+            except pika.exceptions.AMQPConnectionError:
+                logging.error("RabbitMQ connection error")
+            except Exception:
+                log_traceback()
+            time.sleep(2)
+
+
+    def listen_udp(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         try:
             firstoctet = int(config["seismic_addr"].split(".")[0])
             is_multicast = firstoctet >= 224
         except ValueError:
             is_multicast = False
-
 
         if is_multicast:
             logging.info("Starting multicast listener {}:{}".format(config["seismic_addr"], config["seismic_port"]))
@@ -151,19 +201,7 @@ class Service(BaseService):
                 data, addr = self.sock.recvfrom(4092)
             except (socket.error):
                 continue
-
-            try:
-                message = SeismicMessage(json.loads(decode_if_py3(data)))
-            except Exception:
-                logging.warning("Malformed seismic message detected", handlers=False)
-                print("\n")
-                print(data)
-                print("\n")
-                continue
-
-            if message.site_name != config["site_name"]:
-                continue
-            self.queue.append(message)
+            self.handle_data(data)
 
 
     def process(self):
@@ -194,6 +232,7 @@ class Service(BaseService):
 
                 if self.loki:
                     self.loki(message)
+
 
 
     def relay_message(self, message):
