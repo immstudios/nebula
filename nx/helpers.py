@@ -232,7 +232,7 @@ def cg_download(target_path, method, timeout=10, **kwargs):
     start_time = time.time()
     target_dir = os.path.dirname(os.path.abspath(target_path))
     cg_server = config.get("cg_server", "https://cg.immstudios.org")
-    cg_site = config.get("cg_site", False) or config["site_name"]
+    cg_site = config.get("cg_site", config["site_name"])
     if not os.path.isdir(target_dir):
         try:
             os.makedirs(target_dir)

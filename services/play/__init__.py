@@ -79,11 +79,16 @@ class Service(BaseService):
                 "plugin_exec" : self.plugin_exec,
                 "recover" : self.channel_recover
             }
-        self.server_thread = threading.Thread(target=self.server.serve_forever, args=())
+        self.server_thread = threading.Thread(target=self.server.serve_forever, args=(), daemon=True)
         self.server_thread.start()
         self.plugins.load()
+        self.on_progress()
         #self.channel_recover()
 
+
+    def on_shutdown(self):
+        if self.controller and hasattr(self.controller, "shutdown"):
+            self.controller.shutdown()
 
     #
     # API Commands

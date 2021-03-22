@@ -3,6 +3,8 @@ __all__ = ["messaging"]
 import time
 import json
 import socket
+import queue
+import threading
 
 try:
     import pika
@@ -18,6 +20,8 @@ class RabbitSender():
     def __init__(self):
         self.connection = None
         self.channel = None
+        self.queue = queue.Queue()
+        self.lock = threading.Lock()
         if not has_pika:
             critical_error("'pika' module is not installed")
 
@@ -39,6 +43,16 @@ class RabbitSender():
         return True
 
     def __call__(self, method, **data):
+        self.queue.put([method, data])
+        self.lock.acquire()
+        while not self.queue.empty():
+            qm, qd = self.queue.get()
+            self.send_message(qm, **qd)
+        self.lock.release()
+
+
+
+    def send_message(self, method, **data):
         if not (self.connection and self.channel):
             if not self.connect():
                 time.sleep(1)
@@ -65,7 +79,8 @@ class RabbitSender():
             logging.error("RabbitMQ connection lost", handlers=[])
             self.connection = self.channel = None
         except:
-            log_traceback("RabbitMQ errro", handlers=[])
+            log_traceback("RabbitMQ error", handlers=[])
+            logging.debug("Unable to send message" , message, handlers=[])
             self.connection = self.channel = None
 
     def __del__(self):
@@ -75,8 +90,8 @@ class RabbitSender():
 
 class UDPSender():
     def __init__(self):
-        self.addr = config.get("seismic_addr", "224.168.2.8")
-        self.port = int(config.get("seismic_port", 42112))
+        self.addr = config.get("seismic_addr", "224.168.1.1")
+        self.port = int(config.get("seismic_port", 42005))
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 255)
 
@@ -104,7 +119,7 @@ class Messaging():
         self.sender = None
 
     def configure(self):
-        if config.get("seismic_mode") == "rabbitmq":
+        if config.get("messaging") == "rabbitmq":
             self.sender = RabbitSender()
         else:
             self.sender = UDPSender()

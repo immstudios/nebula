@@ -298,7 +298,6 @@ class CasparController(object):
             if self.current_item and bool(self.current_item["loop"] != bool(do_loop)):
                 self.current_item["loop"] = bool(do_loop)
                 self.current_item.save(notify=False)
-                print(do_loop, bool(do_loop), bool(self.current_item["loop"]))
                 bin_refresh([self.current_item["id_bin"]], db=self.current_item.db)
             return NebulaResponse(result.response, f"SET LOOP: {result.data}")
         else:

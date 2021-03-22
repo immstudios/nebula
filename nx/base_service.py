@@ -29,6 +29,9 @@ class BaseService(object):
     def on_main(self):
         pass
 
+    def on_shutdown(self):
+        pass
+
     def soft_stop(self):
         logging.info("Soft stop requested")
         db = DB()
@@ -41,6 +44,7 @@ class BaseService(object):
             db = DB()
             db.query("UPDATE services SET autostart=FALSE WHERE id=%s", [self.id_service])
             db.commit()
+        self.on_shutdown()
         sys.exit(0)
 
     def heartbeat(self):

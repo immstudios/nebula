@@ -12,7 +12,7 @@ from .log import log_clean_up, format_log_message
 logging.handlers = []
 
 
-class SeismicMessage():
+class Message():
     def __init__(self, packet):
         self.timestamp, self.site_name, self.host, self.method, self.data = packet
 
@@ -42,7 +42,7 @@ class Service(BaseService):
             if relay is None or not relay.text:
                 continue
             url = relay.text.rstrip("/")
-            logging.info("Adding message relay: {}".format(url))
+            logging.info(f"Adding message relay: {url}")
             url += "/msg_publish?id=" + config["site_name"]
             self.relays.append(url)
 
@@ -74,7 +74,7 @@ class Service(BaseService):
                     log_traceback()
                     self.log_dir = None
             if not os.path.isdir(self.log_dir):
-                logging.error("{} is not a directory. Logs will not be saved".format(log_dir))
+                logging.error(f"{log_dir} is not a directory. Logs will not be saved")
                 self.log_dir = None
 
         log_ttl = self.settings.find("log_ttl")
@@ -91,7 +91,7 @@ class Service(BaseService):
         # Listener
         #
 
-        if config.get("seismic_mode") == "rabbitmq":
+        if config.get("messaging") == "rabbitmq":
             listener = self.listen_rabbit
         else:
             listener = self.listen_udp
@@ -119,9 +119,9 @@ class Service(BaseService):
 
     def handle_data(self, data):
         try:
-            message = SeismicMessage(json.loads(decode_if_py3(data)))
+            message = Message(json.loads(decode_if_py3(data)))
         except Exception:
-            logging.warning("Malformed seismic message detected", handlers=False)
+            logging.warning("Malformed message detected", handlers=False)
             print("\n")
             print(data)
             print("\n")
@@ -171,15 +171,18 @@ class Service(BaseService):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
+        addr = config.get("seismic_addr", "224.168.1.1")
+        port = config.get("seismic_port", 42005)
+
         try:
-            firstoctet = int(config["seismic_addr"].split(".")[0])
+            firstoctet = int(addr.split(".")[0])
             is_multicast = firstoctet >= 224
         except ValueError:
             is_multicast = False
 
         if is_multicast:
-            logging.info("Starting multicast listener {}:{}".format(config["seismic_addr"], config["seismic_port"]))
-            self.sock.bind(("0.0.0.0", int(config["seismic_port"])))
+            logging.info(f"Starting multicast listener {addr}:{port}")
+            self.sock.bind(("0.0.0.0", int(port)))
             self.sock.setsockopt(
                     socket.IPPROTO_IP,
                     socket.IP_MULTICAST_TTL,
@@ -188,17 +191,17 @@ class Service(BaseService):
             self.sock.setsockopt(
                     socket.IPPROTO_IP,
                     socket.IP_ADD_MEMBERSHIP,
-                    socket.inet_aton(config["seismic_addr"]) + socket.inet_aton("0.0.0.0")
+                    socket.inet_aton(addr) + socket.inet_aton("0.0.0.0")
                 )
         else:
-            logging.info("Starting unicast listener {}:{}".format(config["seismic_addr"], config["seismic_port"]))
-            self.sock.bind((config["seismic_addr"], int(config["seismic_port"])))
+            logging.info(f"Starting unicast listener {addr}:{port}")
+            self.sock.bind((addr, int(port)))
 
         self.sock.settimeout(1)
 
         while True:
             try:
-                data, addr = self.sock.recvfrom(4092)
+                data, _ = self.sock.recvfrom(4092)
             except (socket.error):
                 continue
             self.handle_data(data)

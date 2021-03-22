@@ -7,7 +7,7 @@ import rex
 from nebula import *
 from conti import *
 
-CONTI_DEBUG["source"] = True
+CONTI_DEBUG["source"] = False
 CONTI_DEBUG["encoder"] = False
 
 
@@ -33,6 +33,7 @@ class ContiController(object):
     def __init__(self, parent):
         self.parent = parent
         self.cueing = False
+        self.cued = False
         self.request_time = time.time()
         self.position = self.duration = 0
         settings = {
@@ -43,6 +44,7 @@ class ContiController(object):
         settings.update(self.parent.channel_config.get("conti_settings", {}))
         self.conti = NebulaConti(None, **settings)
         self.conti.parent = self
+
 
     @property
     def current_item(self):
@@ -86,6 +88,7 @@ class ContiController(object):
         self.cued = NebulaContiSource(self.conti, full_path, **kwargs)
         #TODO: add per-source filters here
         self.cued.open()
+        self.cueing = False
 
         if not self.cued:
             return NebulaResponse(500)
@@ -118,3 +121,6 @@ class ContiController(object):
     def abort(self, **kwargs):
         self.conti.abort()
         return NebulaResponse(200)
+
+    def shutdown(self):
+        self.conti.stop()
