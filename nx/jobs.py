@@ -229,7 +229,7 @@ class Job():
             [time.time(), message, self.id]
             )
         self.db.commit()
-        logging.goodnews("{self}: {message}")
+        logging.goodnews(f"{self}: {message}")
         messaging.send("job_progress", id=self.id, id_asset=self.asset.id, id_action=self.action.id, status=2, progress=100, message=message)
 
 
