@@ -10,9 +10,9 @@ MAX_RETRIES = 5
 
 try:
     import pylibmc
-except ImportError:
-    log_traceback("Import error")
-    critical_error("Unable to import pylibmc")
+    has_pylibmc = True
+except ModuleNotFoundError:
+    has_pylibmc = False
 
 
 class Cache():
@@ -24,13 +24,17 @@ class Cache():
         self.site = config["site_name"]
         self.host = config.get("cache_host", "localhost")
         self.port = config.get("cache_port", 11211)
-        self.cstring = f"{self.host}:{self.port}"
-        self.pool = False
         self.connect()
 
     def connect(self):
-        self.conn = pylibmc.Client([self.cstring])
-        self.pool = False
+        if config.get("cache_mode", "memcached") == "redis":
+            pass
+        else:
+            if not has_pylibmc:
+                critical_error("'pylibmc' module is not installed")
+            self.cstring = f"{self.host}:{self.port}"
+            self.pool = False
+            self.conn = pylibmc.Client([self.cstring])
 
     def load(self, key):
         if config.get("mc_thread_safe", False):
