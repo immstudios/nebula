@@ -108,7 +108,7 @@ def get_next_item(item, **kwargs):
         logging.error(f"Unexpected get_next_item argument {item}")
         return False
 
-    logging.debug(f"Looking for item following {current_item}")
+    logging.debug(f"Looking for an item following {current_item}")
     current_bin = Bin(current_item["id_bin"], db=db)
 
     items = current_bin.items
@@ -212,7 +212,6 @@ def send_mail(to, subject, body, **kwargs):
     default_reply_address = config.get("mail_from", f"Nebula <{config['site_name']}@nebulabroadcast.com>")
     reply_address = kwargs.get("from", default_reply_address)
     smtp_host = config.get("smtp_host", "localhost")
-    smtp_port = config.get("smtp_port", 0)
     smtp_user = config.get("smtp_user", False)
     smtp_pass = config.get("smtp_pass", False)
     msg = MIMEText(body)
@@ -220,8 +219,10 @@ def send_mail(to, subject, body, **kwargs):
     msg['From'] = reply_address
     msg['To'] = ",".join(to)
     if config.get("smtp_ssl", False):
+        smtp_port = config.get("smtp_port", 25)
         s = smtplib.SMTP_SSL(smtp_host, port=smtp_port)
     else:
+        smtp_port = config.get("smtp_port", 465)
         s = smtplib.SMTP(smtp_host, port=smtp_port)
     if smtp_user and smtp_pass:
         s.login(smtp_user, smtp_pass)

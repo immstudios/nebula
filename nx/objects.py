@@ -43,7 +43,7 @@ class Asset(AssetMixIn, ServerObject):
     def delete_children(self):
         if self.id:
             self.db.query("DELETE FROM jobs WHERE id_asset = %s", [self.id])
-            # db.commit is called from delete method
+            # db.commit is called by the delete method
 
     @property
     def has_proxy(self):
