@@ -94,6 +94,7 @@ def find_start_timecode(dump):
 
 
 def mediaprobe(source_file):
+    source_file = str(source_file)
     if not os.path.exists(source_file):
         return {}
 
