@@ -133,7 +133,7 @@ Legal
 Credits
 -------
 
-*Nebula* is developed and maintained by (https://imm.cz)[imm studios, z.s.]
+*Nebula* is developed and maintained by [imm studios, z.s.](https://imm.cz)
 
 License
 -------
