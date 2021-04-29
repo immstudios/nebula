@@ -237,6 +237,7 @@ def api_get(**kwargs):
             row = {
                 "id" : obj.id,
                 "id_folder" : obj["id_folder"],
+                "title" : obj["title"],
                 "duration" : obj["duration"],
                 "mark_in" : obj["mark_in"],
                 "mark_out" : obj["mark_out"],

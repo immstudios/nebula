@@ -32,6 +32,6 @@ class LokiLogger():
             self.url,
             data=json.dumps(data),
             headers={"Content-Type" : "application/json"},
-            timeout=.5
+            timeout=.2
         )
 
