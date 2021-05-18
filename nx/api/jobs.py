@@ -130,9 +130,9 @@ def api_jobs(**kwargs):
                 "status" : status,
                 "progress" : progress,
                 "message" : message,
-                "ctime" : format_time(ctime, never_placeholder="(not yet)") if formatted else ctime,
-                "stime" : format_time(stime, never_placeholder="(not yet)") if formatted else stime,
-                "etime" : format_time(etime, never_placeholder="(not yet)") if formatted else etime
+                "ctime" : format_time(ctime, never_placeholder="") if formatted else ctime,
+                "stime" : format_time(stime, never_placeholder="") if formatted else stime,
+                "etime" : format_time(etime, never_placeholder="") if formatted else etime
             }
         if formatted:
             asset = Asset(meta=meta)
