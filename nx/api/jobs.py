@@ -37,7 +37,15 @@ def api_jobs(**kwargs):
         result = [r[0] for r in db.fetchall()]
         db.commit()
         logging.info("Restarted jobs {}".format(result))
-        #TODO: smarter message
+        for job_id in result:
+            messaging.send(
+                "job_progress",
+                id=job_id,
+                status=5,
+                progress=0,
+                message="Restart requested"
+            )
+        #TODO: smarter messag
         return NebulaResponse(200, "Jobs restarted", data=result)
 
     if "abort" in kwargs:
@@ -56,6 +64,14 @@ def api_jobs(**kwargs):
         result = [r[0] for r in db.fetchall()]
         logging.info("Aborted jobs {}".format(result))
         db.commit()
+        for job_id in result:
+            messaging.send(
+                "job_progress",
+                id=job_id,
+                status=4,
+                progress=0,
+                message="Aborted"
+            )
         #TODO: smarter message
         return NebulaResponse(200, "Jobs aborted", data=result)
 
