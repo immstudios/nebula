@@ -11,6 +11,8 @@ def api_jobs(**kwargs):
     db = kwargs.get("db", DB())
     now = time.time()
 
+    id_user = user.id or None
+
     if not user:
         return NebulaResponse(401, "You are not logged-in")
 
@@ -22,6 +24,7 @@ def api_jobs(**kwargs):
         jobs = [int(i) for i in kwargs["restart"]]
         db.query("""
             UPDATE jobs SET
+                id_user=%s,
                 status=5,
                 retries=0,
                 creation_time=%s,
@@ -33,7 +36,7 @@ def api_jobs(**kwargs):
                 id IN %s
             RETURNING id
             """,
-            [now, tuple(jobs)]
+            [id_user, now, tuple(jobs)]
             )
         result = [r[0] for r in db.fetchall()]
         db.commit()

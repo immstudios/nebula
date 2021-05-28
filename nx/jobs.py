@@ -406,7 +406,7 @@ def send_to(id_asset, id_action, settings={}, id_user=None, priority=3, restart_
 
             db.query("""
                 UPDATE jobs SET
-                    id_user=%s
+                    id_user=%s,
                     id_service=NULL,
                     message='Restart requested',
                     status=5,
