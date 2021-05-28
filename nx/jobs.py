@@ -406,6 +406,7 @@ def send_to(id_asset, id_action, settings={}, id_user=None, priority=3, restart_
 
             db.query("""
                 UPDATE jobs SET
+                    id_user=%s
                     id_service=NULL,
                     message='Restart requested',
                     status=5,
@@ -417,7 +418,7 @@ def send_to(id_asset, id_action, settings={}, id_user=None, priority=3, restart_
                     AND status NOT IN({})
                 RETURNING id
                     """.format(conds),
-                    [time.time(), res[0][0]])
+                    [id_user, time.time(), res[0][0]])
             db.commit()
             if db.fetchall():
                 messaging.send("job_progress", id=res[0][0], id_asset=id_asset, id_action=id_action, progress=0)
