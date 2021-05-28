@@ -17,8 +17,8 @@ class NebulaFFMPEG(BaseEncoder):
             if p.tag == "param":
                 value = str(eval(p.text)) if p.text else ""
                 if p.attrib["name"] == "ss":
-                    self.ffparams.insert(2, "-ss")
-                    self.ffparams.insert(3, value)
+                    self.ffparams.insert(1, "-ss")
+                    self.ffparams.insert(2, value)
                 else:
                     self.ffparams.append("-" + p.attrib["name"])
                     if value:
@@ -75,7 +75,6 @@ class NebulaFFMPEG(BaseEncoder):
         return self.proc and self.proc.is_running
 
     def start(self):
-        logging.debug("Executing {}".format(" ".join(shlex.quote(x) for x in self.ffparams)))
         self.proc = FFMPEG(*self.ffparams)
         self.proc.start()
 
