@@ -229,7 +229,7 @@ def send_mail(to, subject, body, **kwargs):
     s.sendmail(reply_address, [to], msg.as_string())
 
 
-def cg_download(target_path, method, timeout=10, **kwargs):
+def cg_download(target_path, method, timeout=10, verbose=True, **kwargs):
     start_time = time.time()
     target_dir = os.path.dirname(os.path.abspath(target_path))
     cg_server = config.get("cg_server", "https://cg.immstudios.org")
@@ -257,6 +257,7 @@ def cg_download(target_path, method, timeout=10, **kwargs):
     except Exception:
         log_traceback(f"Unable to write CG item to {target_path}")
         return False
-    logging.info("CG {} downloaded in {:.02f}s".format(method, time.time() - start_time))
+    if verbose:
+        logging.info("CG {} downloaded in {:.02f}s".format(method, time.time() - start_time))
     return True
 

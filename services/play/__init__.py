@@ -304,6 +304,8 @@ class Service(BaseService):
 
 
     def on_progress(self):
+        if not self.controller:
+            return # fix the race condition, when on_progress is created, but not yet added to the service
         if time.time() - self.last_info > .3:
             messaging.send("playout_status", **self.playout_status)
             self.last_info = time.time()
