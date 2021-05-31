@@ -242,6 +242,8 @@ def api_get(**kwargs):
             row = {
                 "id" : obj.id,
                 "id_folder" : obj["id_folder"],
+                "qc/state" : obj["qc/state"],
+                "proxy_url" : obj.proxy_url,
                 "title" : obj["title"],
                 "duration" : obj["duration"],
                 "mark_in" : obj["mark_in"],
