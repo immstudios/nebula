@@ -27,6 +27,7 @@ class CasparController(object):
         self.cued_item = False
         self.cued_fname = False
         self.cueing = False
+        self.cueing_time = 0
         self.cueing_item = False
         self.stalled  = False
 
@@ -173,7 +174,11 @@ class CasparController(object):
                     self.cueing = False
 
             else:
-                logging.debug(f"Waiting for cue {self.cueing}")
+                logging.debug(f"Waiting for cue {self.cueing} (is {cued_fname})")
+                if time.time() - self.cueing_time > 5 and self.current_item:
+                    logging.warning("Cueing again")
+                    self.cueing = False
+                    self.parent.cue_next()
 
         elif not self.cueing and self.cued_item and cued_fname and cued_fname != self.cued_fname and not self.parent.cued_live:
             logging.error(f"Cue mismatch: IS: {cued_fname} SHOULDBE: {self.cued_fname}")
@@ -208,6 +213,7 @@ class CasparController(object):
 
         self.cueing       = fname
         self.cueing_item  = item
+        self.cueing_time  = time.time()
 
         result = self.query(query)
 
@@ -217,11 +223,13 @@ class CasparController(object):
             self.cued_fname  = False
             self.cueing      = False
             self.cueing_item = False
+            self.cueing_time = 0
             return NebulaResponse(result.response, message)
 
         if play:
             self.cueing = False
             self.cueing_item = False
+            self.cueing_time = 0
             self.current_item = item
             self.current_fname = fname
 

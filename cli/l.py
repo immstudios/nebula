@@ -67,7 +67,7 @@ def listen():
             sock.setsockopt(
                     socket.IPPROTO_IP,
                     socket.IP_ADD_MEMBERSHIP,
-                    socket.inet_aton(config["seismic_addr"]) + socket.inet_aton("0.0.0.0")
+                    socket.inet_aton(addr) + socket.inet_aton("0.0.0.0")
                 )
         else:
             logging.info(f"Starting unicast listener {addr}:{port}")

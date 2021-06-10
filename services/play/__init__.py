@@ -365,6 +365,9 @@ class Service(BaseService):
         It does not handle AUTO playlist advancing
         """
 
+        if not hasattr(self, "controller"):
+            return
+
         current_item = self.controller.current_item # YES. CURRENT
         if not current_item:
             return
