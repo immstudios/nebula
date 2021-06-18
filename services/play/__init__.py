@@ -87,6 +87,8 @@ class Service(BaseService):
 
 
     def on_shutdown(self):
+        if not hasattr(self, "controller"):
+            return
         if self.controller and hasattr(self.controller, "shutdown"):
             self.controller.shutdown()
 
