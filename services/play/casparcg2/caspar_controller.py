@@ -22,6 +22,8 @@ class CasparController(object):
         self.caspar_channel      = int(parent.channel_config.get("caspar_channel", 1))
         self.caspar_feed_layer   = int(parent.channel_config.get("caspar_feed_layer", 10))
 
+        self.should_run = True
+
         self.current_item = Item()
         self.current_fname = False
         self.cued_item = False
@@ -46,6 +48,11 @@ class CasparController(object):
         self.lock = threading.Lock()
         self.work_thread = threading.Thread(target=self.work, args=())
         self.work_thread.start()
+
+    def shutdown(self):
+        logging.info("Controller shutdown requested")
+        self.should_run = False
+        self.caspar_data.shutdown()
 
     @property
     def id_channel(self):
@@ -83,12 +90,13 @@ class CasparController(object):
         return self.cmdc.query(*args, **kwargs)
 
     def work(self):
-        while True:
+        while self.should_run:
             try:
                 self.main()
             except Exception:
                 log_traceback()
             time.sleep(1/self.fps)
+        logging.info("Controller work thread shutdown")
 
     def main(self):
         channel = self.caspar_data[self.caspar_channel]

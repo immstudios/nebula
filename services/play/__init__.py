@@ -230,7 +230,6 @@ class Service(BaseService):
         if hasattr(self.controller, "set"):
             return self.controller.set(key, value)
         return NebulaResponse(501)
-        return NebulaResponse(200)
 
 
     def stat(self, **kwargs):
