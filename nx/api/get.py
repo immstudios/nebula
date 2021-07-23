@@ -179,6 +179,7 @@ def api_get(**kwargs):
     result_type   = kwargs.get("result", False)
     result_format = kwargs.get("result_format", False)
     result_lang   = kwargs.get("language", config.get("language", "en"))
+    as_folder     = kwargs.get("as_folder", None)
 
     if not user:
         return NebulaResponse(ERROR_UNAUTHORISED)
@@ -239,6 +240,8 @@ def api_get(**kwargs):
     elif result_type == "form":
         for response, obj in get_objects(ObjectType, **kwargs):
             result["count"] |= response["count"]
+            if as_folder is not None:
+                obj["id_folder"] = as_folder
             row = {
                 "id" : obj.id,
                 "id_folder" : obj["id_folder"],
