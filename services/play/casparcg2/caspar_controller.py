@@ -201,7 +201,7 @@ class CasparController(object):
             log_traceback("Playout on_main failed")
 
 
-    def cue(self, fname, item, layer=None, play=False, auto=True, loop=False):
+    def cue(self, fname, item, layer=None, play=False, auto=True, loop=False, **kwargs):
         layer = layer or self.caspar_feed_layer
 
         query_list = ["PLAY" if play else "LOADBG"]
