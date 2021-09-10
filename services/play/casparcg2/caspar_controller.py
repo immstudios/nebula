@@ -201,23 +201,33 @@ class CasparController(object):
             log_traceback("Playout on_main failed")
 
 
-    def cue(self, fname, item, **kwargs):
-        layer      = kwargs.get("layer", self.caspar_feed_layer)
-        play       = kwargs.get("play", False)
-        auto       = kwargs.get("auto", True)
-        loop       = kwargs.get("loop", False)
-        mark_in    = item.mark_in()
-        mark_out   = item.mark_out()
+    def cue(self, fname, item, layer=None, play=False, auto=True, loop=False):
+        layer = layer or self.caspar_feed_layer
 
-        base_cmd = "PLAY" if play else "LOADBG"
-        auto_cmd = " AUTO" if auto else ""
-        loop_cmd = " LOOP" if loop else ""
+        query_list = ["PLAY" if play else "LOADBG"]
+        query_list.append(f"{self.caspar_channel}-{layer}")
+        query_list.append(fname)
 
-        seek_cmd   = f" SEEK {int(mark_in * self.channel_fps)}" if mark_in else ""
-        length_cmd = f" LENGTH {int((mark_out - mark_in) * self.channel_fps)}" \
-                if mark_out and mark_out < item["duration"] and mark_out > mark_in else ""
+        if auto:
+            query_list.append("AUTO")
+        if loop:
+            query_list.append("LOOP")
+        if item.mark_in():
+            query_list.append(f"SEEK {int(item.mark_in() * self.channel_fps)}")
+        if item.mark_out():
+            query_list.append(f"LENGTH {int(item.duration * self.channel_fps)}")
 
-        query = f"{base_cmd} {self.caspar_channel}-{layer} {fname}{auto_cmd}{loop_cmd}{seek_cmd}{length_cmd}"
+        query = " ".join(query_list)
+
+#        base_cmd = "PLAY" if play else "LOADBG"
+#        auto_cmd = " AUTO" if auto else ""
+#        loop_cmd = " LOOP" if loop else ""
+#
+#        seek_cmd   = f" SEEK {int(mark_in * self.channel_fps)}" if mark_in else ""
+#        length_cmd = f" LENGTH {int(item.duration * self.channel_fps)}" \
+#                if mark_out and mark_out < item["duration"] and mark_out > mark_in else ""
+#
+#        query = f"{base_cmd} {self.caspar_channel}-{layer} {fname}{auto_cmd}{loop_cmd}{seek_cmd}{length_cmd}"
 
         self.cueing       = fname
         self.cueing_item  = item
@@ -244,7 +254,7 @@ class CasparController(object):
         return NebulaResponse(200)
 
 
-    def clear(self, **kwargs):
+    def clear(self, layer=None):
         layer = layer or self.caspar_feed_layer
         result = self.query(f"CLEAR {self.channel}-{layer}")
         return NebulaResponse(result.response, result.data)
@@ -274,7 +284,7 @@ class CasparController(object):
         if self.current_item.mark_out():
             seekparams += " LENGTH " + str(int((self.current_item.mark_out() - self.current_item.mark_in()) * self.channel_fps))
 
-        query = f"PLAY {self.caspar_channel}-{layer} {self.current_fname} {seekparam}"
+        query = f"PLAY {self.caspar_channel}-{layer} {self.current_fname} {seekparams}"
         result = self.query(query)
 
         if result.is_success:
@@ -297,7 +307,7 @@ class CasparController(object):
             q = f"PAUSE {self.caspar_channel}-{layer}"
             message = "Playback paused"
         result = self.query(q)
-        return NebulaResponse(result.response, result.data)
+        return NebulaResponse(result.response, message)
 
 
     def abort(self, **kwargs):
@@ -325,4 +335,3 @@ class CasparController(object):
             return NebulaResponse(result.response, f"SET LOOP: {result.data}")
         else:
             return NebulaResponse(400)
-
