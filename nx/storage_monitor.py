@@ -1,3 +1,6 @@
+import time
+import subprocess
+
 from nebulacore import *
 
 from .db import DB
@@ -104,7 +107,9 @@ class StorageMonitor(BaseAgent):
 
         else:
             return
-        c = Shell(cmd)
-        if c.retcode:
+        proc = subprocess.Popen(cmd, shell=True)
+        while proc.poll() == None:
+            time.sleep(.1)
+        if proc.returncode:
             logging.debug(executable, ":", c.stderr().read().strip())
 
