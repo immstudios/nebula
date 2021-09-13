@@ -54,6 +54,10 @@ class CasparController(object):
         self.should_run = False
         self.caspar_data.shutdown()
 
+    def on_main(self):
+        if time.time() - self.caspar_data.last_osc > 5:
+            logging.warning("Waiting for OSC")
+
     @property
     def id_channel(self):
         return self.parent.id_channel
@@ -198,7 +202,7 @@ class CasparController(object):
         try:
             self.parent.on_progress()
         except Exception:
-            log_traceback("Playout on_main failed")
+            log_traceback("Playout on_progress failed")
 
 
     def cue(self, fname, item, layer=None, play=False, auto=True, loop=False, **kwargs):
