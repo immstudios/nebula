@@ -369,6 +369,9 @@ class Service(BaseService):
         if not hasattr(self, "controller"):
             return
 
+        if hasattr(self.controller, "on_main"):
+            self.controller.on_main()
+
         current_item = self.controller.current_item # YES. CURRENT
         if not current_item:
             return

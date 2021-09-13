@@ -1,0 +1,14 @@
+{
+    "python.analysis.extraPaths": [
+        "./vendor/casparcg-infoparser",
+        "./vendor/cherryadmin",
+        "./vendor/conti",
+        "./vendor/nebula-core",
+        "./vendor/nebula-hub",
+        "./vendor/nxtools",
+        "./vendor/promexp",
+        "./vendor/python-osc",
+        "./vendor/themis2",
+        "./vendor/unidecode"
+    ]
+}
