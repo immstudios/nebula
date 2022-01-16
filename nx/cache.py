@@ -65,7 +65,6 @@ class Cache():
                 self.connect()
         else:
             critical_error("Memcache save failed. This should never happen. Check MC server")
-            sys.exit(-1)
         return True
 
     def delete(self,key):
@@ -82,7 +81,6 @@ class Cache():
                 self.connect()
         else:
             critical_error("Memcache delete failed. This should never happen. Check MC server")
-            sys.exit(-1)
         return True
 
     def threaded_load(self, key):

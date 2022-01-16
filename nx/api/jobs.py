@@ -1,6 +1,20 @@
-from nx import *
+from asyncio.proactor_events import constants
+import time
+
+from nxtools import (format_time, logging, slugify)
+
+
+from nx import (
+    NebulaResponse,
+    anonymous,
+    messaging,
+    config,
+    Asset,
+    DB
+)
 
 __all__ = ["api_jobs"]
+
 
 def api_jobs(**kwargs):
     formatted = kwargs.get("formatted", False) # load titles etc
@@ -56,7 +70,8 @@ def api_jobs(**kwargs):
 
     if "abort" in kwargs:
         jobs = [int(i) for i in kwargs["abort"]]
-        db.query("""
+        db.query(
+            """
             UPDATE jobs SET
                 status=4,
                 end_time=%s,
@@ -66,7 +81,7 @@ def api_jobs(**kwargs):
             RETURNING id
             """,
             [now, tuple(jobs)]
-            )
+        )
         result = [r[0] for r in db.fetchall()]
         logging.info("Aborted jobs {}".format(result))
         db.commit()
@@ -143,27 +158,30 @@ def api_jobs(**kwargs):
             """.format(cond))
     for id, id_asset, id_action, id_service, id_user, priority, retries, status, progress, message, ctime, stime, etime, meta in db.fetchall():
         row = {
-                "id" : id,
-                "id_asset" : id_asset,
-                "id_action" : id_action,
-                "id_service" : id_service,
-                "id_user" : id_user,
-                "priority" : priority,
-                "retries" : retries,
-                "status" : status,
-                "progress" : progress,
-                "message" : message,
-                "ctime" : format_time(ctime, never_placeholder="") if formatted else ctime,
-                "stime" : format_time(stime, never_placeholder="") if formatted else stime,
-                "etime" : format_time(etime, never_placeholder="") if formatted else etime
+                "id": id,
+                "id_asset": id_asset,
+                "id_action": id_action,
+                "id_service": id_service,
+                "id_user": id_user,
+                "priority": priority,
+                "retries": retries,
+                "status": status,
+                "progress": progress,
+                "message": message,
+                "ctime": format_time(ctime, never_placeholder="") if formatted else ctime,
+                "stime": format_time(stime, never_placeholder="") if formatted else stime,
+                "etime": format_time(etime, never_placeholder="") if formatted else etime
             }
 
         asset = Asset(meta=meta)
         row["asset_title"] = asset["title"]
         row["action_title"] = config["actions"][id_action]["title"]
         if id_service:
-            service = config["services"].get(id_service, {"title" : "Unknown", "host" : "Unknown"})
-            row["service_title"] = "{}@{}".format(service["title"], service["host"])
+            service = config["services"].get(
+                id_service, 
+                {"title": "Unknown", "host": "Unknown"}
+            )
+            row["service_title"] = f"{service['title']}@{service['host']}"
         else:
             row["service_title"] = ""
 

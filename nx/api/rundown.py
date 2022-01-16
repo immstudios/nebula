@@ -1,27 +1,51 @@
-#
-# Returns a rundown for given day and channel
-#
-# Arguments:
-#
-# id_channel    Playout channel ID
-#               Defaults to first playout channel
-# start_time    Rundown start time (timestamp)
-#               Defaults to today's broadcast day start
-#
+"""
+Return a rundown for given day and channel.
 
-from nx import *
+Arguments:
+id_channel    Playout channel ID
+    Defaults to first playout channel
+start_time    Rundown start time (timestamp)
+    Defaults to today's broadcast day start
+"""
+
+import time
+
+from nx import (
+    NebulaResponse,
+    config,
+    DB,
+    Asset,
+    Item,
+    Event,
+    anonymous,
+    get_item_runs,
+    ERROR_ACCESS_DENIED,
+    ERROR_BAD_REQUEST
+)
+
+from nebulacore.constants import (
+    AIRED,
+    ONLINE,
+    OFFLINE,
+    REMOTE,
+    CORRUPTED,
+    UNKNOWN,
+    RUN_SKIP,
+    ONAIR,
+)
+
+from nxtools import datestr2ts
 
 __all__ = ["get_rundown", "api_rundown"]
 
 
 def get_rundown(id_channel, start_time=False, end_time=False, db=False):
+    """Get a rundown."""
     db = db or DB()
     channel_config = config["playout_channels"][id_channel]
     if not start_time:
         # default today
         sh, sm = channel_config.get("day_start", [6, 0])
-        rundown_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
-        rundown_start_time = datestr2ts(rundown_date, hh=sh, mm=sm)
         rundown_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
         start_time = datestr2ts(rundown_date, hh=sh, mm=sm)
 
@@ -30,45 +54,54 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
     item_runs = get_item_runs(id_channel, start_time, end_time, db=db)
 
     if channel_config.get("send_action", False):
-        db.query("SELECT id_asset FROM jobs WHERE id_action=%s AND status in (0, 5)", [channel_config["send_action"]])
+        db.query(
+            """SELECT id_asset FROM jobs
+            WHERE id_action=%s AND status in (0, 5)
+            """,
+            [channel_config["send_action"]]
+        )
         pending_assets = [r[0] for r in db.fetchall()]
     else:
         pending_assets = []
 
-    db.query("""
-            SELECT
-                e.id,
-                e.meta,
-                i.meta,
-                a.meta
-            FROM
-                events AS e
+    db.query(
+        """
+        SELECT
+            e.id,
+            e.meta,
+            i.meta,
+            a.meta
+        FROM
+            events AS e
 
-            LEFT JOIN
-                items AS i
-            ON
-                e.id_magic = i.id_bin
+        LEFT JOIN
+            items AS i
+        ON
+            e.id_magic = i.id_bin
 
-            LEFT JOIN
-                assets AS a
-            ON
-                i.id_asset = a.id
+        LEFT JOIN
+            assets AS a
+        ON
+            i.id_asset = a.id
 
-            WHERE
-                e.id_channel = %s AND e.start >= %s AND e.start < %s
+        WHERE
+            e.id_channel = %s AND e.start >= %s AND e.start < %s
 
-            ORDER BY
-                e.start ASC,
-                i.position ASC,
-                i.id ASC
-            """, (id_channel, start_time, end_time))
+        ORDER BY
+            e.start ASC,
+            i.position ASC,
+            i.id ASC
+        """,
+        (id_channel, start_time, end_time)
+    )
 
     current_event_id = None
     event = None
 
     ts_broadcast = ts_scheduled = 0
     pskey = "playout_status/{}".format(id_channel)
-    for id_event, emeta, imeta, ameta in db.fetchall() + [(-1, None, None, None)]:
+    for id_event, emeta, imeta, ameta in \
+            db.fetchall() + [(-1, None, None, None)]:
         if id_event != current_event_id:
             if event:
                 yield event
@@ -85,7 +118,8 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
             if event["run_mode"]:
                 ts_broadcast = 0
             event.meta["rundown_scheduled"] = ts_scheduled = event["start"]
-            event.meta["rundown_broadcast"] = ts_broadcast = ts_broadcast or ts_scheduled
+            event.meta["rundown_broadcast"] = \
+                ts_broadcast = ts_broadcast or ts_scheduled
 
         if imeta:
             item = Item(meta=imeta, db=db)
@@ -118,7 +152,7 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
                 istatus = airstatus
             elif asset["status"] == OFFLINE:
                 istatus = OFFLINE
-            elif not pskey in asset.meta:
+            elif pskey not in asset.meta:
                 istatus = REMOTE
             elif asset[pskey]["status"] == OFFLINE:
                 istatus = REMOTE
@@ -140,19 +174,23 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
             event.items.append(item)
 
 
-
 def api_rundown(**kwargs):
+    """Rundown API endpoint."""
     user = kwargs.get("user", anonymous)
     id_channel = int(kwargs.get("id_channel", -1))
     start_time = kwargs.get("start_time", 0)
 
-    if not (user.has_right("rundown_view", id_channel) or user.has_right("rundown_edit", id_channel)):
+    if not (user.has_right("rundown_view", id_channel)
+            or user.has_right("rundown_edit", id_channel)):
         return NebulaResponse(ERROR_ACCESS_DENIED)
 
     process_start_time = time.time()
 
-    if not id_channel in config["playout_channels"]:
-        return NebulaResponse(ERROR_BAD_REQUEST, "Invalid playout channel specified")
+    if id_channel not in config["playout_channels"]:
+        return NebulaResponse(
+            ERROR_BAD_REQUEST,
+            "Invalid playout channel specified"
+        )
 
     rows = []
     i = 0
@@ -162,12 +200,16 @@ def api_rundown(**kwargs):
         row["is_empty"] = len(event.items) == 0
         row["id_bin"] = event["id_magic"]
         rows.append(row)
-        i+=1
+        i += 1
         for item in event.items:
             row = item.meta
             row["object_type"] = "item"
             rows.append(row)
-            i+=1
+            i += 1
 
     process_time = time.time() - process_start_time
-    return NebulaResponse(200, "Rundown loaded in {:.02f} seconds".format(process_time), data=rows)
+    return NebulaResponse(
+        200,
+        f"Rundown loaded in {process_time:.02f} seconds",
+        data=rows
+    )

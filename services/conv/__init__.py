@@ -1,20 +1,35 @@
-from nebula import *
-from nx.jobs import Action, get_job
+import time
 
-from services.conv.encoders import *
+from nebula import (
+    BaseService,
+    DB,
+    IN_PROGRESS,
+    RESTART,
+    ABORTED
+)
+from nx.jobs import Action, get_job
+from nxtools import xml, logging, s2words, log_traceback
+
+from services.conv.encoders import NebulaFFMPEG
 
 FORCE_INFO_EVERY = 20
 
 available_encoders = {
-        "ffmpeg" : NebulaFFMPEG
+        "ffmpeg": NebulaFFMPEG
     }
+
 
 class Service(BaseService):
     def on_init(self):
         self.service_type = "conv"
         self.actions = []
         db = DB()
-        db.query("SELECT id, title, service_type, settings FROM actions ORDER BY id")
+        db.query(
+            """
+            SELECT id, title, service_type, settings 
+            FROM actions ORDER BY id
+            """
+        )
         for id_action, title, service_type, settings in db.fetchall():
             if service_type == self.service_type:
                 logging.debug(f"Registering action {title}")
@@ -23,7 +38,8 @@ class Service(BaseService):
 
     def reset_jobs(self):
         db = DB()
-        db.query("""
+        db.query(
+            """
             UPDATE jobs SET
                 id_service=NULL,
                 progress=0,
@@ -36,12 +52,11 @@ class Service(BaseService):
                 id_service=%s AND STATUS IN (0,1,5)
             RETURNING id
             """,
-                [self.id_service]
-            )
+            [self.id_service]
+        )
         for id_job, in db.fetchall():
             logging.info(f"Restarting job ID {id_job} (converter restarted)")
         db.commit()
-
 
     def progress_handler(self, position):
         position = float(position)
@@ -57,7 +72,6 @@ class Service(BaseService):
 
         progress = (position / self.job.asset["duration"]) * 100
         self.job.set_progress(progress, f"Encoding: {progress:.02f}%")
-
 
     def on_main(self):
         db = DB()
@@ -80,17 +94,18 @@ class Service(BaseService):
             job_params = {}
 
         tasks = action.settings.findall("task")
-        job_start_time = last_info_time = time.time()
+        job_start_time = time.time()
 
         for id_task, task in enumerate(tasks):
-            task_start_time = time.time()
-
             try:
                 using = task.attrib["mode"]
-                if not using in available_encoders:
+                if using not in available_encoders:
                     continue
             except KeyError:
-                self.job.fail(f"Wrong encoder type specified for task {id_task}", critical=True)
+                self.job.fail(
+                    f"Wrong encoder type specified for task {id_task}", 
+                    critical=True
+                )
                 return
 
             logging.debug(f"Configuring task {id_task+1} of {len(tasks)}")
@@ -118,7 +133,7 @@ class Service(BaseService):
                 return
             job_params = self.encoder.params
 
-        job = self.job
+        job = self.job  # noqa
 
         for success_script in action.settings.findall("success"):
             logging.info("Executing success script")
@@ -129,4 +144,6 @@ class Service(BaseService):
         duration = asset["duration"] or 1
         speed = duration / elapsed_time
 
-        self.job.done(f"Finished in {s2words(elapsed_time)} ({speed:.02f}x realtime)")
+        self.job.done(
+            f"Finished in {s2words(elapsed_time)} ({speed:.02f}x realtime)"
+        )

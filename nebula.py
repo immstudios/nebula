@@ -17,21 +17,15 @@
 #
 
 if __name__ == "__main__":
-    print ()
+    print()
 
 import os
 import sys
+import time
 import rex
 
-#
-# Env setup
-#
-
-if sys.version_info[:2] < (3, 0):
-    reload(sys)
-    sys.setdefaultencoding('utf-8')
-
 from nx import *
+from nxtools import logging, log_traceback, critical_error
 
 config["nebula_root"] = os.path.abspath(os.getcwd())
 if not config["nebula_root"] in sys.path:

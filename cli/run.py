@@ -1,4 +1,7 @@
+import time
+
 from .common import *
+from nxtools import xml
 
 def run(*args):
     id_service = args[0]

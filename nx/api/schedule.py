@@ -1,6 +1,7 @@
 import psycopg2
 
 from nx import *
+from nxtools import format_time
 
 __all__ = ["api_schedule"]
 

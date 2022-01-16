@@ -119,7 +119,7 @@ class Service(BaseService):
 
     def handle_data(self, data):
         try:
-            message = Message(json.loads(decode_if_py3(data)))
+            message = Message(json.loads(data.decode()))
         except Exception:
             logging.warning("Malformed message detected", handlers=False)
             print("\n")

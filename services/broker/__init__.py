@@ -1,5 +1,6 @@
-from nebula import *
+from nebula import DB, Asset, ONLINE, BaseService
 from nx.jobs import send_to, Action
+from nxtools import xml, logging
 
 
 class Service(BaseService):

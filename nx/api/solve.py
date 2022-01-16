@@ -1,4 +1,10 @@
-from nx import *
+from nx import (
+    DB,
+    NebulaResponse,
+    anonymous,
+    Item
+)
+from nebulacore.constants import ERROR_ACCESS_DENIED
 from nx.plugins.solver import get_solver
 
 
@@ -11,7 +17,6 @@ def api_solve(**kwargs):
     items = kwargs.get("items", [])
     user = kwargs.get("user", anonymous)
 
-    #TODO: SMARTER ACL
     if not user.has_right("rundown_edit", anyval=True):
         return NebulaResponse(ERROR_ACCESS_DENIED)
 
@@ -19,11 +24,17 @@ def api_solve(**kwargs):
         items.append(id_item)
 
     if not (items and solver_name):
-        return NebulaResponse(400, "You must specify placeholder item ID and a solver name")
+        return NebulaResponse(
+            400,
+            "You must specify placeholder item ID and a solver name"
+        )
 
     Solver = get_solver(solver_name)
     if Solver is None:
-        return NebulaResponse(500, "Unable to load the solver. Check logs for details")
+        return NebulaResponse(
+            500,
+            "Unable to load the solver. Check logs for details"
+        )
 
     db = DB()
     for id_item in items:

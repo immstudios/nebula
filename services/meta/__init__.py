@@ -1,9 +1,27 @@
-from nebula import *
-from .ffprobe import FFProbe
+import os
+import time
 
-probes = [
-        FFProbe()
-    ]
+from nebula import (
+    BaseService,
+    DB,
+    Asset,
+    config,
+    storages,
+    meta_types
+)
+
+from nebula import (
+    FILE,
+    OFFLINE,
+    ONLINE,
+    CREATING,
+    RESET,
+    RETRIEVING
+)
+
+from .ffprobe import ffprobe_asset
+from nxtools import logging, s2time, FileObject
+
 
 class Service(BaseService):
     def on_init(self):
@@ -15,7 +33,10 @@ class Service(BaseService):
             self.restart_on_update = [int(k.strip()) for k in rou.split(",")]
         else:
             self.restart_on_update = None
-        logging.debug(f"Following actions will be restarted on source update: {self.restart_on_update}")
+        logging.debug(
+            "Following actions will be restarted on source update:",
+            self.restart_on_update
+        )
 
         for cond in self.settings.findall("cond"):
             if cond is None:
@@ -30,12 +51,19 @@ class Service(BaseService):
         self.mounted_storages = []
         for id_storage in storages:
             storage_path = storages[id_storage].local_path
-            if os.path.exists(storage_path) and len(os.listdir(storage_path)) != 0:
+            if os.path.exists(storage_path) \
+                    and len(os.listdir(storage_path)) != 0:
                 self.mounted_storages.append(id_storage)
 
         db = DB()
         # do not scan trashed and archived files
-        db.query("SELECT id, meta FROM assets WHERE media_type=%s AND status NOT IN (3, 4)", [FILE])
+        db.query(
+            """
+            SELECT id, meta FROM assets 
+            WHERE media_type=%s AND status NOT IN (3, 4)
+            """,
+            [FILE]
+        )
         i = 0
         for id, meta in db.fetchall():
             asset = Asset(meta=meta, db=db)
@@ -48,7 +76,6 @@ class Service(BaseService):
         if duration > 60 or config.get("debug_mode", False):
             logging.debug(f"Metadata scanned in {s2time(duration)}")
 
-
     def process(self, asset):
         for cond in self.conds:
             if not cond(asset):
@@ -59,7 +86,9 @@ class Service(BaseService):
         if not id_storage:
             return
         if id_storage not in self.mounted_storages:
-            logging.warning(f"Skipping unmounted storage {asset['id_storage']} of {asset}")
+            logging.warning(
+                f"Skipping unmounted storage {asset['id_storage']} of {asset}"
+            )
             return
 
         try:
@@ -69,13 +98,13 @@ class Service(BaseService):
 
         if not file_exists:
             if asset["status"] in [ONLINE, RESET, CREATING]:
-                logging.warning(f"{asset}: Turning offline (File does not exist)")
+                logging.warning(f"{asset}: Turning offline")
                 asset["status"] = OFFLINE
                 asset.save()
             return
 
         fmtime = int(asset_file.mtime)
-        fsize  = int(asset_file.size)
+        fsize = int(asset_file.size)
 
         if fsize == 0:
             if asset["status"] not in [OFFLINE, RETRIEVING]:
@@ -84,15 +113,17 @@ class Service(BaseService):
                 asset.save()
             return
 
-
-        if fmtime != asset["file/mtime"] or asset["status"] in [RESET, RETRIEVING]:
+        if fmtime != asset["file/mtime"] \
+                or asset["status"] in [RESET, RETRIEVING]:
             try:
                 f = asset_file.open("rb")
             except Exception:
-                logging.debug(f"{asset} is not readable (transfer in progress?)")
+                logging.debug(
+                    f"{asset} is not readable (transfer in progress?)"
+                )
                 return
             else:
-                f.seek(0,2)
+                f.seek(0, 2)
                 fsize = f.tell()
                 f.close()
 
@@ -100,39 +131,44 @@ class Service(BaseService):
                 asset.load_sidecar_metadata()
 
             # Filesize must be changed to update metadata automatically.
-            # It sucks, but mtime only condition is.... errr doesn't work always
 
-            if fsize == asset["file/size"] and asset["status"] not in [RESET, RETRIEVING]:
-                logging.debug(f"{asset}: File mtime has been changed. Updating metadata.")
+            if fsize == asset["file/size"] \
+                    and asset["status"] not in [RESET, RETRIEVING]:
+                logging.debug(
+                    f"{asset}: File mtime has been changed. Updating metadata."
+                )
                 asset["file/mtime"] = fmtime
                 asset.save(set_mtime=False, notify=False)
-            elif fsize != asset["file/size"] or asset["status"] in [RESET, RETRIEVING]:
+            elif fsize != asset["file/size"] \
+                    or asset["status"] in [RESET, RETRIEVING]:
                 if asset["status"] in [RESET, RETRIEVING]:
-                    logging.info(f"{asset}: Metadata reset requested. Updating metadata.")
+                    logging.info(
+                        f"{asset}: Reset requested. Updating metadata."
+                    )
                 else:
-                    logging.info(f"{asset}: File has been changed. Updating metadata.")
+                    logging.info(
+                        f"{asset}: File has been changed. Updating metadata."
+                    )
 
                 keys = list(asset.meta.keys())
                 for key in keys:
                     if meta_types[key]["ns"] in ("f", "q"):
                         del (asset.meta[key])
 
-                asset["file/size"]  = fsize
+                asset["file/size"] = fsize
                 asset["file/mtime"] = fmtime
                 asset["file/ctime"] = int(asset_file.ctime)
                 asset.save()
 
-                for probe in probes:
-                    if probe.accepts(asset):
-                        logging.debug(f"{asset}: probing using {probe}")
-                        result = probe(asset)
-                        if result:
-                            asset = result
-                        elif asset["status"] != CREATING:
-                            asset["status"] = CREATING
-                            return
-                        else:
-                            return
+                logging.debug(f"{asset}: probing asset")
+                result = ffprobe_asset(asset)
+                if result:
+                    asset = result
+                elif asset["status"] != CREATING:
+                    asset["status"] = CREATING
+                    return
+                else:
+                    return
 
                 if asset["status"] == RESET:
                     asset["status"] = ONLINE
@@ -153,11 +189,13 @@ class Service(BaseService):
 
             if self.restart_on_update:
                 if type(self.restart_on_update) == list:
-                    action_cond = "AND id_action in ({})".format(",".join(self.restart_on_update))
+                    actions_to_restart = ",".join(self.restart_on_update)
+                    action_cond = f"AND id_action in ({actions_to_restart})"
                 else:
                     action_cond = ""
                 db = DB()
-                db.query("""
+                db.query(
+                    f"""
                     UPDATE jobs SET
                         status=5,
                         retries=0,
@@ -170,13 +208,17 @@ class Service(BaseService):
                     WHERE
                         id_asset=%s
                         AND status IN (1,2,3,4,6)
-                        {}
+                        {action_cond}
                     RETURNING id
-                    """.format(action_cond),
-                        [time.time(), asset.id]
+                    """,
+                    [time.time(), asset.id]
+                )
 
-                    )
                 res = db.fetchall()
                 if res:
-                    logging.info("{}: Changed. Restarting jobs {}".format(asset, ", ".join([str(l[0]) for l in res])))
+                    joblist = ", ".join([str(jid[0]) for jid in res])
+                    logging.info(
+                        f"{asset} has been changed.",
+                        f"Restarting jobs {joblist}"
+                    )
                 db.commit()

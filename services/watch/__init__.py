@@ -1,4 +1,25 @@
-from nebula import *
+import os
+import time
+
+from nebula import (
+    DB,
+    storages,
+    Asset,
+    config,
+    BaseService,
+    file_types,
+    asset_by_path
+)
+from nebula import FILE, CREATING
+
+from nxtools import (
+    s2time,
+    logging,
+    get_files,
+    get_base_name,
+    log_traceback
+)
+
 
 class Service(BaseService):
     def on_init(self):
@@ -21,14 +42,19 @@ class Service(BaseService):
         for wf_settings in self.settings.findall("folder"):
             id_storage = int(wf_settings.attrib["id_storage"])
             rel_wf_path = wf_settings.attrib["path"]
-            quarantine_time = int(wf_settings.attrib.get("quarantine_time", "10"))
+            quarantine_time = int(
+                wf_settings.attrib.get("quarantine_time", "10")
+            )
             id_folder = int(wf_settings.attrib.get("id_folder", 12))
 
             storage_path = storages[id_storage].local_path
             watchfolder_path = os.path.join(storage_path, rel_wf_path)
 
             if not os.path.exists(watchfolder_path):
-                logging.warning("Skipping non-existing watchfolder", watchfolder_path)
+                logging.warning(
+                    "Skipping non-existing watchfolder", 
+                    watchfolder_path
+                )
                 continue
 
             i = 0
@@ -36,7 +62,9 @@ class Service(BaseService):
                         watchfolder_path,
                         recursive=wf_settings.attrib.get("recursive", False),
                         hidden=wf_settings.attrib.get("hidden", False),
-                        case_sensitive_exts=wf_settings.get("case_sensitive_exts", False)
+                        case_sensitive_exts=wf_settings.get(
+                            "case_sensitive_exts", False
+                        )
                     ):
                 i += 1
                 if i % 100 == 0 and config.get("debug_mode", False):
@@ -52,7 +80,7 @@ class Service(BaseService):
                 now = time.time()
                 asset_path = full_path.replace(storage_path, "", 1).lstrip("/")
                 ext = os.path.splitext(asset_path)[1].lstrip(".").lower()
-                if not ext in file_types:
+                if ext not in file_types:
                     continue
 
                 asset = asset_by_path(id_storage, asset_path, db=db)
@@ -62,13 +90,14 @@ class Service(BaseService):
 
                 base_name = get_base_name(asset_path)
 
-                if quarantine_time and now - file_object.mtime < quarantine_time:
+                if quarantine_time \
+                        and now - file_object.mtime < quarantine_time:
                     logging.debug(f"{base_name} is too young. Skipping")
                     continue
 
                 asset = Asset(db=db)
                 asset["content_type"] = file_types[ext]
-                asset["media_type"]  = FILE
+                asset["media_type"] = FILE
                 asset["id_storage"] = id_storage
                 asset["path"] = asset_path
                 asset["ctime"] = now
@@ -79,12 +108,14 @@ class Service(BaseService):
 
                 asset.load_sidecar_metadata()
 
-                failed=False
+                failed = False
                 for post_script in wf_settings.findall("post"):
                     try:
                         exec(post_script.text)
-                    except:
-                        log_traceback(f"Error executing post-script on {asset}")
+                    except Exception:
+                        log_traceback(
+                            f"Error executing post-script on {asset}"
+                        )
                         failed = True
 
                 if not failed:

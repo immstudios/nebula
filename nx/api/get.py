@@ -1,4 +1,5 @@
 import string
+import time
 
 from nx import *
 

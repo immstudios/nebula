@@ -1,12 +1,13 @@
 import difflib
 
-from nx import *
 from nx.mediaprobe import mediaprobe
 
-from .common import Probe
+from nebula import (meta_types, SELECT)
+from nxtools import slugify, logging, get_base_name
 
 
 def string2cs(key, value):
+    """Return a CS best matching for the given string."""
     logging.info(f"Parsing {key} value {value}")
     cs = meta_types[key].cs
     vslug = slugify(value, separator=" ")
@@ -28,36 +29,29 @@ def string2cs(key, value):
     return best_match
 
 
-class FFProbe(Probe):
-    title = "FFProbe"
+def ffprobe_asset(asset):
+    meta = mediaprobe(asset.file_path)
+    if not meta:
+        return False
 
-    def accepts(self, asset):
-        return asset["content_type"] in [VIDEO, AUDIO, IMAGE]
+    for key, value in meta.items():
 
-    def __call__(self, asset):
-        meta = mediaprobe(asset.file_path)
-        if not meta:
-            return False
-
-        for key, value in meta.items():
-
-            # Only update auto-generated title
-            if key == "title":
-                if value == get_base_name(asset.file_path):
-                    continue
-
-            # Do not update descriptive metadata
-            elif meta_types[key]["ns"] == "m" and asset[key]:
+        # Only update auto-generated title
+        if key == "title":
+            if value == get_base_name(asset.file_path):
                 continue
 
-            if key == "genre" and meta_types["genre"]["class"] == SELECT:
-                new_val = string2cs("genre", value)
-                if new_val is None:
-                    continue
-                asset["genre/original"] = value
-                value = new_val
+        # Do not update descriptive metadata
+        elif meta_types[key]["ns"] == "m" and asset[key]:
+            continue
 
-            asset[key] = value
+        if key == "genre" and meta_types["genre"]["class"] == SELECT:
+            new_val = string2cs("genre", value)
+            if new_val is None:
+                continue
+            asset["genre/original"] = value
+            value = new_val
 
-        return asset
-        
+        asset[key] = value
+
+    return asset

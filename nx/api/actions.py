@@ -1,17 +1,33 @@
-from nx import *
+from nx import (
+    Asset,
+    NebulaResponse,
+    DB,
+    ERROR_UNAUTHORISED,
+    ERROR_BAD_REQUEST,
+    anonymous
+)
+
+from nxtools import xml, log_traceback
 
 __all__ = ["api_actions"]
 
+
 def api_actions(**kwargs):
-    objects = kwargs.get("objects") or kwargs.get("ids", []) #TODO: ids is deprecated. use objects instead
+    objects = kwargs.get("objects") or kwargs.get("ids", [])
     db = kwargs.get("db", DB())
     user = kwargs.get("user", anonymous)
 
     if not user:
-        return NebulaResponse(ERROR_UNAUTHORISED, "You are not allowed to execute any actions")
+        return NebulaResponse(
+            ERROR_UNAUTHORISED,
+            "You are not allowed to execute any actions"
+        )
 
     if not objects:
-        return NebulaResponse(ERROR_BAD_REQUEST, "No asset selected")
+        return NebulaResponse(
+            ERROR_BAD_REQUEST,
+            "No asset selected"
+        )
 
     result = []
 
