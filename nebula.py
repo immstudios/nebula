@@ -121,11 +121,21 @@ if __name__ == "__main__":
 
 else:
     # This is a very dirty hack to keep old plugins working.
+
     import os
     import sys
     import json
     import time
 
-    from nx import *
-    from nebulacore import *
     from nxtools import *
+
+    from nx.db import *
+    from nx.plugins import *
+    from nx.core import *
+    from nx.helpers import *
+    from nx.objects import *
+    from nx.cache import *
+    from nx.messaging import *
+
+    from nebulacore.constants import *
+
