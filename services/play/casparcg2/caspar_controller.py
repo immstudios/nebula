@@ -4,8 +4,10 @@ import os
 import time
 import threading
 
-from nebula import *
+from nxtools import logging, log_traceback
 from nxtools.caspar import CasparCG
+
+from nx import NebulaResponse, Item, bin_refresh
 
 from .caspar_data import CasparOSCServer
 
@@ -16,11 +18,11 @@ class CasparController(object):
     def __init__(self, parent):
         self.parent = parent
 
-        self.caspar_host         = parent.channel_config.get("caspar_host", "localhost")
-        self.caspar_port         = int(parent.channel_config.get("caspar_port", 5250))
-        self.caspar_osc_port     = int(parent.channel_config.get("caspar_osc_port", 5253))
-        self.caspar_channel      = int(parent.channel_config.get("caspar_channel", 1))
-        self.caspar_feed_layer   = int(parent.channel_config.get("caspar_feed_layer", 10))
+        self.caspar_host = parent.channel_config.get("caspar_host", "localhost")
+        self.caspar_port = int(parent.channel_config.get("caspar_port", 5250))
+        self.caspar_osc_port = int(parent.channel_config.get("caspar_osc_port", 5253))
+        self.caspar_channel = int(parent.channel_config.get("caspar_channel", 1))
+        self.caspar_feed_layer = int(parent.channel_config.get("caspar_feed_layer", 10))
 
         self.should_run = True
 
@@ -31,7 +33,7 @@ class CasparController(object):
         self.cueing = False
         self.cueing_time = 0
         self.cueing_item = False
-        self.stalled  = False
+        self.stalled = False
 
         # To be updated based on CCG data
         self.channel_fps = self.fps
@@ -123,7 +125,7 @@ class CasparController(object):
         self.paused = foreground.paused
         self.loop = foreground.loop
 
-#2        if cued_fname and (not self.paused) and (pos == self.pos) and (not self.parent.current_live) and self.cued_item and (not self.cued_item["run_mode"]):
+#        if cued_fname and (not self.paused) and (pos == self.pos) and (not self.parent.current_live) and self.cued_item and (not self.cued_item["run_mode"]):
 #            if self.stalled and self.stalled < time.time() - 5:
 #                logging.warning("Stalled for a long time")
 #                logging.warning("Taking stalled clip (pos: {})".format(self.pos))
@@ -158,8 +160,6 @@ class CasparController(object):
                     self.current_fname = self.cued_fname
                     advanced = True
                 self.cued_item = False
-
-
 
         if advanced and not self.cueing:
             try:
@@ -204,7 +204,6 @@ class CasparController(object):
         except Exception:
             log_traceback("Playout on_progress failed")
 
-
     def cue(self, fname, item, layer=None, play=False, auto=True, loop=False, **kwargs):
         layer = layer or self.caspar_feed_layer
 
@@ -223,46 +222,32 @@ class CasparController(object):
 
         query = " ".join(query_list)
 
-#        base_cmd = "PLAY" if play else "LOADBG"
-#        auto_cmd = " AUTO" if auto else ""
-#        loop_cmd = " LOOP" if loop else ""
-#
-#        seek_cmd   = f" SEEK {int(mark_in * self.channel_fps)}" if mark_in else ""
-#        length_cmd = f" LENGTH {int(item.duration * self.channel_fps)}" \
-#                if mark_out and mark_out < item["duration"] and mark_out > mark_in else ""
-#
-#        query = f"{base_cmd} {self.caspar_channel}-{layer} {fname}{auto_cmd}{loop_cmd}{seek_cmd}{length_cmd}"
-
-        self.cueing       = fname
-        self.cueing_item  = item
-        self.cueing_time  = time.time()
+        self.cueing = fname
+        self.cueing_item = item
+        self.cueing_time = time.time()
 
         result = self.query(query)
 
         if result.is_error:
             message = f"Unable to cue \"{fname}\" {result.data}"
-            self.cued_item   = Item()
-            self.cued_fname  = False
-            self.cueing      = False
+            self.cued_item = Item()
+            self.cued_fname = False
+            self.cueing = False
             self.cueing_item = False
             self.cueing_time = 0
             return NebulaResponse(result.response, message)
-
         if play:
             self.cueing = False
             self.cueing_item = False
             self.cueing_time = 0
             self.current_item = item
             self.current_fname = fname
-
         return NebulaResponse(200)
-
 
     def clear(self, layer=None):
         layer = layer or self.caspar_feed_layer
         result = self.query(f"CLEAR {self.channel}-{layer}")
         return NebulaResponse(result.response, result.data)
-
 
     def take(self, **kwargs):
         layer = kwargs.get("layer", self.caspar_feed_layer)
@@ -278,19 +263,15 @@ class CasparController(object):
             message = "Take failed: {result.data}"
         return NebulaResponse(result.response, message)
 
-
     def retake(self, **kwargs):
         layer = kwargs.get("layer", self.caspar_feed_layer)
         if self.parent.current_live:
             return NebulaResponse(409, "Unable to retake live item")
-
         seekparams = "SEEK " + str(int(self.current_item.mark_in() * self.channel_fps))
         if self.current_item.mark_out():
             seekparams += " LENGTH " + str(int((self.current_item.mark_out() - self.current_item.mark_in()) * self.channel_fps))
-
         query = f"PLAY {self.caspar_channel}-{layer} {self.current_fname} {seekparams}"
         result = self.query(query)
-
         if result.is_success:
             message = "Retake OK"
             self.stalled = False
@@ -299,20 +280,18 @@ class CasparController(object):
             message = "Take command failed: " + result.data
         return NebulaResponse(result.response, message)
 
-
     def freeze(self, **kwargs):
         layer = kwargs.get("layer", self.caspar_feed_layer)
         if self.parent.current_live:
             return NebulaResponse(409, "Unable to freeze live item")
         if self.paused:
-            q = f"RESUME {self.caspar_channel}-{layer}"
+            query = f"RESUME {self.caspar_channel}-{layer}"
             message = "Playback resumed"
         else:
-            q = f"PAUSE {self.caspar_channel}-{layer}"
+            query = f"PAUSE {self.caspar_channel}-{layer}"
             message = "Playback paused"
-        result = self.query(q)
+        result = self.query(query)
         return NebulaResponse(result.response, message)
-
 
     def abort(self, **kwargs):
         layer = kwargs.get("layer", self.caspar_feed_layer)
@@ -325,7 +304,7 @@ class CasparController(object):
         if self.cued_item.mark_out():
             length = int((self.cued_item.mark_out() - self.cued_item.mark_in()) * self.channel_fps)
             query += f" LENGTH {length}"
-        result = self.query(q)
+        result = self.query(query)
         return NebulaResponse(result.response, result.data)
 
     def set(self, key, value):

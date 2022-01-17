@@ -2,8 +2,8 @@ __all__ = ["WebToolPlugin"]
 
 import os
 
-from nx import *
-from nx.plugins.common import *
+from nxtools import format_time, s2tc, slugify
+from nx.plugins.common import get_plugin_path
 
 
 class WebToolPlugin(object):
@@ -15,7 +15,6 @@ class WebToolPlugin(object):
         self.view = view
         self.name = name
         self["name"] = self.title
-
 
     def render(self, template):
         import jinja2
@@ -32,7 +31,6 @@ class WebToolPlugin(object):
     def set_template(self, name):
         tpl_dir = os.path.join(get_plugin_path("webtools"), self.name)
         self.view.template_path = os.path.join(tpl_dir, "{}.html".format(name))
-
 
     def __getitem__(self, key):
         return self.view[key]

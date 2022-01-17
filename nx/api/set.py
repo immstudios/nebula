@@ -1,16 +1,40 @@
 __all__ = ["api_set"]
 
-from nx import *
+from nxtools import logging, log_traceback
+
+from nx import (
+    NebulaResponse,
+    Asset,
+    Item,
+    Bin,
+    Event,
+    User,
+    anonymous,
+    DB,
+    get_hash,
+    config,
+    bin_refresh,
+    messaging,
+)
+
+from nebulacore.constants import (
+    ERROR_UNAUTHORISED,
+    ERROR_ACCESS_DENIED,
+    ERROR_BAD_REQUEST,
+    ERROR_INTERNAL
+)
+
+
 from nx.plugins.validator import get_validator
 from nebulacore.base_objects import BaseObject
 
 
 def api_set(**kwargs):
     object_type = kwargs.get("object_type", "asset")
-    objects  = kwargs.get("objects", [])
+    objects = kwargs.get("objects", [])
     data = kwargs.get("data", {})
     user = kwargs.get("user", anonymous)
-    db   = kwargs.get("db", DB())
+    db = kwargs.get("db", DB())
     initiator = kwargs.get("initiator", None)
 
     if not user:
@@ -20,11 +44,11 @@ def api_set(**kwargs):
         return NebulaResponse(200, "No object created or modified")
 
     object_type_class = {
-                "asset" : Asset,
-                "item"  : Item,
-                "bin"   : Bin,
-                "event" : Event,
-                "user" : User,
+                "asset": Asset,
+                "item": Item,
+                "bin": Bin,
+                "event": Event,
+                "user": User,
             }.get(object_type, None)
 
     if object_type_class is None:
@@ -45,9 +69,10 @@ def api_set(**kwargs):
         if object_type == "asset":
             id_folder = data.get("id_folder", False) or obj["id_folder"]
             if not user.has_right("asset_edit", id_folder):
+                folder_title = config['folders'][id_folder]['title']
                 return NebulaResponse(
                     ERROR_ACCESS_DENIED,
-                    f"{user} is not allowed to edit {config['folders'][id_folder]['title']} folder"
+                    f"{user} is not allowed to edit {folder_title} folder"
                 )
         elif object_type == "user":
             if obj.id:
@@ -79,11 +104,17 @@ def api_set(**kwargs):
             try:
                 obj = validator.validate(obj)
             except Exception:
-                return NebulaResponse(ERROR_INTERNAL, log_traceback("Unable to validate object changes."))
+                return NebulaResponse(
+                    ERROR_INTERNAL,
+                    log_traceback("Unable to validate object changes.")
+                )
 
             if not isinstance(obj, BaseObject):
                 # TODO: use 409-conflict?
-                return NebulaResponse(ERROR_BAD_REQUEST, f"Unable to save {tt}:\n\n{obj}")
+                return NebulaResponse(
+                    ERROR_BAD_REQUEST,
+                    f"Unable to save {tt}:\n\n{obj}"
+                )
 
         if changed:
             obj.save(notify=False)

@@ -1,16 +1,14 @@
 import os
 import time
 
-from nebula import (
+from nx import (
     BaseService,
     DB,
-    Asset,
-    config,
-    storages,
-    meta_types
+    Asset
 )
 
-from nebula import (
+from nebulacore import config, storages, meta_types
+from nebulacore.constants import (
     FILE,
     OFFLINE,
     ONLINE,
@@ -59,7 +57,7 @@ class Service(BaseService):
         # do not scan trashed and archived files
         db.query(
             """
-            SELECT id, meta FROM assets 
+            SELECT id, meta FROM assets
             WHERE media_type=%s AND status NOT IN (3, 4)
             """,
             [FILE]

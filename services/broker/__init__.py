@@ -1,6 +1,9 @@
-from nebula import DB, Asset, ONLINE, BaseService
-from nx.jobs import send_to, Action
 from nxtools import xml, logging
+
+from nx import DB, Asset, BaseService
+from nx.jobs import send_to, Action
+
+from nebulacore.constants import ONLINE
 
 
 class Service(BaseService):
@@ -14,8 +17,11 @@ class Service(BaseService):
 
     def on_main(self):
         db = DB()
-        db.query("SELECT id, meta FROM assets WHERE status=%s", [ONLINE])
-        for id_asset, meta in db.fetchall():
+        db.query(
+            "SELECT id, meta FROM assets WHERE status=%s",
+            [ONLINE]
+        )
+        for _, meta in db.fetchall():
             asset = Asset(meta=meta, db=db)
             self.proc(asset)
 
@@ -25,7 +31,9 @@ class Service(BaseService):
                 continue
 
             if action.should_create(asset):
-                logging.info(f"{asset} matches action condition {action.title}")
+                logging.info(
+                    f"{asset} matches action condition {action.title}"
+                )
                 result = send_to(
                         asset.id,
                         action.id,

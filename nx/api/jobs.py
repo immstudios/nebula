@@ -1,4 +1,3 @@
-from asyncio.proactor_events import constants
 import time
 
 from nxtools import (format_time, logging, slugify)

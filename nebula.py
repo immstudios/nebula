@@ -22,14 +22,11 @@ if __name__ == "__main__":
 import os
 import sys
 import time
-import rex
+import rex # noqa
 
-from nx import *
+from nx import config, get_plugin_path
 from nxtools import logging, log_traceback, critical_error
 
-config["nebula_root"] = os.path.abspath(os.getcwd())
-if not config["nebula_root"] in sys.path:
-    sys.path.insert(0, config["nebula_root"])
 
 #
 # Start agents only if this script is executed (not imported)
@@ -119,3 +116,15 @@ if __name__ == "__main__":
         print()
         logging.warning("Immediate shutdown enforced. This may cause problems")
         sys.exit(1)
+
+
+else:
+    # This is a very dirty hack to keep old plugins working.
+    import os
+    import sys
+    import json
+    import time
+
+    from nx import *
+    from nebulacore import *
+    from nxtools import *

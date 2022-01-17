@@ -32,13 +32,16 @@ class RabbitSender():
             self.connection = pika.BlockingConnection(conparams)
         except Exception:
             self.connection = None
-            logging.error(f"Unable to connect RabbitMQ broker at {host}", handlers=[])
+            logging.error(
+                f"Unable to connect RabbitMQ broker at {host}",
+                handlers=[]
+            )
             return
 
         self.channel = self.connection.channel()
         self.channel.queue_declare(
             queue=config["site_name"],
-            arguments={'x-message-ttl' : 1000}
+            arguments={'x-message-ttl': 1000}
         )
         return True
 
@@ -49,8 +52,6 @@ class RabbitSender():
             qm, qd = self.queue.get()
             self.send_message(qm, **qd)
         self.lock.release()
-
-
 
     def send_message(self, method, **data):
         if not (self.connection and self.channel):
@@ -78,9 +79,9 @@ class RabbitSender():
         except pika.exceptions.StreamLostError:
             logging.error("RabbitMQ connection lost", handlers=[])
             self.connection = self.channel = None
-        except:
+        except Exception:
             log_traceback("RabbitMQ error", handlers=[])
-            logging.debug("Unable to send message" , message, handlers=[])
+            logging.debug("Unable to send message", message, handlers=[])
             self.connection = self.channel = None
 
     def __del__(self):
@@ -92,7 +93,11 @@ class UDPSender():
     def __init__(self):
         self.addr = config.get("seismic_addr", "224.168.1.1")
         self.port = int(config.get("seismic_port", 42005))
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self.sock = socket.socket(
+            socket.AF_INET,
+            socket.SOCK_DGRAM,
+            socket.IPPROTO_UDP
+        )
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 255)
 
     def __call__(self, method, **data):

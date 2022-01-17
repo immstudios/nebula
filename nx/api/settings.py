@@ -12,20 +12,20 @@ def api_settings(**kwargs):
         return NebulaResponse(ERROR_UNAUTHORISED)
     data = {}
     for key in [
-            "actions",
-            "cs",
-            "folders",
-            "ingest_channels",
-            "meta_types",
-            "playout_channels",
-            "proxy_url",
-            "services",
-            "seismic_addr",
-            "seismic_port",
-            "site_name",
-            "views",
-            "language"
-            ]:
+        "actions",
+        "cs",
+        "folders",
+        "ingest_channels",
+        "meta_types",
+        "playout_channels",
+        "proxy_url",
+        "services",
+        "seismic_addr",
+        "seismic_port",
+        "site_name",
+        "views",
+        "language"
+    ]:
         if key in config:
             data[key] = config[key]
 

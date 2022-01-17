@@ -1,4 +1,7 @@
+import sys
 import psycopg2
+
+from nxtools import logging, critical_error
 
 from nebulacore import *
 from nebulacore.metadata import clear_cs_cache
@@ -59,7 +62,7 @@ def load_settings(*args, **kwargs):
     config["cs"] = {}
     db.query("SELECT cs, value, settings FROM cs")
     for cst, value, settings in db.fetchall():
-        if not cst in config["cs"]:
+        if cst not in config["cs"]:
             config["cs"][cst] = []
         config["cs"][cst].append([value, settings])
     clear_cs_cache()
@@ -73,9 +76,9 @@ def load_settings(*args, **kwargs):
     db.query("SELECT id, service_type, title FROM actions")
     for id, service_type, title in db.fetchall():
         config["actions"][id] = {
-                    "title" : title,
-                    "service_type" : service_type,
-                }
+            "title": title,
+            "service_type": service_type,
+        }
 
     config["services"] = {}
     db.query("SELECT id, service_type, host, title FROM services")
@@ -99,10 +102,13 @@ def load_settings(*args, **kwargs):
     cache.configure()
     load_common_scripts()
 
-
     if logging.user == "hub":
         messaging.send("config_changed")
     return True
 
 
 load_settings()
+
+config["nebula_root"] = os.path.abspath(os.getcwd())
+if not config["nebula_root"] in sys.path:
+    sys.path.insert(0, config["nebula_root"])

@@ -1,7 +1,9 @@
 import re
+import time
 
-from nebula import *
+from nxtools import EMAIL_REGEXP, GUID_REGEXP, log_traceback, get_guid
 from cherryadmin import CherryAdminView
+from nx import DB, User, send_mail, config
 
 
 MAIL_BODY = """
@@ -40,11 +42,20 @@ class ViewPassReset(CherryAdminView):
             email = kwargs["email"].strip()
 
             if not re.match(EMAIL_REGEXP, email):
-                self.context.message("Invalid e-mail address specified", "error")
+                self.context.message(
+                    "Invalid e-mail address specified",
+                    "error"
+                )
                 return
 
             db = DB()
-            db.query("SELECT meta FROM users where LOWER(meta->>'email') = LOWER(%s)", [email])
+            db.query(
+                """
+                SELECT meta
+                FROM users where LOWER(meta->>'email') = LOWER(%s)
+                """,
+                [email]
+            )
             try:
                 user = User(meta=db.fetchall()[0][0], db=db)
             except IndexError:
@@ -52,9 +63,11 @@ class ViewPassReset(CherryAdminView):
                 return
 
             if time.time() - user.meta.get("pass_reset_time", 0) < 3600:
-                self.context.message("Only one password reset request per hour is allowed", "error")
+                self.context.message(
+                    "Only one password reset request per hour is allowed",
+                    "error"
+                )
                 return
-
 
             token = get_guid()
 
@@ -62,13 +75,13 @@ class ViewPassReset(CherryAdminView):
             user["pass_reset_code"] = token
 
             mailvars = {
-                    "name" : user["full_name"] or user["login"],
-                    "site_name" : config["site_name"],
-                    "hub_url" : config.get(
-                            "hub_url",
-                            "https://{}.nbla.cloud".format(config["site_name"])
-                        ),
-                    "token" : token
+                    "name": user["full_name"] or user["login"],
+                    "site_name": config["site_name"],
+                    "hub_url": config.get(
+                        "hub_url",
+                        f"https://{config['site_name']}.nbla.cloud"
+                    ),
+                    "token": token
                 }
 
             body = MAIL_BODY.format(**mailvars)
@@ -77,7 +90,8 @@ class ViewPassReset(CherryAdminView):
                 send_mail(email, "Nebula password reset", body)
             except Exception:
                 log_traceback()
-                self.context.message("Unable to send password reset email. Please contact your system administrator", "error")
+                self.context.message("""Unable to send password reset email.
+                Please contact your system administrator""", "error")
                 return
 
             user.save()
@@ -99,7 +113,10 @@ class ViewPassReset(CherryAdminView):
                 return
 
             db = DB()
-            db.query("SELECT meta FROM users WHERE meta->>'pass_reset_code' = %s", [token])
+            db.query(
+                "SELECT meta FROM users WHERE meta->>'pass_reset_code' = %s",
+                [token]
+            )
             try:
                 user = User(meta=db.fetchall()[0][0], db=db)
             except IndexError:
@@ -111,7 +128,6 @@ class ViewPassReset(CherryAdminView):
                 self["mode"] = "email-entry"
                 return
 
-
             pass1 = kwargs.get("pass1", False)
             pass2 = kwargs.get("pass2", False)
             if pass1 and pass2:
@@ -122,9 +138,10 @@ class ViewPassReset(CherryAdminView):
 
                 if len(pass1) < 8:
                     self["mode"] = "pass-entry"
-                    self.context.message("Your password is too weak. It must be at least 8 characters long.", "error")
+                    self.context.message(
+                        "The password is weak. Must be at least 8 characters",
+                        "error")
                     return
-
 
                 user.set_password(pass1)
                 del(user.meta["pass_reset_code"])
@@ -133,7 +150,6 @@ class ViewPassReset(CherryAdminView):
 
                 self["mode"] = "finished"
                 return
-
 
             self["mode"] = "pass-entry"
             return

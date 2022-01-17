@@ -1,9 +1,14 @@
+import os
 import time
+import json
 import socket
 import threading
 import requests
 
-from nebula import *
+from nxtools import logging, log_traceback, critical_error
+
+from nx import BaseService, messaging
+from nebulacore import config
 
 from .loki import LokiLogger
 from .log import log_clean_up, format_log_message
@@ -12,19 +17,23 @@ from .log import log_clean_up, format_log_message
 logging.handlers = []
 
 
-class Message():
+class Message:
     def __init__(self, packet):
-        self.timestamp, self.site_name, self.host, self.method, self.data = packet
+        self.timestamp = packet[0]
+        self.site_name = packet[1]
+        self.host = packet[2]
+        self.method = packet[3]
+        self.data = packet[4]
 
     @property
     def json(self):
         return json.dumps([
-                self.timestamp,
-                self.site_name,
-                self.host,
-                self.method,
-                self.data
-            ])
+            self.timestamp,
+            self.site_name,
+            self.host,
+            self.method,
+            self.data
+        ])
 
 
 class Service(BaseService):
@@ -74,7 +83,9 @@ class Service(BaseService):
                     log_traceback()
                     self.log_dir = None
             if not os.path.isdir(self.log_dir):
-                logging.error(f"{log_dir} is not a directory. Logs will not be saved")
+                logging.error(
+                    f"{log_dir} is not a directory. Logs will not be saved"
+                )
                 self.log_dir = None
 
         log_ttl = self.settings.find("log_ttl")
@@ -96,13 +107,10 @@ class Service(BaseService):
         else:
             listener = self.listen_udp
 
-
         listen_thread = threading.Thread(target=listener, daemon=True)
         listen_thread.start()
-
         process_thread = threading.Thread(target=self.process, daemon=True)
         process_thread.start()
-
 
     def shutdown(self, *args, **kwargs):
         self.session.close()
@@ -110,12 +118,14 @@ class Service(BaseService):
 
     def on_main(self):
         if len(self.queue) > 50:
-            logging.warning(f"Truncating message queue ({len(self.queue)} messages)", handlers=[])
+            logging.warning(
+                f"Truncating message queue ({len(self.queue)} messages)",
+                handlers=[]
+            )
             self.queue = []
 
         if self.log_dir and self.log_ttl:
-           log_clean_up(self.log_dir, self.log_ttl)
-
+            log_clean_up(self.log_dir, self.log_ttl)
 
     def handle_data(self, data):
         try:
@@ -129,7 +139,6 @@ class Service(BaseService):
         if message.site_name != config["site_name"]:
             return
         self.queue.append(message)
-
 
     def listen_rabbit(self):
         try:
@@ -147,7 +156,7 @@ class Service(BaseService):
 
                 result = channel.queue_declare(
                     queue=config["site_name"],
-                    arguments={'x-message-ttl' : 1000}
+                    arguments={"x-message-ttl": 1000}
                 )
                 queue_name = result.method.queue
 
@@ -155,7 +164,9 @@ class Service(BaseService):
 
                 channel.basic_consume(
                     queue=queue_name,
-                    on_message_callback=lambda ch, method, properties, body: self.handle_data(body),
+                    on_message_callback=lambda c, m, p, b: self.handle_data(
+                        b
+                    ),
                     auto_ack=True
                 )
 
@@ -166,9 +177,12 @@ class Service(BaseService):
                 log_traceback()
             time.sleep(2)
 
-
     def listen_udp(self):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self.sock = socket.socket(
+            socket.AF_INET,
+            socket.SOCK_DGRAM,
+            socket.IPPROTO_UDP
+        )
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         addr = config.get("seismic_addr", "224.168.1.1")
@@ -206,7 +220,6 @@ class Service(BaseService):
                 continue
             self.handle_data(data)
 
-
     def process(self):
         while True:
             try:
@@ -230,25 +243,37 @@ class Service(BaseService):
                         if not log:
                             continue
 
-                        log_path = os.path.join(self.log_dir, time.strftime("%Y-%m-%d.txt"))
+                        log_path = os.path.join(
+                            self.log_dir,
+                            time.strftime("%Y-%m-%d.txt")
+                        )
                         with open(log_path, "a") as f:
                             f.write(log)
 
                     if self.loki:
                         self.loki(message)
             except Exception:
-                log_traceback("Unhandled exception occured during message processing")
-
-
+                log_traceback("Unhandled exception during message processing")
 
     def relay_message(self, message):
-        mjson = message.json.replace("\n", "") + "\n" # one message per line
+        mjson = message.json.replace("\n", "") + "\n"  # one message per line
         for relay in self.relays:
             try:
-                result = self.session.post(relay, mjson.encode("ascii"), timeout=.3)
-            except:
-                logging.error(f"Exception: Unable to relay message to {relay}", handlers=[])
+                result = self.session.post(
+                    relay,
+                    mjson.encode("ascii"),
+                    timeout=.3
+                )
+            except Exception:
+                logging.error(
+                    f"Exception: Unable to relay message to {relay}",
+                    handlers=[]
+                )
                 continue
             if result.status_code >= 400:
-                logging.warning(f"Error {result.status_code}: Unable to relay message to {relay}", handlers=[])
+                err = f"Error {result.status_code}"
+                logging.warning(
+                    f"{err}: Unable to relay message to {relay}",
+                    handlers=[]
+                )
                 continue

@@ -2,8 +2,8 @@ class APIPlugin(object):
     def __init__(self):
         self.mime = "application/json"
         self.headers = {
-                "Connection" : "keep-alive",
-                "Cache-Control" :  "no-cache"
+                "Connection": "keep-alive",
+                "Cache-Control":  "no-cache"
             }
 
     def __call__(self, **kwargs):
@@ -15,4 +15,3 @@ class APIPlugin(object):
 
     def main(self, **kwargs):
         pass
-

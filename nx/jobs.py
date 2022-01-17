@@ -1,7 +1,8 @@
 import json
 import time
 
-from nebulacore import (
+from nebulacore import ( # noqa
+    ONLINE,
     PENDING,
     IN_PROGRESS,
     ABORTED,
@@ -16,7 +17,6 @@ from .messaging import messaging
 from .objects import Asset
 
 from nxtools import xml, logging, log_traceback
-from nebulacore.constants import *
 
 MAX_RETRIES = 3
 

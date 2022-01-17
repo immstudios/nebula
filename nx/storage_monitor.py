@@ -1,7 +1,9 @@
+import os
 import time
 import subprocess
 
-from nebulacore import *
+from nxtools import logging
+from nebulacore import config, Storage, storages, ismount
 
 from .db import DB
 from .agents import BaseAgent
@@ -9,7 +11,7 @@ from .agents import BaseAgent
 __all__ = ["StorageMonitor"]
 
 # id_storage: is_alive, check_interval, last_check
-storage_status = {k : [True, 2, 0] for k in storages}
+storage_status = {key: [True, 2, 0] for key in storages}
 
 
 class StorageMonitor(BaseAgent):
@@ -26,34 +28,49 @@ class StorageMonitor(BaseAgent):
 
             if storage:
                 storage_string = f"{config['site_name']}:{storage.id}"
-                storage_ident_path = os.path.join(storage.local_path,".nebula_root")
+                storage_ident_path = os.path.join(
+                    storage.local_path,
+                    ".nebula_root"
+                )
 
-                if not (os.path.exists(storage_ident_path) and storage_string in [line.strip() for line in open(storage_ident_path).readlines()]):
+                if not (
+                        os.path.exists(storage_ident_path)
+                        and storage_string in [
+                            line.strip() for line in open(
+                                storage_ident_path
+                            ).readlines()
+                        ]
+                        ):
                     try:
-                        f = open(storage_ident_path, "a")
-                        f.write(storage_string+"\n")
-                        f.close()
+                        with open(storage_ident_path, "a") as f:
+                            f.write(storage_string+"\n")
                     except Exception:
                         if self.first_run:
-                            logging.warning (f"{storage} is mounted, but read only")
+                            logging.warning(
+                                f"{storage} is mounted, but read only"
+                            )
                     else:
                         if self.first_run:
-                            logging.info (f"{storage} is mounted and root is writable")
+                            logging.info(
+                                f"{storage} is mounted and root is writable"
+                            )
                 continue
 
-            s,i,l = storage_status.get(id_storage, [True, 2, 0])
+            s, i, lcheck = storage_status.get(id_storage, [True, 2, 0])
 
-            if not s and time.time() - l < i:
+            if not s and time.time() - lcheck < i:
                 continue
 
             if s:
-                logging.info (f"{storage} is not mounted. Mounting...")
+                logging.info(f"{storage} is not mounted. Mounting...")
             if not os.path.exists(storage.local_path):
                 try:
                     os.mkdir(storage.local_path)
-                except:
+                except Exception:
                     if s:
-                        logging.error(f"Unable to create mountpoint for {storage}")
+                        logging.error(
+                            f"Unable to create mountpoint for {storage}"
+                        )
                     storage_status[id_storage] = [False, 240, time.time()]
                     continue
 
@@ -61,7 +78,7 @@ class StorageMonitor(BaseAgent):
 
             if ismount(storage.local_path):
                 logging.goodnews(f"{storage} mounted successfully")
-                if not id_storage in storage_status:
+                if id_storage not in storage_status:
                     storage_status[id_storage] = [True, 2, 0]
                 storage_status[id_storage][0] = True
                 storage_status[id_storage][1] = 2
@@ -73,7 +90,6 @@ class StorageMonitor(BaseAgent):
                 storage_status[id_storage][1] = min(240, check_interval*2)
 
             storage_status[id_storage][2] = time.time()
-
 
     def mount(self, storage):
         if storage["protocol"] == "samba":
@@ -88,7 +104,6 @@ class StorageMonitor(BaseAgent):
             if smbver:
                 smbopts["vers"] = smbver
 
-            host = storage["path"].split("/")[2]
             executable = "mount.cifs"
             if smbopts:
                 opts = " -o '{}'".format(",".join(
@@ -96,20 +111,16 @@ class StorageMonitor(BaseAgent):
                     ))
             else:
                 opts = ""
-
             cmd = f"mount.cifs {storage['path']} {storage.local_path}{opts}"
-
 
         elif storage["protocol"] == "nfs":
             executable = "mount.nfs"
             cmd = f"mount.nfs {storage['path']} {storage.local_path}"
-
-
         else:
             return
+
         proc = subprocess.Popen(cmd, shell=True)
-        while proc.poll() == None:
+        while proc.poll() is None:
             time.sleep(.1)
         if proc.returncode:
-            logging.debug(executable, ":", c.stderr().read().strip())
-
+            logging.debug(executable, ":", proc.stderr().read().strip())

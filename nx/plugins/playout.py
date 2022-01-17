@@ -1,9 +1,11 @@
+import os
 import threading
 
-from nx import *
+from nxtools import log_traceback
+from nx import storages
 
 
-class PlayoutPluginSlot(object):
+class PlayoutPluginSlot:
     def __init__(self, slot_type, slot_name, **kwargs):
         assert slot_type in ["action", "text", "number", "select"]
         self.type = slot_type
@@ -20,7 +22,8 @@ class PlayoutPluginSlot(object):
     def title(self):
         return self.opts.get("title", self.name.capitalize())
 
-class PlayoutPlugin(object):
+
+class PlayoutPlugin:
     def __init__(self, service):
         self.service = service
         self.playout_dir = os.path.join(
@@ -42,10 +45,10 @@ class PlayoutPlugin(object):
         result = []
         for id_slot, slot in enumerate(self.slots):
             s = {
-                    "id" : id_slot,
-                    "name" : slot.name,
-                    "type" : slot.type,
-                    "title" : slot.title,
+                    "id": id_slot,
+                    "name": slot.name,
+                    "type": slot.type,
+                    "title": slot.title,
                 }
             for key in slot.opts:
                 if key in s:
@@ -89,7 +92,6 @@ class PlayoutPlugin(object):
             thread.start()
         else:
             return False
-            logging.warning(f"Not starting {self} on_progress (busy)")
 
     def main_thread(self):
         try:

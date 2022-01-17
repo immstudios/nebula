@@ -1,10 +1,27 @@
 import cherrypy
-from nebula import *
 from cherryadmin import CherryAdminView
+
+from nxtools import logging, log_traceback, datestr2ts, tc2s
+from nx import Asset, DB, config
+from nx.api import api_set, api_actions
+
+from nebulacore.constants import (
+    STRING,
+    TEXT,
+    INTEGER,
+    NUMERIC,
+    BOOLEAN,
+    DATETIME,
+    TIMECODE,
+    REGIONS,
+    FRACTION,
+    SELECT,
+    LIST,
+    COLOR
+)
 
 
 def validate_data(context, asset, meta):
-    result = {}
     changed = False
     for key in meta:
         value = meta[key]
@@ -21,7 +38,7 @@ def validate_data(context, asset, meta):
                 try:
                     new_val = int(value)
                 except ValueError:
-                    return "Invalid value for key {}".format(key)
+                    return f"Invalid value for key {key}"
 
         elif meta_type["class"] == NUMERIC:
             if not value:
@@ -29,9 +46,9 @@ def validate_data(context, asset, meta):
             else:
                 try:
                     new_val = float(value)
-                    #todo chage float to int
+                    # TODO: chage float to int
                 except ValueError:
-                    return "Invalid value for key {}".format(key)
+                    return f"Invalid value for key {key}"
 
         elif meta_type["class"] == BOOLEAN:
             if value == "1":
@@ -48,7 +65,7 @@ def validate_data(context, asset, meta):
                 except Exception:
                     log_traceback()
                     return "Invalid value {} for key {}".format(value, key)
-                #TODO time
+                # TODO: time
 
         elif meta_type["class"] == TIMECODE:
             try:
@@ -68,7 +85,6 @@ def validate_data(context, asset, meta):
             new_val = value
 
         if asset[key] != new_val:
-            #context.message("{} {} -> {}".format(key, json.dumps(asset[key]), json.dumps(new_val)))
             changed = True
             try:
                 asset[key] = new_val
@@ -81,15 +97,14 @@ def validate_data(context, asset, meta):
     return None
 
 
-
 class ViewDetail(CherryAdminView):
     def build(self, *args, **kwargs):
         self["name"] = "detail"
         self["title"] = "Asset detail"
         self["js"] = [
-                "/static/js/vendor/resumable.js",
-                "/static/js/detail.js"
-                ]
+            "/static/js/vendor/resumable.js",
+            "/static/js/detail.js"
+        ]
 
         try:
             id_asset = int(args[-1].split("-")[0])
@@ -112,7 +127,6 @@ class ViewDetail(CherryAdminView):
             if not asset.id:
                 raise cherrypy.HTTPError(status=404, message="Asset not found")
 
-
         id_folder = int(kwargs.get("folder_change", asset["id_folder"]))
         if id_folder != asset["id_folder"]:
             asset["id_folder"] = id_folder
@@ -125,18 +139,18 @@ class ViewDetail(CherryAdminView):
                 response = api_set(
                         user=self["user"],
                         objects=[asset.id],
-                        data={k:asset[k] for k in kwargs},
+                        data={k: asset[k] for k in kwargs},
                         db=db
                     )
                 if response.is_success:
                     self.context.message("Asset saved")
                 else:
                     self.context.message(response.message, level="error")
-                asset = Asset(id_asset, db=db) # reload after update
+                asset = Asset(id_asset, db=db)  # reload after update
 
         try:
             fconfig = config["folders"][id_folder]
-        except:
+        except Exception:
             self.context.message("Unknown folder ID", level="error")
             fconfig = config["folders"][min(config["folders"].keys())]
 
@@ -151,6 +165,19 @@ class ViewDetail(CherryAdminView):
         self["title"] = asset["title"] if asset.id else "New asset"
         self["id_folder"] = id_folder
         self["main_keys"] = fconfig["meta_set"]
-        self["extended_keys"] = sorted([k for k in asset.meta if k in asset.meta_types and asset.meta_types[k]["ns"] not in ["f","q"] and k not in [l[0] for l in fconfig["meta_set"]]], key=lambda k: asset.meta_types[k]["ns"])
-        self["technical_keys"] = sorted([k for k in asset.meta if asset.meta_types[k]["ns"] in ["f","q"] ])
+        self["extended_keys"] = sorted(
+            [
+                k for k in asset.meta
+                if k in asset.meta_types
+                and asset.meta_types[k]["ns"] not in ["f", "q"]
+                and k not in [mlist[0] for mlist in fconfig["meta_set"]]
+            ],
+            key=lambda k: asset.meta_types[k]["ns"])
+
+        self["technical_keys"] = sorted(
+            [
+                k for k in asset.meta
+                if asset.meta_types[k]["ns"] in ["f", "q"]
+            ]
+        )
         self["actions"] = actions.data if actions.is_success else []

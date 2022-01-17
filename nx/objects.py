@@ -1,14 +1,32 @@
-from nebulacore import *
-from nebulacore.base_objects import *
+import os
 
-from .db import DB
+from nxtools import logging, s2tc, log_traceback
+
+from nebulacore import (
+    config,
+    storages,
+    ASSET,
+    ITEM,
+    BIN,
+    EVENT,
+    USER
+)
+
+from nebulacore.base_objects import (
+    AssetMixIn,
+    ItemMixIn,
+    BinMixIn,
+    EventMixIn,
+    UserMixIn
+)
+
 from .cache import cache
 from .server_object import ServerObject
 
 __all__ = ["Asset", "Item", "Bin", "Event", "User", "anonymous"]
 
 
-class ObjectHelper(object):
+class ObjectHelper:
     def __init__(self):
         self.classes = {}
 
@@ -19,17 +37,24 @@ class ObjectHelper(object):
         obj = self.classes[object_type](meta=meta)
         obj.invalidate()
 
+
 object_helper = ObjectHelper()
 
 
 class Asset(AssetMixIn, ServerObject):
     table_name = "assets"
-    db_cols = ["id_folder", "content_type", "media_type", "status", "version_of", "ctime", "mtime"]
+    db_cols = [
+        "id_folder",
+        "content_type",
+        "media_type",
+        "status",
+        "version_of",
+        "ctime",
+        "mtime"
+    ]
 
     def invalidate(self):
         # Invalidate view count
-        # TODO: Performance idea:
-        #  - invalidate only if view is affected (folder changed, inserted...)
         for id_view in config["views"]:
             view = config["views"][id_view]
             for id_folder in view.get("folders", config["folders"].keys()):
@@ -38,7 +63,7 @@ class Asset(AssetMixIn, ServerObject):
                     break
 
     def load_sidecar_metadata(self):
-        pass #TODO
+        pass
 
     def delete_children(self):
         if self.id:
@@ -55,9 +80,9 @@ class Asset(AssetMixIn, ServerObject):
             return ""
         if not hasattr(self, "_proxy_full_path"):
             self._proxy_full_path = os.path.join(
-                        storages[self.proxy_storage].local_path,
-                        self.proxy_path
-                    )
+                storages[self.proxy_storage].local_path,
+                self.proxy_path
+            )
         return self._proxy_full_path
 
     @property
@@ -83,11 +108,11 @@ class Asset(AssetMixIn, ServerObject):
         except KeyError:
             return None
 
-
     def get_playout_path(self, id_channel):
+        container = config["playout_channels"][id_channel]["playout_container"]
         return os.path.join(
                 config["playout_channels"][id_channel]["playout_dir"],
-                self.get_playout_name(id_channel) + "." + config["playout_channels"][id_channel]["playout_container"]
+                self.get_playout_name(id_channel) + "." + container
             )
 
     def get_playout_full_path(self, id_channel):
@@ -100,17 +125,16 @@ class Asset(AssetMixIn, ServerObject):
             )
 
 
-
 class Item(ItemMixIn, ServerObject):
     table_name = "items"
     db_cols = ["id_asset", "id_bin", "position"]
-    defaults = {"id_asset" : 0, "position" : 0}
+    defaults = {"id_asset": 0, "position": 0}
 
     @property
     def asset(self):
         if not hasattr(self, "_asset"):
             if not self.meta.get("id_asset", False):
-                self._asset = False # Virtual items
+                self._asset = False  # Virtual items
             else:
                 self._asset = Asset(self["id_asset"], db=self.db) or False
         return self._asset
@@ -142,8 +166,17 @@ class Bin(BinMixIn, ServerObject):
             if not self.id:
                 self._items = []
             else:
-                self.db.query("SELECT meta FROM items WHERE id_bin=%s ORDER BY position ASC, id ASC", [self.id])
-                self._items = [Item(meta=meta, db=self.db) for meta, in self.db.fetchall()]
+                self.db.query(
+                    """
+                    SELECT meta FROM items
+                    WHERE id_bin=%s ORDER BY position ASC, id ASC
+                    """,
+                    [self.id]
+                )
+                self._items = [
+                    Item(meta=meta, db=self.db)
+                    for meta, in self.db.fetchall()
+                ]
         return self._items
 
     @items.setter
@@ -158,7 +191,13 @@ class Bin(BinMixIn, ServerObject):
     @property
     def event(self):
         if not hasattr(self, "_event"):
-            self.db.query("SELECT meta FROM events WHERE id_magic=%s", [self.id]) #TODO: playout only
+            self.db.query(
+                """
+                SELECT meta FROM events
+                WHERE id_magic=%s
+                """,
+                [self.id]
+            )  # TODO: playout only
             try:
                 self._event = Event(meta=self.db.fetchall()[0][0])
             except IndexError:
@@ -191,7 +230,7 @@ class Event(EventMixIn, ServerObject):
     @property
     def bin(self):
         if not hasattr(self, "_bin"):
-            if not self["id_magic"]: # non-playout events
+            if not self["id_magic"]:  # non-playout events
                 self._bin = False
             else:
                 self._bin = Bin(self["id_magic"], db=self.db)
@@ -200,7 +239,7 @@ class Event(EventMixIn, ServerObject):
     @property
     def asset(self):
         if not hasattr(self, "_asset"):
-            #TODO: non-playout events (by channel_type)
+            # TODO: non-playout events (by channel_type)
             if not self["id_asset"]:
                 self._asset = False
             else:
@@ -212,15 +251,17 @@ class User(UserMixIn, ServerObject):
     table_name = "users"
     db_cols = ["login", "password"]
 
+
 #
 # Helpers
 #
 
-object_helper[ASSET] = Asset
-object_helper[ITEM]  = Item
-object_helper[BIN]   = Bin
-object_helper[EVENT] = Event
-object_helper[USER]  = User
 
-anonymous_data = {"login" : "Anonymous"}
+object_helper[ASSET] = Asset
+object_helper[ITEM] = Item
+object_helper[BIN] = Bin
+object_helper[EVENT] = Event
+object_helper[USER] = User
+
+anonymous_data = {"login": "Anonymous"}
 anonymous = User(meta=anonymous_data)

@@ -2,8 +2,7 @@ import time
 import fractions
 import threading
 
-from nxtools import *
-from nxtools.caspar import *
+from nxtools import logging
 
 from .oscserver import OSCServer
 
@@ -43,10 +42,10 @@ class CasparClip():
 
         else:
             return
-            print(address, args)
 
     def __len__(self):
         return self.producer != "empty"
+
 
 class CasparChannel():
     def __init__(self):
@@ -66,15 +65,16 @@ class CasparChannel():
                 layer = int(address[2])
             except (IndexError, ValueError):
                 return False
-            if not layer in self.layers:
+            if layer not in self.layers:
                 self.layers[layer] = {
-                    "background" :  CasparClip(self),
-                    "foreground" :  CasparClip(self)
+                    "background":  CasparClip(self),
+                    "foreground":  CasparClip(self)
                 }
             self.layers[layer][address[3]].handle_osc(address[4:], *args)
         else:
             print("CHAN ERR", address, args)
             return False
+
 
 class CasparOSCServer():
     def __init__(self, osc_port=5253):
@@ -110,7 +110,7 @@ class CasparOSCServer():
         except (KeyError, ValueError):
             return False
 
-        if not channel in self.channels:
+        if channel not in self.channels:
             self.channels[channel] = CasparChannel()
         self.channels[channel].handle_osc(address[3:], *args)
 

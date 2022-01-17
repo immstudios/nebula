@@ -1,13 +1,17 @@
 import cherrypy
 
-from nebula import *
-from nx.jobs import Job
 from cherryadmin import CherryAdminView
+
+from nx import (
+    DB,
+    Asset,
+    NebulaResponse
+)
+from nx.api import api_actions, api_send
 
 
 class ViewJobs(CherryAdminView):
     def build(self, *args, **kwargs):
-
         mode = "active"
         if len(args) > 1:
             if args[1] in ["finished", "failed"]:
@@ -28,7 +32,7 @@ class ViewJobs(CherryAdminView):
 
         if cherrypy.request.method == "POST":
             if id_asset and id_action:
-                #TODO: how to select restert_existing/running?
+                # TODO: how to select restert_existing/running?
                 response = api_send(
                        ids=[id_asset],
                        id_action=id_action,
@@ -40,24 +44,24 @@ class ViewJobs(CherryAdminView):
                 else:
                     self.context.message(response.message)
 
-            id_asset = id_action = 0 # do not use filter: show all active jobs to see queue
-
+            # do not use filter: show all active jobs to see queue
+            id_asset = id_action = 0
 
         if id_asset:
             db = DB()
             asset = Asset(id_asset, db=db)
             actions = api_actions(
-                        user=self["user"],
-                        db=db,
-                        ids=[id_asset]
-                    )
+                user=self["user"],
+                db=db,
+                ids=[id_asset]
+            )
         else:
             actions = NebulaResponse(404)
             asset = False
 
         self["name"] = "jobs"
         self["js"] = ["/static/js/jobs.js"]
-        self["title"] = mode.capitalize() +  " jobs"
+        self["title"] = mode.capitalize() + " jobs"
         self["mode"] = mode
         self["id_asset"] = id_asset
         self["asset"] = asset

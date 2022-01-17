@@ -1,5 +1,5 @@
 import os
-from nebula import storages
+from nebulacore import storages
 from nxtools import log_traceback, get_temp
 
 

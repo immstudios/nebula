@@ -1,8 +1,11 @@
 import time
 
-from nebula import (
+from nx import (
     BaseService,
     DB,
+)
+
+from nebulacore.constants import (
     IN_PROGRESS,
     RESTART,
     ABORTED
@@ -26,7 +29,7 @@ class Service(BaseService):
         db = DB()
         db.query(
             """
-            SELECT id, title, service_type, settings 
+            SELECT id, title, service_type, settings
             FROM actions ORDER BY id
             """
         )
@@ -103,7 +106,7 @@ class Service(BaseService):
                     continue
             except KeyError:
                 self.job.fail(
-                    f"Wrong encoder type specified for task {id_task}", 
+                    f"Wrong encoder type specified for task {id_task}",
                     critical=True
                 )
                 return

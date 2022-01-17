@@ -1,8 +1,10 @@
 import time
+import json
 import psycopg2
 
-from nebulacore import *
+from nxtools import log_traceback
 from promexp import Promexp
+from nebulacore import config, storages
 
 from .db import DB
 from .messaging import messaging
@@ -21,22 +23,31 @@ def update_host_info():
     for id_storage, storage in storages.items():
         mp2id[storage.local_path] = id_storage
 
-    p = Promexp(provider_settings={"casparcg":None})
+    p = Promexp(provider_settings={"casparcg": None})
     p.metrics.add("runtime_seconds", time.time() - NEBULA_START_TIME)
 
     p.collect()
     for metric in list(p.metrics.data.keys()):
         mname, tags = metric
-        if mname in ["storage_bytes_total", "storage_bytes_free", "storage_usage"]:
+        if mname in [
+            "storage_bytes_total",
+            "storage_bytes_free",
+            "storage_usage"
+        ]:
             id_storage = mp2id.get(tags["mountpoint"])
             if id_storage is None:
                 continue
             value = p.metrics.data[metric]
             del (p.metrics.data[metric])
-            p.metrics.add(f"shared_{mname}", value, **{"id" : id_storage, "title" : storages[id_storage].title})
+            p.metrics.add(
+                f"shared_{mname}",
+                value,
+                id=id_storage,
+                title=storages[id_storage].title
+            )
 
     status = {
-        "metrics" : p.metrics.dump()
+        "metrics": p.metrics.dump()
     }
 
     db = DB()
@@ -52,7 +63,13 @@ class SystemMonitor(BaseAgent):
         self.last_update = 0
         db = DB()
         try:
-            db.query("INSERT INTO hosts(hostname, last_seen) VALUES (%s, %s) ON CONFLICT DO NOTHING", [config["host"], time.time()])
+            db.query(
+                """
+                INSERT INTO hosts(hostname, last_seen)
+                VALUES (%s, %s) ON CONFLICT DO NOTHING
+                """,
+                [config["host"], time.time()]
+            )
         except psycopg2.IntegrityError:
             pass
         else:

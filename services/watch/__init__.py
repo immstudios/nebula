@@ -1,17 +1,6 @@
 import os
 import time
 
-from nebula import (
-    DB,
-    storages,
-    Asset,
-    config,
-    BaseService,
-    file_types,
-    asset_by_path
-)
-from nebula import FILE, CREATING
-
 from nxtools import (
     s2time,
     logging,
@@ -19,6 +8,16 @@ from nxtools import (
     get_base_name,
     log_traceback
 )
+
+from nx import (
+    DB,
+    Asset,
+    BaseService,
+    asset_by_path
+)
+
+from nebulacore import config, storages
+from nebulacore.constants import FILE, CREATING, file_types
 
 
 class Service(BaseService):
@@ -52,7 +51,7 @@ class Service(BaseService):
 
             if not os.path.exists(watchfolder_path):
                 logging.warning(
-                    "Skipping non-existing watchfolder", 
+                    "Skipping non-existing watchfolder",
                     watchfolder_path
                 )
                 continue

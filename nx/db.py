@@ -1,5 +1,7 @@
 __all__ = ["DB"]
 
+from nxtools import log_traceback, critical_error
+
 try:
     import psycopg2
 except ImportError:
@@ -8,18 +10,23 @@ except ImportError:
 
 from nebulacore import config
 
+
 class DB(object):
     def __init__(self, **kwargs):
         self.pmap = {
-                "host" : "db_host",
-                "user" : "db_user",
-                "password" : "db_pass",
-                "database" : "db_name",
-            }
+            "host": "db_host",
+            "user": "db_user",
+            "password": "db_pass",
+            "database": "db_name",
+        }
 
         self.settings = {
-                key : kwargs.get(self.pmap[key], config[self.pmap[key]]) for key in self.pmap
-            }
+            key: kwargs.get(
+                self.pmap[key],
+                config[self.pmap[key]]
+            )
+            for key in self.pmap
+        }
 
         self.conn = psycopg2.connect(**self.settings)
         self.cur = self.conn.cursor()
@@ -48,4 +55,3 @@ class DB(object):
 
     def __len__(self):
         return True
-

@@ -16,6 +16,7 @@ from nebulacore.constants import (
 
 __all__ = ["api_system"]
 
+
 def api_system(**kwargs):
     """
     Returns system status and controls services
@@ -91,14 +92,14 @@ def api_system(**kwargs):
         db.query("SELECT id, service_type, host, title, autostart, state, last_seen FROM services ORDER BY id ASC")
         for id, service_type, host, title, autostart, state, last_seen in db.fetchall():
             service = {
-                    "id" : id,
-                    "type" : service_type,
-                    "host" : host,
-                    "title" : title,
-                    "autostart" : autostart,
-                    "state" : state,
-                    "last_seen" : last_seen,
-                    "last_seen_before" : time.time() - last_seen
+                    "id": id,
+                    "type": service_type,
+                    "host": host,
+                    "title": title,
+                    "autostart": autostart,
+                    "state": state,
+                    "last_seen": last_seen,
+                    "last_seen_before": time.time() - last_seen
                 }
             services.append(service)
         result["services"] = services

@@ -1,4 +1,8 @@
-from nebulacore import *
+import json
+
+from nxtools import logging, slugify
+
+from nebulacore import meta_types
 from nebulacore.base_objects import BaseObject
 
 from .db import DB
@@ -7,33 +11,36 @@ from .messaging import messaging
 
 __all__ = ["ServerObject"]
 
+
 def create_ft_index(meta):
     ft = {}
     if "subclips" in meta:
         weight = 8
-        for sc in [k.get("title","") for k in meta["subclips"]]:
+        for sc in [k.get("title", "") for k in meta["subclips"]]:
             try:
                 for word in slugify(sc, make_set=True, min_length=3):
-                    if not word in ft:
+                    if word not in ft:
                         ft[word] = weight
                     else:
                         ft[word] = max(ft[word], weight)
             except Exception:
-                logging.error(f"Unable to slugify key {key} with value {meta[key]}")
+                logging.error("Unable to slugify subclips data")
     for key in meta:
-        if not key in meta_types:
+        if key not in meta_types:
             continue
         weight = meta_types[key]["fulltext"]
         if not weight:
             continue
         try:
             for word in slugify(meta[key], make_set=True, min_length=3):
-                if not word in ft:
+                if word not in ft:
                     ft[word] = weight
                 else:
                     ft[word] = max(ft[word], weight)
         except Exception:
-            logging.error(f"Unable to slugify key {key} with value {meta[key]}")
+            logging.error(
+                f"Unable to slugify key {key} with value {meta[key]}"
+            )
     return ft
 
 
@@ -64,7 +71,10 @@ class ServerObject(BaseObject):
         try:
             self.meta = self.db.fetchall()[0][0]
         except IndexError:
-            logging.error(f"Unable to load {self.__class__.__name__} ID:{id}. Object does not exist")
+            logging.error(
+                f"Unable to load {self.__class__.__name__}"
+                f"ID:{id}. Object does not exist"
+            )
             return False
         self.cache()
 
@@ -84,11 +94,13 @@ class ServerObject(BaseObject):
         self.text_changed = self.meta_changed = False
         self.is_new = False
         if kwargs.get("notify", True):
-            messaging.send("objects_changed", objects=[self.id], object_type=self.object_type)
-
+            messaging.send(
+                "objects_changed",
+                objects=[self.id],
+                object_type=self.object_type
+            )
 
     def _insert(self, **kwargs):
-        meta = json.dumps(self.meta)
         cols = []
         vals = []
         if self.id:
@@ -108,7 +120,10 @@ class ServerObject(BaseObject):
                         ", ".join(["%s"]*len(cols))
                     )
         else:
-            query = f"INSERT INTO {self.table_name} DEFAULT VALUES RETURNING id"
+            query = f"""
+                INSERT INTO {self.table_name}
+                DEFAULT VALUES RETURNING id
+            """
         self.db.query(query, vals)
 
         if not self.id:
@@ -117,7 +132,6 @@ class ServerObject(BaseObject):
                     f"UPDATE {self.table_name} SET meta=%s WHERE id=%s",
                     [json.dumps(self.meta), self.id]
                 )
-
 
     def _update(self, **kwargs):
         assert self.id > 0
@@ -134,17 +148,23 @@ class ServerObject(BaseObject):
             )
         self.db.query(query, vals+[self.id])
 
-
     def update_ft_index(self, is_new=False):
         if not is_new:
-            self.db.query("DELETE FROM ft WHERE object_type=%s AND id=%s", [self.object_type_id, self.id])
+            self.db.query(
+                "DELETE FROM ft WHERE object_type=%s AND id=%s",
+                [self.object_type_id, self.id]
+            )
         ft = create_ft_index(self.meta)
         if not ft:
             return
         args = [(self.id, self.object_type_id, ft[word], word) for word in ft]
         tpls = ','.join(['%s'] * len(args))
-        self.db.query(f"INSERT INTO ft (id, object_type, weight, value) VALUES {tpls}", args)
-
+        self.db.query(
+            f"""
+            INSERT INTO ft (id, object_type, weight, value)
+            VALUES {tpls}""",
+            args
+        )
 
     @property
     def cache_key(self):
@@ -163,7 +183,6 @@ class ServerObject(BaseObject):
         """Invalidate all cache objects which references this one"""
         pass
 
-
     def delete_children(self):
         pass
 
@@ -173,6 +192,12 @@ class ServerObject(BaseObject):
         logging.info(f"Deleting {self}")
         cache.delete(self.cache_key)
         self.delete_children()
-        self.db.query("DELETE FROM {} WHERE id=%s".format(self.table_name), [self.id])
-        self.db.query("DELETE FROM ft WHERE object_type=%s AND id=%s", [self.object_type_id, self.id])
+        self.db.query(
+            "DELETE FROM {} WHERE id=%s".format(self.table_name),
+            [self.id]
+        )
+        self.db.query(
+            "DELETE FROM ft WHERE object_type=%s AND id=%s",
+            [self.object_type_id, self.id]
+        )
         self.db.commit()

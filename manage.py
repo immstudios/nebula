@@ -18,15 +18,16 @@
 
 import os
 import sys
+import rex
 
 orig_dir = os.getcwd()
 if orig_dir != "/opt/nebula":
     os.chdir("/opt/nebula")
 
-from nebula import *
-logging.user = "nebula"
-
+from nxtools import logging, log_traceback, critical_error
 from cli import *
+
+logging.user = "nebula"
 
 if __name__ == "__main__":
     command = os.path.basename(sys.argv[0])
@@ -39,14 +40,14 @@ if __name__ == "__main__":
             critical_error("This command takes at least one argument")
         module = sys.argv[1]
         args = sys.argv[2:]
-        if not module in modules:
+        if module not in modules:
             critical_error("Unknown module '{}'".format(module))
 
     try:
         modules[module](*args)
     except SystemExit:
         pass
-    except:
+    except Exception:
         log_traceback()
 
 os.chdir(orig_dir)

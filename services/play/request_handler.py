@@ -5,7 +5,7 @@ import urllib.parse
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from nebula import NebulaResponse
+from nx import NebulaResponse
 from nxtools import logging, log_traceback
 
 
@@ -42,12 +42,12 @@ class PlayoutRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         ctype = self.headers.get("content-type")
         if ctype != "application/x-www-form-urlencoded":
-            self.error(400, "Play service received a bad request. Expected x-www-form-urlencoded data.")
+            self.error(400, "Play service received a bad request.")
             return
 
         length = int(self.headers.get('content-length'))
         postvars = urllib.parse.parse_qs(
-            self.rfile.read(length), 
+            self.rfile.read(length),
             keep_blank_values=1
         )
 

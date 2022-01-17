@@ -2,9 +2,12 @@ from nx import (
     Asset,
     NebulaResponse,
     DB,
+    anonymous
+)
+
+from nebulacore.constants import (
     ERROR_UNAUTHORISED,
     ERROR_BAD_REQUEST,
-    anonymous
 )
 
 from nxtools import xml, log_traceback
@@ -33,7 +36,7 @@ def api_actions(**kwargs):
 
     db.query("SELECT id, title, settings FROM actions ORDER BY id ASC")
     for id, title, settings in db.fetchall():
-        allow = False
+        allow = False  # noqa
         try:
             cond = xml(settings).find("allow_if").text
         except Exception:
@@ -41,7 +44,7 @@ def api_actions(**kwargs):
             continue
 
         for id_asset in objects:
-            asset = Asset(id_asset, db=db)
+            asset = Asset(id_asset, db=db)  # noqa
             if not eval(cond):
                 break
         else:

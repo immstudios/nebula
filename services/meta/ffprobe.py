@@ -1,9 +1,11 @@
 import difflib
 
+from nxtools import slugify, logging, get_base_name
+
 from nx.mediaprobe import mediaprobe
 
-from nebula import (meta_types, SELECT)
-from nxtools import slugify, logging, get_base_name
+from nebulacore import meta_types
+from nebulacore.constants import SELECT
 
 
 def string2cs(key, value):

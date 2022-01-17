@@ -1,6 +1,6 @@
 import os
 
-from nebula import storages, NebulaResponse
+from nebulacore import storages, NebulaResponse
 
 from nxtools import log_traceback, logging
 from nxtools.media import FFMPEG

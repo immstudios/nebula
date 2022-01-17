@@ -1,23 +1,44 @@
+import json
 import string
 import time
 
-from nx import *
+from nxtools import logging, slugify
+
+from nx import (
+    NebulaResponse,
+    cache,
+    DB,
+    anonymous,
+    Asset,
+    Item,
+    Bin,
+    Event,
+    User
+)
+from nebulacore import config, meta_types
+
+from nebulacore.constants import (
+    INTEGER, NUMERIC, DATETIME, TIMECODE, COLOR,
+    ASSET, ERROR_UNAUTHORISED
+)
+
 
 __all__ = ["api_get", "api_browse", "get_objects"]
+
 
 def get_objects(ObjectType, **kwargs):
     """objects lookup function. To be used inside services"""
 
-    db          = kwargs.get("db", DB())
-    raw_conds   = kwargs.get("conds", [])
-    fulltext    = kwargs.get("fulltext", False)
-    result_type = kwargs.get("result", False)
-    limit       = kwargs.get("limit", False)
-    offset      = kwargs.get("offset", False)
-    order       = kwargs.get("order", False)
-    id_view     = kwargs.get("id_view", False)
-    objects     = kwargs.get("objects", [])
-    id          = kwargs.get("id")
+    db = kwargs.get("db", DB())
+    raw_conds = kwargs.get("conds", [])
+    fulltext = kwargs.get("fulltext", False)
+    # result_type = kwargs.get("result", False)
+    limit = kwargs.get("limit", False)
+    offset = kwargs.get("offset", False)
+    order = kwargs.get("order", False)
+    id_view = kwargs.get("id_view", False)
+    objects = kwargs.get("objects", [])
+    id = kwargs.get("id")
 
     if not objects:
         if id:
@@ -36,7 +57,6 @@ def get_objects(ObjectType, **kwargs):
         if not order_trend.lower() in ["asc", "desc"]:
             order_trend = "ASC"
 
-
         if order_key in ObjectType.db_cols + ["id"]:
             order = f"{order_key} {order_trend}"
         else:
@@ -53,29 +73,29 @@ def get_objects(ObjectType, **kwargs):
             else:
                 order = f"meta->>'{order_key}' {order_trend}"
 
-
-
     if objects:
-        l = {"count": len(objects)}
+        carr = {"count": len(objects)}
         # We do not do database lookup. Just returning objects by their ids
         for id_object in objects:
-            yield l, ObjectType(id_object, db=db)
+            yield carr, ObjectType(id_object, db=db)
         return
 
-
-    if id_view and id_view in config["views"] and ObjectType.object_type_id == ASSET:
+    if id_view \
+            and id_view in config["views"] \
+            and ObjectType.object_type_id == ASSET:
         view_config = config["views"][id_view]
         for key, col in [
-                    ["folders", "id_folder"],
-                    ["media_types", "media_type"],
-                    ["content_types", "content_type"],
-                    ["states", "status"],
-                ]:
+            ["folders", "id_folder"],
+            ["media_types", "media_type"],
+            ["content_types", "content_type"],
+            ["states", "status"],
+        ]:
             if key in view_config and view_config[key]:
                 if len(view_config[key]) == 1:
                     raw_conds.append(f"{col}={view_config[key][0]}")
                 else:
-                    raw_conds.append("{} IN ({})".format(col, ",".join([str(v) for v in view_config[key]])))
+                    viewlist = ",".join([str(v) for v in view_config[key]])
+                    raw_conds.append(f"{col} IN ({viewlist})")
         for cond in view_config.get("conds", []):
             raw_conds.append(cond)
 
@@ -88,29 +108,45 @@ def get_objects(ObjectType, **kwargs):
         else:
             conds.append("meta->>"+cond)
 
-
     view_count = 0
     if fulltext:
         do_count = True
         if ":" in fulltext:
-            key, value = fulltext.split(":",1)
+            key, value = fulltext.split(":", 1)
             key = key.strip()
             value = value.strip().lower()
-            value = value.replace("%", "%%").replace("*", "%").replace("?", "_")
+            value = value\
+                .replace("%", "%%") \
+                .replace("*", "%") \
+                .replace("?", "_")
             conds.append("meta->>'{}' ILIKE '{}'".format(key, value))
         else:
-            ft = slugify(fulltext, make_set=True, slug_whitelist=string.ascii_letters+string.digits+"%*_", split_chars=" ")
-            logging.debug(ft)
+            ft = slugify(
+                fulltext,
+                make_set=True,
+                slug_whitelist=string.ascii_letters+string.digits+"%*_",
+                split_chars=" "
+            )
             for value in ft:
-                value = value.replace("%", "%%").replace("*", "%").replace("?", "_")
+                value = value \
+                    .replace("%", "%%") \
+                    .replace("*", "%") \
+                    .replace("?", "_")
                 if not value.endswith("%"):
                     value += "%"
-                conds.append("id IN (SELECT id FROM ft WHERE object_type={} AND value LIKE '{}')".format(ObjectType.object_type_id, value))
+                conds.append(
+                    f"""
+                    id IN (
+                        SELECT id FROM ft
+                        WHERE object_type={ObjectType.object_type_id}
+                        AND value LIKE '{value}')
+                    """
+                )
     else:
         try:
-            view_count = int(cache.load("view-count-{}".format(id_view)))
-        except:
-            cache.delete("view-count-{}".format(id_view))
+            view_count = int(cache.load(f"view-count-{id_view}"))
+        except Exception:
+            cache.delete(f"view-count-{id_view}")
             view_count = False
         if view_count:
             do_count = False
@@ -120,7 +156,7 @@ def get_objects(ObjectType, **kwargs):
     conds = " WHERE " + " AND ".join(conds) if conds else ""
     counter = ", count(id) OVER() AS full_count" if do_count else ", 0"
 
-    q = "SELECT id, meta{} FROM {}{}".format(counter, ObjectType.table_name, conds)
+    q = f"SELECT id, meta{counter} FROM {ObjectType.table_name}{conds}"
     q += " ORDER BY {}".format(order) if order else ""
     q += " LIMIT {}".format(limit) if limit else ""
     q += " OFFSET {}".format(offset) if offset else ""
@@ -137,22 +173,22 @@ def get_objects(ObjectType, **kwargs):
 
 
 def api_browse(**kwargs):
-    db = kwargs.get("db", DB())
-    user = kwargs.get("user", anonymous)
+    # db = kwargs.get("db", DB())
+    # user = kwargs.get("user", anonymous)
 
     params = {
-            "id_view" : int(kwargs.get("v", min(config["views"].keys()))),
-            "limit" : int(kwargs.get("l", 50)),
-            "offset" : (max(0,int(kwargs.get("p", 1)) - 1))*50,
-            "fulltext" : kwargs.get("q", "")
+            "id_view": int(kwargs.get("v", min(config["views"].keys()))),
+            "limit": int(kwargs.get("l", 50)),
+            "offset": (max(0, int(kwargs.get("p", 1)) - 1))*50,
+            "fulltext": kwargs.get("q", "")
         }
 
     result = {
-        "response" : 200,
-        "message" : "OK",
-        "data" : [],
-        "id_view" : params["id_view"],
-        "count" : 0
+        "response": 200,
+        "message": "OK",
+        "data": [],
+        "id_view": params["id_view"],
+        "count": 0
     }
 
     columns = config["views"][params["id_view"]]["columns"]
@@ -160,10 +196,10 @@ def api_browse(**kwargs):
     for response, obj in get_objects(Asset, **params):
         result["count"] |= response["count"]
         row = {
-            "_id" : obj.id,
-            "_id_folder" : obj["id_folder"],
-            "_status" : obj["status"],
-            "_content_type" : obj["content_type"],
+            "_id": obj.id,
+            "_id_folder": obj["id_folder"],
+            "_status": obj["status"],
+            "_content_type": obj["content_type"],
         }
         for col in columns:
             row[col] = obj.show(col)
@@ -171,16 +207,15 @@ def api_browse(**kwargs):
     return result
 
 
-
 def api_get(**kwargs):
-    db            = kwargs.get("db", DB())
-    user          = kwargs.get("user", anonymous)
+    # db = kwargs.get("db", DB())
+    user = kwargs.get("user", anonymous)
 
-    object_type   = kwargs.get("object_type", "asset")
-    result_type   = kwargs.get("result", False)
+    object_type = kwargs.get("object_type", "asset")
+    result_type = kwargs.get("result", False)
     result_format = kwargs.get("result_format", False)
-    result_lang   = kwargs.get("language", config.get("language", "en"))
-    as_folder     = kwargs.get("as_folder", None)
+    result_lang = kwargs.get("language", config.get("language", "en"))
+    as_folder = kwargs.get("as_folder", None)
 
     if not user:
         return NebulaResponse(ERROR_UNAUTHORISED)
@@ -188,25 +223,25 @@ def api_get(**kwargs):
     start_time = time.time()
 
     ObjectType = {
-                "asset" : Asset,
-                "item"  : Item,
-                "bin"   : Bin,
-                "event" : Event,
-                "user"  : User
+                "asset": Asset,
+                "item": Item,
+                "bin": Bin,
+                "event": Event,
+                "user": User
             }[object_type]
 
     result = {
-            "message" : "Incomplete query",
-            "response" : 500,
-            "data" : [],
-            "count" : 0
+            "message": "Incomplete query",
+            "response": 500,
+            "data": [],
+            "count": 0
         }
 
     rformat = None
     if result_format:
         rformat = {
-                "result" : result_format,
-                "language" : result_lang
+                "result": result_format,
+                "language": result_lang
             }
 
     if type(result_type) == list:
@@ -244,21 +279,20 @@ def api_get(**kwargs):
             if as_folder is not None:
                 obj["id_folder"] = as_folder
             row = {
-                "id" : obj.id,
-                "id_folder" : obj["id_folder"],
-                "qc/state" : obj["qc/state"],
-                "proxy_url" : obj.proxy_url,
-                "title" : obj["title"],
-                "duration" : obj["duration"],
-                "mark_in" : obj["mark_in"],
-                "mark_out" : obj["mark_out"],
-                "form" : {}
+                "id": obj.id,
+                "id_folder": obj["id_folder"],
+                "qc/state": obj["qc/state"],
+                "proxy_url": obj.proxy_url,
+                "title": obj["title"],
+                "duration": obj["duration"],
+                "mark_in": obj["mark_in"],
+                "mark_out": obj["mark_out"],
+                "form": {}
             }
-            for key, s in config["folders"][obj["id_folder"]]["meta_set"]:
+            for key, _ in config["folders"][obj["id_folder"]]["meta_set"]:
                 row["form"][key] = obj.show(key, result="full")
 
             result["data"].append(row)
-
 
     elif result_type == "ids":
         # Result is an array of matching object IDs

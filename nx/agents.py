@@ -1,9 +1,12 @@
 import time
 import threading
 
+from nxtools import logging, log_traceback, critical_error
+
 from nebulacore import *
 
 __all__ = ["BaseAgent"]
+
 
 class BaseAgent():
     def __init__(self, once=False):
@@ -13,7 +16,7 @@ class BaseAgent():
         self.should_run = True
         try:
             self.on_init()
-        except:
+        except Exception:
             log_traceback()
             critical_error(f"Unable to start {self.__class__.__name__}")
         if once:
@@ -37,7 +40,7 @@ class BaseAgent():
         while self.should_run:
             try:
                 self.main()
-            except:
+            except Exception:
                 log_traceback()
             self.first_run = False
             time.sleep(2)

@@ -2,7 +2,7 @@ NEBULA
 ======
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/nebulabroadcast/nebula?style=for-the-badge)
-![Maintenance](https://img.shields.io/maintenance/yes/2021?style=for-the-badge)
+![Maintenance](https://img.shields.io/maintenance/yes/2022?style=for-the-badge)
 ![Last commit](https://img.shields.io/github/last-commit/immstudios/nebula?style=for-the-badge)
 ![Python version](https://img.shields.io/badge/python-3.7-blue?style=for-the-badge)
 
@@ -53,7 +53,7 @@ Each clip in the rundown is picked by its editorial format, genre, tempo, atmosp
 
 ### Playout control
 
-For linear broadcasting, Nebula can control 
+For linear broadcasting, Nebula can control
 [CasparCG](https://casparcg.com), [VLC](https://videolan.org) or [Conti](https://github.com/immstudios/conti).
 Broadcasting can run autonomously with and option of starting blocks at a specified time.
 
@@ -102,8 +102,8 @@ Installation
 ------------
 
 See [nebula-setup](https://github.com/nebulabroadcast/nebula-setup)
-for installation scripts and instructions. 
-If you already have a running instance and you are about to add another node, 
+for installation scripts and instructions.
+If you already have a running instance and you are about to add another node,
 you may use `support/install_prerequisites.sh` script to install required Python libraries and tools.
 
  - After initial setup, use `make install` command to create symlinks for command-line utilities.
@@ -126,7 +126,7 @@ Command line tools
  - `nxs {[command:start|stop|auto|noauto] id_service:int}` services monitor and control panel
  - `nxt [tool_name:string]` plug-in runner
 
-  
+
 Legal
 -----
 
@@ -141,8 +141,8 @@ the Free Software Foundation, either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
 
 Need help?
 ----------
