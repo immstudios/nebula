@@ -1,13 +1,20 @@
-from .common import *
+import time
+from nxtools import s2words, critical_error
+
+from nx.db import DB
+from nx.enum import ServiceState
+from cli.common import colored
+
 
 def format_state(state):
     return {
-            STOPPED  : colored.format(31, "STOPPED"),
-            STARTED  : colored.format(32, "STARTED"),
-            STARTING : colored.format(33, "STARTING"),
-            STOPPING : colored.format(33, "STOPPING"),
-            KILL     : colored.format(33, "KILL"),
-        }[state]
+        ServiceState.STOPPED: colored.format(31, "STOPPED"),
+        ServiceState.STARTED: colored.format(32, "STARTED"),
+        ServiceState.STARTING: colored.format(33, "STARTING"),
+        ServiceState.STOPPING: colored.format(33, "STOPPING"),
+        ServiceState.KILL: colored.format(33, "KILL"),
+    }[state]
+
 
 def show_services(db):
     db.query("SELECT id, service_type, host, title, autostart, state, last_seen FROM services ORDER BY id")
@@ -25,11 +32,11 @@ def show_services(db):
                 "state" : format_state(state),
                 "warning": "NOT RESPONDING FOR {}".format(s2words(last_seen_age)) if last_seen_age > 60 else ""
             }
-        print ("{id:<4}{type:<12}{title:<20}{host:<15}{auto:<6}{state} {warning}".format(**data))
+        print("{id:<4}{type:<12}{title:<20}{host:<15}{auto:<6}{state} {warning}".format(**data))
 
 
 def s(*args):
-    print
+    print()
     db = DB()
 
     if len(args) >= 2:

@@ -1,15 +1,11 @@
+__all__ = ["api_send"]
+
 from nxtools import logging
 
-from nx import NebulaResponse, anonymous
+from nx import NebulaResponse, DB
 from nx.jobs import send_to
+from nx.objects import anonymous
 
-from nebulacore.constants import (
-    ERROR_BAD_REQUEST,
-    ERROR_ACCESS_DENIED,
-    SUCCESS_ACCEPTED
-)
-
-__all__ = ["api_send"]
 
 def api_send(**kwargs):
     objects = kwargs.get("objects") or kwargs.get("ids", []) #TODO: ids is deprecated. use objects instead
@@ -21,17 +17,17 @@ def api_send(**kwargs):
     restart_running = kwargs.get("restart_running", False)
 
     if not user.has_right("job_control", anyval=True):
-        return NebulaResponse(ERROR_ACCESS_DENIED, "You are not allowed to execute this action")
+        return NebulaResponse(403, "You are not allowed to execute this action")
         #TODO: Better ACL
 
     if not id_action:
-        return NebulaResponse(ERROR_BAD_REQUEST, "No valid action selected")
+        return NebulaResponse(400, "No valid action selected")
 
     if not objects:
-        return NebulaResponse(ERROR_BAD_REQUEST,  "No asset selected")
+        return NebulaResponse(400,  "No asset selected")
 
     if not user.has_right("job_control", id_action):
-        return NebulaResponse(ERROR_ACCESS_DENIED, "You are not allowed to start this action")
+        return NebulaResponse(400, "You are not allowed to start this action")
 
     logging.info("{} is starting action {} for the following assets: {}".format(user, id_action, ", ".join([str (i) for i in  objects]) ))
 
@@ -46,5 +42,5 @@ def api_send(**kwargs):
                 db=db
             )
 
-    return NebulaResponse(SUCCESS_ACCEPTED, "Starting {} job{}".format(len(objects), "s" if len(objects) > 1 else ""))
+    return NebulaResponse(200, "Starting {} job{}".format(len(objects), "s" if len(objects) > 1 else ""))
 

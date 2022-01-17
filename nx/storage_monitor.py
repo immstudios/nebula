@@ -1,14 +1,15 @@
+__all__ = ["StorageMonitor"]
+
 import os
 import time
 import subprocess
 
 from nxtools import logging
-from nebulacore import config, Storage, storages, ismount
 
-from .db import DB
-from .agents import BaseAgent
+from nx.db import DB
+from nx.core import config, storages, Storage, ismount
+from nx.agents import BaseAgent
 
-__all__ = ["StorageMonitor"]
 
 # id_storage: is_alive, check_interval, last_check
 storage_status = {key: [True, 2, 0] for key in storages}

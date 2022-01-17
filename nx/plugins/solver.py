@@ -3,14 +3,9 @@ import imp
 
 from nxtools import logging, format_time, log_traceback, FileObject
 
-from nx import (
-    NebulaResponse,
-    DB,
-    Bin,
-    Item,
-    Event,
-    bin_refresh
-)
+from nx import NebulaResponse, DB
+from nx.objects import Bin, Item, Event
+from nx.helpers import bin_refresh
 from nx.plugins.common import get_plugin_path
 
 

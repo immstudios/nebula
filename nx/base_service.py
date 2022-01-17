@@ -3,10 +3,9 @@ import time
 
 from nxtools import logging, log_traceback
 
-from nebulacore import config
-from nebulacore.constants import STOPPED, STOPPING, KILL
-
-from .db import DB
+from nx.core import config
+from nx.enum import ServiceState
+from nx.db import DB
 
 
 __all__ = ["BaseService"]
@@ -68,7 +67,7 @@ class BaseService(object):
         try:
             state = db.fetchall()[0][0]
         except IndexError:
-            state = KILL
+            state = ServiceState.KILL
         else:
             if state == 0:
                 state = 1
@@ -78,5 +77,9 @@ class BaseService(object):
             )
             db.commit()
 
-        if state in [STOPPED, STOPPING, KILL]:
+        if state in [
+                ServiceState.STOPPED,
+                ServiceState.STOPPING,
+                ServiceState.KILL
+        ]:
             self.shutdown()

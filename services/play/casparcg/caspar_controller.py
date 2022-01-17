@@ -1,19 +1,14 @@
 __all__ = ["CasparController"]
 
-import os
 import time
-import telnetlib
+import _thread as thread
 
-try:
-    import _thread as thread
-except ImportError:
-    import thread
-
-
-from nebula import *
-
+from nxtools import logging, log_traceback
 from nxtools.caspar import CasparCG
-from ccginfo import *
+from ccginfo import get_info_parser
+
+from nx.core import NebulaResponse
+from nx.objects import Item
 
 
 class CasparController(object):
@@ -22,10 +17,10 @@ class CasparController(object):
     def __init__(self, parent):
         self.parent = parent
 
-        self.caspar_host         = parent.channel_config.get("caspar_host", "localhost")
-        self.caspar_port         = int(parent.channel_config.get("caspar_port", 5250))
-        self.caspar_channel      = int(parent.channel_config.get("caspar_channel", 1))
-        self.caspar_feed_layer   = int(parent.channel_config.get("caspar_feed_layer", 10))
+        self.caspar_host = parent.channel_config.get("caspar_host", "localhost")
+        self.caspar_port = int(parent.channel_config.get("caspar_port", 5250))
+        self.caspar_channel = int(parent.channel_config.get("caspar_channel", 1))
+        self.caspar_feed_layer = int(parent.channel_config.get("caspar_feed_layer", 10))
 
         self.current_item = False
         self.current_fname = False
@@ -34,9 +29,9 @@ class CasparController(object):
         self.cueing = False
         self.force_cue = False
 
-        self.paused   = False
-        self.loop     = False
-        self.stalled  = False
+        self.paused = False
+        self.loop = False
+        self.stalled = False
 
         self.fpos = self.fdur = 0
         self.cued_in = self.cued_out = self.current_in = self.current_out = 0
@@ -74,7 +69,6 @@ class CasparController(object):
 
     def query(self, *args, **kwargs):
         return self.cmdc.query(*args, **kwargs)
-
 
     @property
     def fps(self):
@@ -149,7 +143,6 @@ class CasparController(object):
         self.fpos = info["pos"]
         self.fdur = info["dur"]
 
-
         #
         # Playlist advancing
         #
@@ -158,10 +151,10 @@ class CasparController(object):
 
         if self.cueing and self.cueing == current_fname and not cued_fname and not self.parent.cued_live:
             logging.warning("Using short clip workaround")
-            self.current_item  = self.cued_item
+            self.current_item = self.cued_item
             self.current_fname = current_fname
-            self.current_in    = self.cued_in
-            self.current_out   = self.cued_out
+            self.current_in = self.cued_in
+            self.current_out = self.cued_out
             self.cued_in = self.cued_out = 0
             advanced = True
             self.cued_item = False
@@ -170,19 +163,19 @@ class CasparController(object):
 
         elif (not cued_fname) and (current_fname) and not self.parent.cued_live:
             if current_fname == self.cued_fname:
-                self.current_item  = self.cued_item
+                self.current_item = self.cued_item
                 self.current_fname = self.cued_fname
-                self.current_in    = self.cued_in
-                self.current_out   = self.cued_out
+                self.current_in = self.cued_in
+                self.current_out = self.cued_out
                 self.cued_in = self.cued_out = 0
                 advanced = True
             self.cued_item = False
 
         elif (not current_fname) and (not cued_fname) and self.parent.cued_live:
-            self.current_item  = self.cued_item
+            self.current_item = self.cued_item
             self.current_fname = "LIVE"
-            self.current_in    = 0
-            self.current_out   = 0
+            self.current_in = 0
+            self.current_out = 0
             self.cued_in = self.cued_out = 0
             advanced = True
             self.cued_item = False
@@ -209,11 +202,9 @@ class CasparController(object):
             else:
                 logging.debug("Cueing", self.cueing)
 
-
         if self.cued_item and cued_fname and cued_fname != self.cued_fname and not self.cueing:
             logging.warning("Cue mismatch: IS: {} SHOULDBE: {}".format(cued_fname, self.cued_fname))
             self.cued_item = False
-
 
         try:
             self.parent.on_progress()
@@ -222,14 +213,13 @@ class CasparController(object):
         self.current_fname = current_fname
         self.cued_fname = cued_fname
 
-
     def cue(self, fname, item, **kwargs):
-        auto       = kwargs.get("auto", True)
-        layer      = kwargs.get("layer", self.caspar_feed_layer)
-        play       = kwargs.get("play", False)
-        loop       = kwargs.get("loop", False)
-        mark_in    = item.mark_in()
-        mark_out   = item.mark_out()
+        auto = kwargs.get("auto", True)
+        layer = kwargs.get("layer", self.caspar_feed_layer)
+        play = kwargs.get("play", False)
+        loop = kwargs.get("loop", False)
+        mark_in = item.mark_in()
+        mark_out = item.mark_out()
 
         marks = ""
         if loop:
@@ -260,24 +250,21 @@ class CasparController(object):
 
         if result.is_error:
             message = "Unable to cue \"{}\" {} - args: {}".format(fname, result.data, str(kwargs))
-            self.cued_item  = Item()
+            self.cued_item= Item()
             self.cued_fname = False
-            self.cueing     = False
+            self.cueing = False
         else:
-            self.cued_item  = item
+            self.cued_item = item
             self.cued_fname = fname
-            self.cued_in    = mark_in*self.fps
-            self.cued_out   = mark_out*self.fps
+            self.cued_in = mark_in*self.fps
+            self.cued_out = mark_out*self.fps
             message = "Cued item {} ({})".format(self.cued_item, fname)
-
         return NebulaResponse(result.response, message)
 
-
     def clear(self, **kwargs):
-        layer = layer or self.caspar_feed_layer
+        layer = kwargs.get("layer", self.caspar_feed_layer)
         result = self.query("CLEAR {}-{}".format(self.channel, layer))
         return NebulaResponse(result.response, result.data)
-
 
     def take(self, **kwargs):
         layer = kwargs.get("layer", self.caspar_feed_layer)
@@ -294,7 +281,6 @@ class CasparController(object):
         else:
             message = "Take command failed: " + result.data
         return NebulaResponse(result.response, message)
-
 
     def retake(self, **kwargs):
         layer = kwargs.get("layer", self.caspar_feed_layer)
@@ -349,7 +335,6 @@ class CasparController(object):
         else:
             message = result.data
         return NebulaResponse(result.response, message)
-
 
     def abort(self, **kwargs):
         layer = kwargs.get("layer", self.caspar_feed_layer)

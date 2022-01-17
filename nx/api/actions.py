@@ -1,18 +1,8 @@
-from nx import (
-    Asset,
-    NebulaResponse,
-    DB,
-    anonymous
-)
-
-from nebulacore.constants import (
-    ERROR_UNAUTHORISED,
-    ERROR_BAD_REQUEST,
-)
+__all__ = ["api_actions"]
 
 from nxtools import xml, log_traceback
-
-__all__ = ["api_actions"]
+from nx import NebulaResponse, DB
+from nx.objects import Asset, anonymous
 
 
 def api_actions(**kwargs):
@@ -22,15 +12,12 @@ def api_actions(**kwargs):
 
     if not user:
         return NebulaResponse(
-            ERROR_UNAUTHORISED,
+            401,
             "You are not allowed to execute any actions"
         )
 
     if not objects:
-        return NebulaResponse(
-            ERROR_BAD_REQUEST,
-            "No asset selected"
-        )
+        return NebulaResponse(400, "No asset selected")
 
     result = []
 

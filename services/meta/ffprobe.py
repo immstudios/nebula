@@ -3,9 +3,8 @@ import difflib
 from nxtools import slugify, logging, get_base_name
 
 from nx.mediaprobe import mediaprobe
-
-from nebulacore import meta_types
-from nebulacore.constants import SELECT
+from nx.core import meta_types
+from nx.enum import MetaClass
 
 
 def string2cs(key, value):
@@ -47,7 +46,7 @@ def ffprobe_asset(asset):
         elif meta_types[key]["ns"] == "m" and asset[key]:
             continue
 
-        if key == "genre" and meta_types["genre"]["class"] == SELECT:
+        if key == "genre" and meta_types["genre"]["class"] == MetaClass.SELECT:
             new_val = string2cs("genre", value)
             if new_val is None:
                 continue

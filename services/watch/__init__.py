@@ -9,14 +9,12 @@ from nxtools import (
     log_traceback
 )
 
-from nx import (
-    DB,
-    Asset,
-    BaseService,
-    asset_by_path
-)
+from nx.db import DB
+from nx.core import config, storages
+from nx.objects import Asset
+from nx.base_service import BaseService
+from nx.helpers import asset_by_path
 
-from nebulacore import config, storages
 from nebulacore.constants import FILE, CREATING, file_types
 
 

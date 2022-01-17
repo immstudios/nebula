@@ -1,8 +1,9 @@
 import cherrypy
 
 from cherryadmin import CherryAdminView
-from nebulacore import storages
-from nx import DB
+
+from nx.core import storages
+from nx.db import DB
 
 
 class ViewDashboard(CherryAdminView):

@@ -5,7 +5,8 @@ import sys
 
 from nxtools import logging
 
-from nx import BaseService, get_plugin_path
+from nx.base_service import BaseService
+from nx.plugins import get_plugin_path
 
 
 class Service(BaseService):

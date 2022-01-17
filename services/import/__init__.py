@@ -3,9 +3,14 @@ import os
 from themis import Themis
 from nxtools import logging, log_traceback, get_temp, get_files
 
-from nebulacore import storages, meta_types
-from nebulacore.constants import CREATING, VIDEO, file_types
-from nx import mediaprobe, BaseService, Asset, DB
+from nx.db import DB
+from nx.core import storages, meta_types
+from nx.mediaprobe import mediaprobe
+from nx.base_service import BaseService
+from nx.objects import Asset
+from nx.enum import AssetState, ContentType
+
+from nebulacore.constants import file_types
 
 
 def temp_file(id_storage, ext):
@@ -122,7 +127,7 @@ def do_import(parent, import_file, asset):
     for key in allkeys:
         if meta_types[key]["ns"] in ["q", "f"]:
             del(asset.meta[key])
-    asset["status"] = CREATING
+    asset["status"] = AssetState.CREATING
 
     asset.save()
 
@@ -151,7 +156,7 @@ class Service(BaseService):
 
         self.exts = [
             f for f in file_types.keys()
-            if file_types[f] == VIDEO
+            if file_types[f] == ContentType.VIDEO
         ]
         self.versioning = True
 

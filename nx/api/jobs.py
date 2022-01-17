@@ -1,24 +1,17 @@
+__all__ = ["api_jobs"]
+
 import time
 
 from nxtools import (format_time, logging, slugify)
 
-
-from nx import (
-    NebulaResponse,
-    anonymous,
-    messaging,
-    config,
-    Asset,
-    DB
-)
-
-__all__ = ["api_jobs"]
+from nx import NebulaResponse, messaging, config, DB
+from nx.objects import Asset, anonymous
 
 
 def api_jobs(**kwargs):
-    formatted = kwargs.get("formatted", False) # load titles etc
+    formatted = kwargs.get("formatted", False)  # load titles etc
     user = kwargs.get("user", anonymous)
-    query = kwargs.get("query", "")
+    # query = kwargs.get("query", "")
     id_asset = kwargs.get("id_asset", False)
     view = kwargs.get("view", "active")
     db = kwargs.get("db", DB())

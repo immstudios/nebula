@@ -2,7 +2,7 @@ import time
 
 from cherryadmin import CherryAdminView
 from nxtools import s2words
-from nx import DB
+from nx.db import DB
 
 
 class ViewServices(CherryAdminView):

@@ -4,9 +4,9 @@ import json
 import urllib.parse
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
-
-from nx import NebulaResponse
 from nxtools import logging, log_traceback
+
+from nx.core import NebulaResponse
 
 
 class PlayoutRequestHandler(BaseHTTPRequestHandler):

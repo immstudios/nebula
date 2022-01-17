@@ -1,7 +1,6 @@
 """Return system settings."""
 
 from nx import NebulaResponse, config, storages
-from nebulacore.constants import ERROR_UNAUTHORISED
 
 __all__ = ["api_settings"]
 
@@ -9,7 +8,7 @@ __all__ = ["api_settings"]
 def api_settings(**kwargs):
     """Return system settings."""
     if not kwargs.get("user", None):
-        return NebulaResponse(ERROR_UNAUTHORISED)
+        return NebulaResponse(401)
     data = {}
     for key in [
         "actions",

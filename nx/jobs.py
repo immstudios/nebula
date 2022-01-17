@@ -1,26 +1,20 @@
+__all__ = ["Job", "Action", "send_to"]
+
 import json
 import time
 
-from nebulacore import ( # noqa
-    ONLINE,
-    PENDING,
-    IN_PROGRESS,
-    ABORTED,
-    RESTART,
-    FAILED,
-    COMPLETED,
-    NebulaResponse
-)
-
-from .db import DB
-from .messaging import messaging
-from .objects import Asset
-
 from nxtools import xml, logging, log_traceback
 
-MAX_RETRIES = 3
+from nx.db import DB
+from nx.core import NebulaResponse
+from nx.messaging import messaging
+from nx.objects import Asset
+from nx.enum import AssetState, JobState
 
-__all__ = ["Job", "Action", "send_to"]
+# for scripts
+from nebulacore.constants import * # noqa
+
+MAX_RETRIES = 3
 
 
 class Action:
@@ -111,7 +105,7 @@ class Job():
         self.id_user = 0
         self.priority = 3
         self.retries = 0
-        self.status = PENDING
+        self.status = JobState.PENDING
         self._asset = None
         self._settings = None
         self._action = None
@@ -236,7 +230,7 @@ class Job():
             id=self.id,
             id_asset=self.id_asset,
             id_action=self.id_action,
-            status=IN_PROGRESS,
+            status=JobState.IN_PROGRESS,
             progress=progress,
             message=message
         )
@@ -260,14 +254,14 @@ class Job():
             [now, message, self.id]
         )
         self.db.commit()
-        self.status = ABORTED
+        self.status = JobState.ABORTED
         messaging.send(
             "job_progress",
             id=self.id,
             id_asset=self.id_asset,
             id_action=self.id_action,
             etime=now,
-            status=ABORTED,
+            status=JobState.ABORTED,
             progress=0,
             message=message
         )
@@ -289,7 +283,7 @@ class Job():
             [message, self.id]
         )
         self.db.commit()
-        self.status = RESTART
+        self.status = JobState.RESTART
         messaging.send(
             "job_progress",
             id=self.id,
@@ -321,14 +315,14 @@ class Job():
             [retries, max(0, self.priority-1), message, self.id]
         )
         self.db.commit()
-        self.status = FAILED
+        self.status = JobState.FAILED
         logging.error(f"{self}: {message}")
         messaging.send(
             "job_progress",
             id=self.id,
             id_asset=self.id_asset,
             id_action=self.id_action,
-            status=FAILED,
+            status=JobState.FAILED,
             progress=0,
             message=message
         )
@@ -347,14 +341,14 @@ class Job():
             [now, message, self.id]
         )
         self.db.commit()
-        self.status = COMPLETED
+        self.status = JobState.COMPLETED
         logging.goodnews(f"{self}: {message}")
         messaging.send(
             "job_progress",
             id=self.id,
             id_asset=self.asset.id,
             id_action=self.action.id,
-            status=COMPLETED,
+            status=JobState.COMPLETED,
             etime=now,
             progress=100,
             message=message

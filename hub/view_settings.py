@@ -6,9 +6,11 @@ import collections
 from cherryadmin import CherryAdminView
 from nxtools import get_files
 
-from nx import DB, User, load_settings
+from nx.db import DB
+from nx.objects import User
+from nx import load_settings
 
-from .webtools import webtools
+from hub.webtools import webtools
 
 
 def get_settings_ctx(ctx, db, **kwargs):

@@ -1,3 +1,5 @@
+__all__ = ["api_schedule"]
+
 import psycopg2
 
 from nxtools import format_time, logging
@@ -7,23 +9,17 @@ from nx import (
     DB,
     config,
     meta_types,
-    anonymous,
-    messaging,
-    Event,
-    Bin,
-    Item,
+    messaging
+)
+
+from nx.objects import (
     Asset,
+    Item,
+    Bin,
+    Event,
+    anonymous,
 )
 
-from nebulacore.constants import (
-    ERROR_UNAUTHORISED,
-    ERROR_ACCESS_DENIED,
-    ERROR_BAD_REQUEST,
-    ERROR_LOCKED,
-)
-
-
-__all__ = ["api_schedule"]
 
 def api_schedule(**kwargs):
     id_channel = kwargs.get("id_channel", 0)
@@ -38,20 +34,20 @@ def api_schedule(**kwargs):
     try:
         id_channel = int(id_channel)
     except ValueError:
-        return NebulaResponse(ERROR_BAD_REQUEST, "id_channel must be an integer")
+        return NebulaResponse(400, "id_channel must be an integer")
 
     try:
         start_time = int(start_time)
     except ValueError:
-        return NebulaResponse(ERROR_BAD_REQUEST, "start_time must be an integer")
+        return NebulaResponse(400, "start_time must be an integer")
 
     try:
         end_time = int(end_time)
     except ValueError:
-        return NebulaResponse(ERROR_BAD_REQUEST, "end_time must be an integer")
+        return NebulaResponse(400, "end_time must be an integer")
 
     if not id_channel or id_channel not in config["playout_channels"]:
-        return NebulaResponse(ERROR_BAD_REQUEST, "Unknown playout channel ID {}".format(id_channel))
+        return NebulaResponse(400, "Unknown playout channel ID {}".format(id_channel))
 
     channel_config = config["playout_channels"][id_channel]
     changed_event_ids = []
@@ -62,7 +58,7 @@ def api_schedule(**kwargs):
 
     for id_event in delete:
         if not user.has_right("scheduler_edit", id_channel):
-            return NebulaResponse(ERROR_ACCESS_DENIED, "You are not allowed to edit this channel")
+            return NebulaResponse(403, "You are not allowed to edit this channel")
         event = Event(id_event, db=db)
         if not event:
             logging.warning(f"Unable to delete non existent event ID {id_event}")
@@ -70,7 +66,7 @@ def api_schedule(**kwargs):
         try:
             event.bin.delete()
         except psycopg2.IntegrityError:
-            return NebulaResponse(ERROR_LOCKED, f"Unable to delete {event}. Already aired.")
+            return NebulaResponse(423, f"Unable to delete {event}. Already aired.")
         else:
             event.delete()
         changed_event_ids.append(event.id)
@@ -81,7 +77,7 @@ def api_schedule(**kwargs):
 
     for event_data in events:
         if not user.has_right("scheduler_edit", id_channel):
-            return NebulaResponse(ERROR_ACCESS_DENIED, "You are not allowed to edit this channel")
+            return NebulaResponse(423, "You are not allowed to edit this channel")
         id_event = event_data.get("id", False)
 
         db.query("SELECT meta FROM events WHERE id_channel=%s and start=%s", [id_channel, event_data["start"]])

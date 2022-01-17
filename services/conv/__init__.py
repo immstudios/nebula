@@ -1,17 +1,11 @@
 import time
 
-from nx import (
-    BaseService,
-    DB,
-)
-
-from nebulacore.constants import (
-    IN_PROGRESS,
-    RESTART,
-    ABORTED
-)
-from nx.jobs import Action, get_job
 from nxtools import xml, logging, s2words, log_traceback
+
+from nx.db import DB
+from nx.base_service import BaseService
+from nx.enum import JobState
+from nx.jobs import Action, get_job
 
 from services.conv.encoders import NebulaFFMPEG
 
@@ -64,11 +58,11 @@ class Service(BaseService):
     def progress_handler(self, position):
         position = float(position)
         stat = self.job.get_status()
-        if stat == RESTART:
+        if stat == JobState.RESTART:
             self.encoder.stop()
             self.job.restart()
             return
-        elif stat == ABORTED:
+        elif stat == JobState.ABORTED:
             self.encoder.stop()
             self.job.abort()
             return
@@ -125,7 +119,7 @@ class Service(BaseService):
             self.encoder.start()
             self.encoder.wait(self.progress_handler)
 
-            if self.job.status != IN_PROGRESS:
+            if self.job.status != JobState.IN_PROGRESS:
                 return
 
             logging.debug(f"Finalizing task {id_task+1} of {len(tasks)}")

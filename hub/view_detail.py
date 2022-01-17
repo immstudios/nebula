@@ -2,23 +2,11 @@ import cherrypy
 from cherryadmin import CherryAdminView
 
 from nxtools import logging, log_traceback, datestr2ts, tc2s
-from nx import Asset, DB, config
+from nx.db import DB
+from nx.core import config
+from nx.objects import Asset
+from nx.enum import MetaClass
 from nx.api import api_set, api_actions
-
-from nebulacore.constants import (
-    STRING,
-    TEXT,
-    INTEGER,
-    NUMERIC,
-    BOOLEAN,
-    DATETIME,
-    TIMECODE,
-    REGIONS,
-    FRACTION,
-    SELECT,
-    LIST,
-    COLOR
-)
 
 
 def validate_data(context, asset, meta):
@@ -28,10 +16,10 @@ def validate_data(context, asset, meta):
         meta_type = asset.meta_types[key]
         new_val = None
 
-        if meta_type["class"] in [STRING, TEXT]:
+        if meta_type["class"] in [MetaClass.STRING, MetaClass.TEXT]:
             new_val = value
 
-        elif meta_type["class"] == INTEGER:
+        elif meta_type["class"] == MetaClass.INTEGER:
             if not value:
                 new_val = 0
             else:
@@ -40,7 +28,7 @@ def validate_data(context, asset, meta):
                 except ValueError:
                     return f"Invalid value for key {key}"
 
-        elif meta_type["class"] == NUMERIC:
+        elif meta_type["class"] == MetaClass.NUMERIC:
             if not value:
                 new_val = 0
             else:
@@ -50,13 +38,13 @@ def validate_data(context, asset, meta):
                 except ValueError:
                     return f"Invalid value for key {key}"
 
-        elif meta_type["class"] == BOOLEAN:
+        elif meta_type["class"] == MetaClass.BOOLEAN:
             if value == "1":
                 new_val = True
             else:
                 new_val = False
 
-        elif meta_type["class"] == DATETIME:
+        elif meta_type["class"] == MetaClass.DATETIME:
             if not value:
                 new_val = 0
             elif meta_type["mode"] == "date":
@@ -67,21 +55,21 @@ def validate_data(context, asset, meta):
                     return "Invalid value {} for key {}".format(value, key)
                 # TODO: time
 
-        elif meta_type["class"] == TIMECODE:
+        elif meta_type["class"] == MetaClass.TIMECODE:
             try:
                 new_val = tc2s(value, asset.fps)
             except Exception:
                 log_traceback()
                 return "Invalid value for key {}".format(key)
-        elif meta_type["class"] == REGIONS:
+        elif meta_type["class"] == MetaClass.OBJECT:
             new_val = value
-        elif meta_type["class"] == FRACTION:
+        elif meta_type["class"] == MetaClass.FRACTION:
             new_val = value
-        elif meta_type["class"] == SELECT:
+        elif meta_type["class"] == MetaClass.SELECT:
             new_val = value
-        elif meta_type["class"] == LIST:
+        elif meta_type["class"] == MetaClass.LIST:
             new_val = value
-        elif meta_type["class"] == COLOR:
+        elif meta_type["class"] == MetaClass.COLOR:
             new_val = value
 
         if asset[key] != new_val:

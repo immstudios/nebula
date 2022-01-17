@@ -3,39 +3,24 @@ import time
 import threading
 
 from nxtools import logging, log_traceback
-from nx import (
-    Asset,
-    Item,
-    Event,
-    BaseService,
-    DB,
-    cache,
-    Cache,
-    NebulaResponse,
-    get_next_item,
-    get_item_event,
-    messaging
-)
 
-from nebulacore import config
-from nebulacore.constants import (
-    OFFLINE,
-    ONLINE,
-    CREATING,
-    UNKNOWN,
-    get_object_state_name,
-    RUN_AUTO,
-    RUN_HARD,
-    RUN_SOFT,
-    RUN_MANUAL,
-)
+from nx.core import config, NebulaResponse
+from nx.db import DB
+from nx.objects import Asset, Item, Event
+from nx.base_service import BaseService
+from nx.cache import cache, Cache
+from nx.messaging import messaging
+from nx.helpers import get_next_item, get_item_event
+from nx.enum import AssetState, RunMode
+
+from nebulacore.constants import get_object_state_name
 
 from services.play.request_handler import HTTPServer, PlayoutRequestHandler
 from services.play.plugins import PlayoutPlugins
 
 
 DEFAULT_STATUS = {
-    "status": OFFLINE,
+    "status": AssetState.OFFLINE,
 }
 
 
@@ -161,13 +146,18 @@ class Service(BaseService):
         playout_status = asset.get(self.status_key, DEFAULT_STATUS)["status"]
 
         kwargs["fname"] = kwargs["full_path"] = None
-        if playout_status in [ONLINE, CREATING, UNKNOWN]:
+        if playout_status in [
+            AssetState.ONLINE,
+            AssetState.CREATING,
+            AssetState.UNKNOWN
+        ]:
             kwargs['fname'] = asset.get_playout_name(self.id_channel)
             kwargs['full_path'] = asset.get_playout_full_path(self.id_channel)
 
         if not kwargs["full_path"] \
                 and self.channel_config.get("allow_remote") \
-                and asset["status"] in (ONLINE, CREATING):
+                and asset["status"] in \
+                (AssetState.ONLINE, AssetState.CREATING):
             kwargs["fname"] = kwargs["full_path"] = asset.file_path
             kwargs["remote"] = True
 
@@ -469,7 +459,7 @@ class Service(BaseService):
         if self.auto_event == next_event.id:
             return
 
-        run_mode = int(next_event["run_mode"]) or RUN_AUTO
+        run_mode = int(next_event["run_mode"]) or RunMode.RUN_AUTO
 
         if not run_mode:
             return
@@ -477,10 +467,10 @@ class Service(BaseService):
         elif not next_event.bin.items:
             return
 
-        elif run_mode == RUN_MANUAL:
+        elif run_mode == RunMode.RUN_MANUAL:
             pass  # ?????
 
-        elif run_mode == RUN_SOFT:
+        elif run_mode == RunMode.RUN_SOFT:
             logging.info("Soft cue", next_event)
             # if current item is live, take next block/lead out automatically
             play = self.current_live
@@ -513,7 +503,7 @@ class Service(BaseService):
                     self.auto_event = next_event.id
                 return
 
-        elif run_mode == RUN_HARD:
+        elif run_mode == RunMode.RUN_HARD:
             logging.info("Hard cue", next_event)
             id_item = next_event.bin.items[0].id
             self.cue(

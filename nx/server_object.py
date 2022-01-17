@@ -1,15 +1,15 @@
+__all__ = ["ServerObject"]
+
 import json
 
 from nxtools import logging, slugify
 
-from nebulacore import meta_types
+from nx.db import DB
+from nx.core import meta_types
+from nx.cache import cache
+from nx.messaging import messaging
+
 from nebulacore.base_objects import BaseObject
-
-from .db import DB
-from .cache import cache
-from .messaging import messaging
-
-__all__ = ["ServerObject"]
 
 
 def create_ft_index(meta):

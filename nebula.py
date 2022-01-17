@@ -24,7 +24,8 @@ import sys
 import time
 import rex # noqa
 
-from nx import config, get_plugin_path
+from nx.core import config
+from nx.plugins import get_plugin_path
 from nxtools import logging, log_traceback, critical_error
 
 

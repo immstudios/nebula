@@ -1,14 +1,8 @@
-from nx import (
-    DB,
-    NebulaResponse,
-    anonymous,
-    Item
-)
-from nebulacore.constants import ERROR_ACCESS_DENIED
-from nx.plugins.solver import get_solver
-
-
 __all__ = ["api_solve"]
+
+from nx import DB, NebulaResponse
+from nx.objects import Item, anonymous
+from nx.plugins.solver import get_solver
 
 
 def api_solve(**kwargs):
@@ -18,7 +12,7 @@ def api_solve(**kwargs):
     user = kwargs.get("user", anonymous)
 
     if not user.has_right("rundown_edit", anyval=True):
-        return NebulaResponse(ERROR_ACCESS_DENIED)
+        return NebulaResponse(403)
 
     if id_item:
         items.append(id_item)

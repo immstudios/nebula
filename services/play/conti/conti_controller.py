@@ -3,9 +3,9 @@ __all__ = ["ContiController"]
 import time
 
 from nxtools import logging
-
-from nx import NebulaResponse
 from conti import CONTI_DEBUG, Conti, ContiSource
+
+from nx.core import NebulaResponse
 
 CONTI_DEBUG["source"] = False
 CONTI_DEBUG["encoder"] = False

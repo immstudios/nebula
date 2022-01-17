@@ -1,10 +1,10 @@
 import sys
 import time
 
-from .common import *
 from nxtools import xml, critical_error, log_traceback, logging
-from nx import DB
-from nebulacore import config
+
+from nx.db import DB
+from nx.core import config
 
 def run(*args):
     id_service = args[0]
@@ -41,7 +41,9 @@ def run(*args):
         except Exception:
             log_traceback()
             logging.error("Malformed settings XML:\n", settings)
-            db.query("UPDATE services SET autostart=0 WHERE id=%s", [id_service])
+            db.query(
+                "UPDATE services SET autostart=0 WHERE id=%s", [id_service]
+            )
             db.commit()
             critical_error("Unable to start service")
 
@@ -63,7 +65,7 @@ def run(*args):
             break
         except (SystemExit):
             break
-        except:
+        except Exception:
             log_traceback()
             time.sleep(2)
             sys.exit(1)
@@ -73,4 +75,3 @@ def run(*args):
                 break
         except IndexError:
             pass
-

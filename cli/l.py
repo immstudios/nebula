@@ -2,7 +2,9 @@ import time
 import socket
 import json
 
-from .common import *
+from nxtools import logging, log_traceback
+from nx.core import config
+
 
 def log_message(message):
     tstamp = time.strftime("%H:%M:%S")

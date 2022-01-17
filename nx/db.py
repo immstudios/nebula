@@ -1,6 +1,7 @@
 __all__ = ["DB"]
 
 from nxtools import log_traceback, critical_error
+from nx.core import config
 
 try:
     import psycopg2
@@ -8,7 +9,7 @@ except ImportError:
     log_traceback("Import error")
     critical_error("Unable to import psycopg2")
 
-from nebulacore import config
+
 
 
 class DB(object):

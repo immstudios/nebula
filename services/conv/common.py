@@ -1,6 +1,7 @@
 import os
-from nebulacore import storages
 from nxtools import log_traceback, get_temp
+
+from nx.core import storages
 
 
 class BaseEncoder:

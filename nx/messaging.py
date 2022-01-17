@@ -13,7 +13,7 @@ except ModuleNotFoundError:
     has_pika = False
 
 from nxtools import logging, log_traceback, critical_error
-from nebulacore import config
+from nx.core import config
 
 
 class RabbitSender():

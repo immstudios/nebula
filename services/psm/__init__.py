@@ -4,23 +4,22 @@ import stat
 
 from nxtools import logging
 
+from nx.db import DB
+from nx.core import storages, config
 from nx.jobs import send_to
+from nx.objects import Asset
+from nx.base_service import BaseService
+from nx.mediaprobe import mediaprobe
+from nx.enum import AssetState
 
-from nx import DB, Asset, mediaprobe, BaseService
-from nebulacore import storages, config
 from nebulacore.constants import (
-    ONLINE,
-    OFFLINE,
-    CORRUPTED,
-    CREATING,
-    UNKNOWN,
     get_object_state_name
 )
 
 SCHEDULE_INTERVAL = 60
 UNSCHEDULE_INTERVAL = 86400
 DEFAULT_STATUS = {
-        "status": OFFLINE,
+        "status": AssetState.OFFLINE,
         "size": 0,
         "mtime": 0,
         "duration": 0
@@ -63,12 +62,12 @@ def check_file_validity(asset, id_channel):
         res = mediaprobe(path)
     except Exception:
         logging.error("Unable to read", path)
-        return CORRUPTED, 0
+        return AssetState.CORRUPTED, 0
     if not res:
-        return CORRUPTED, 0
+        return AssetState.CORRUPTED, 0
     if res["duration"]:
-        return CREATING, res["duration"]
-    return UNKNOWN, 0
+        return AssetState.CREATING, res["duration"]
+    return AssetState.UNKNOWN, 0
 
 
 class PlayoutStorageTool(object):
@@ -112,13 +111,13 @@ class PlayoutStorageTool(object):
 
             if file_exists:
                 if file_size:
-                    file_status = ONLINE
+                    file_status = AssetState.ONLINE
                 else:
-                    file_status = CORRUPTED
+                    file_status = AssetState.CORRUPTED
             else:
-                file_status = OFFLINE
+                file_status = AssetState.OFFLINE
 
-            ostatus = old_status.get("status", OFFLINE)
+            ostatus = old_status.get("status", AssetState.OFFLINE)
             omtime = old_status.get("mtime", 0)
             osize = old_status.get("size", 0)
             duration = old_status.get("duration", 0)
@@ -126,21 +125,21 @@ class PlayoutStorageTool(object):
             now = time.time()
 
             # if file changed, check using ffprobe
-            if file_status == ONLINE:
+            if file_status == AssetState.ONLINE:
                 if omtime != file_mtime or osize != file_size:
                     file_status, duration = check_file_validity(
                         asset,
                         self.id_channel
                     )
                 else:
-                    if ostatus == CREATING:
+                    if ostatus == AssetState.CREATING:
                         if now - file_mtime > 10 and omtime == file_mtime:
-                            file_status = ONLINE
+                            file_status = AssetState.ONLINE
                         else:
-                            file_status = CREATING
-                    elif ostatus == UNKNOWN:
+                            file_status = AssetState.CREATING
+                    elif ostatus == AssetState.UNKNOWN:
                         if now - file_mtime > 10:
-                            file_status = CORRUPTED
+                            file_status = AssetState.CORRUPTED
 
             if ostatus != file_status \
                     or omtime != file_mtime \
@@ -155,8 +154,13 @@ class PlayoutStorageTool(object):
                 }
                 asset.save()
 
-            if file_status not in [ONLINE, CREATING, CORRUPTED] \
-                    and self.send_action and asset["status"] == ONLINE \
+            if file_status not in [
+                    AssetState.ONLINE,
+                    AssetState.CREATING,
+                    AssetState.CORRUPTED
+                    ] \
+                    and self.send_action \
+                    and asset["status"] == AssetState.ONLINE \
                     and scheduled:
                 result = send_to(
                     asset.id,

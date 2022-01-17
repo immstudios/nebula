@@ -5,18 +5,8 @@ import requests
 
 from nxtools import log_traceback
 
-from nx import (
-    NebulaResponse,
-    anonymous,
-    config
-)
-
-from nebulacore.constants import (
-    ERROR_UNAUTHORISED,
-    ERROR_BAD_REQUEST,
-    ERROR_ACCESS_DENIED,
-    ERROR_BAD_GATEWAY
-)
+from nx import NebulaResponse, config
+from nx.objects import anonymous
 
 
 def api_playout(**kwargs):
@@ -26,20 +16,20 @@ def api_playout(**kwargs):
 
     user = kwargs.get("user", anonymous)
     if not user:
-        return NebulaResponse(ERROR_UNAUTHORISED)
+        return NebulaResponse(401)
 
     action = kwargs.get("action", False)
     id_channel = int(kwargs.get("id_channel", False))
 
     if id_channel not in config["playout_channels"]:
         return NebulaResponse(
-            ERROR_BAD_REQUEST,
+            400,
             f"Unknown channel ID {id_channel}"
         )
 
     if not user.has_right("mcr", id_channel):
         return NebulaResponse(
-            ERROR_ACCESS_DENIED,
+            400,
             "You are not permitted to operate this channel"
         )
 
@@ -64,7 +54,7 @@ def api_playout(**kwargs):
                 "cue_backward"
                 ]:
             return NebulaResponse(
-                ERROR_BAD_REQUEST,
+                400,
                 f"Unsupported playout action {action}"
             )
 
@@ -85,7 +75,7 @@ def api_playout(**kwargs):
         except Exception:
             log_traceback()
             return NebulaResponse(
-                ERROR_BAD_GATEWAY,
+                502,
                 "Unable to connect to the playout service"
             )
 

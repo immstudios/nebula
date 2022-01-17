@@ -1,7 +1,9 @@
 import cherrypy
 from cherryadmin import CherryAdminView
 
-from nx import User, DB
+from nx.db import DB
+from nx.objects import User
+
 
 WEAK_PASS_MSG = "The password is weak. It must be at least 8 characters long."
 

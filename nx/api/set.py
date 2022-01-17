@@ -4,26 +4,22 @@ from nxtools import logging, log_traceback
 
 from nx import (
     NebulaResponse,
+    DB,
+    get_hash,
+    config,
+    messaging
+)
+
+from nx.objects import (
     Asset,
     Item,
     Bin,
     Event,
     User,
     anonymous,
-    DB,
-    get_hash,
-    config,
-    bin_refresh,
-    messaging,
 )
 
-from nebulacore.constants import (
-    ERROR_UNAUTHORISED,
-    ERROR_ACCESS_DENIED,
-    ERROR_BAD_REQUEST,
-    ERROR_INTERNAL
-)
-
+from nx.helpers import bin_refresh
 
 from nx.plugins.validator import get_validator
 from nebulacore.base_objects import BaseObject
@@ -38,7 +34,7 @@ def api_set(**kwargs):
     initiator = kwargs.get("initiator", None)
 
     if not user:
-        return NebulaResponse(ERROR_UNAUTHORISED)
+        return NebulaResponse(401)
 
     if not (data and objects):
         return NebulaResponse(200, "No object created or modified")
@@ -71,20 +67,20 @@ def api_set(**kwargs):
             if not user.has_right("asset_edit", id_folder):
                 folder_title = config['folders'][id_folder]['title']
                 return NebulaResponse(
-                    ERROR_ACCESS_DENIED,
+                    403,
                     f"{user} is not allowed to edit {folder_title} folder"
                 )
         elif object_type == "user":
             if obj.id:
                 if not user.has_right("user_edit"):
                     return NebulaResponse(
-                        ERROR_ACCESS_DENIED,
+                        403,
                         f"{user} is not allowed to edit users data"
                     )
             else:
                 if not user.has_right("user_create"):
                     return NebulaResponse(
-                        ERROR_ACCESS_DENIED,
+                        403,
                         f"{user} is not allowed to add new users"
                     )
 
@@ -105,14 +101,14 @@ def api_set(**kwargs):
                 obj = validator.validate(obj)
             except Exception:
                 return NebulaResponse(
-                    ERROR_INTERNAL,
+                    500,
                     log_traceback("Unable to validate object changes.")
                 )
 
             if not isinstance(obj, BaseObject):
                 # TODO: use 409-conflict?
                 return NebulaResponse(
-                    ERROR_BAD_REQUEST,
+                    400,
                     f"Unable to save {tt}:\n\n{obj}"
                 )
 

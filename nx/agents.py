@@ -1,11 +1,9 @@
+__all__ = ["BaseAgent"]
+
 import time
 import threading
 
 from nxtools import logging, log_traceback, critical_error
-
-from nebulacore import *
-
-__all__ = ["BaseAgent"]
 
 
 class BaseAgent():

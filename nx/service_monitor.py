@@ -1,17 +1,16 @@
+__all__ = ["ServiceMonitor"]
+
 import os
 import time
 import subprocess
 
 from nxtools import logging
-from nebulacore import config
-from nebulacore.constants import STARTING, KILL
 
-from .db import DB
-from .messaging import messaging
-from .agents import BaseAgent
-
-
-__all__ = ["ServiceMonitor"]
+from nx.db import DB
+from nx.core import config
+from nx.enum import ServiceState
+from nx.messaging import messaging
+from nx.agents import BaseAgent
 
 
 class ServiceMonitor(BaseAgent):
@@ -74,11 +73,11 @@ class ServiceMonitor(BaseAgent):
                 last_seen=last_seen,
                 last_seen_before=max(0, int(time.time() - last_seen))
             )
-            if state == STARTING:  # Start service
+            if state == ServiceState.STARTING:  # Start service
                 if id not in self.services.keys():
                     self.start_service(id, title, db=db)
 
-            elif state == KILL:  # Kill service
+            elif state == ServiceState.KILL:  # Kill service
                 if id in self.services.keys():
                     self.kill_service(self.services[id][0].pid)
 

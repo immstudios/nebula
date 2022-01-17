@@ -1,42 +1,13 @@
-"""
-Return a rundown for given day and channel.
-
-Arguments:
-id_channel    Playout channel ID
-    Defaults to first playout channel
-start_time    Rundown start time (timestamp)
-    Defaults to today's broadcast day start
-"""
+__all__ = ["get_rundown", "api_rundown"]
 
 import time
 
-from nx import (
-    NebulaResponse,
-    config,
-    DB,
-    Asset,
-    Item,
-    Event,
-    anonymous,
-    get_item_runs,
-    ERROR_ACCESS_DENIED,
-    ERROR_BAD_REQUEST
-)
-
-from nebulacore.constants import (
-    AIRED,
-    ONLINE,
-    OFFLINE,
-    REMOTE,
-    CORRUPTED,
-    UNKNOWN,
-    RUN_SKIP,
-    ONAIR,
-)
+from nx import NebulaResponse, config, DB
+from nx.objects import Asset, Item, Event, anonymous
+from nx.helpers import get_item_runs
+from nx.enum import AssetState, RunMode
 
 from nxtools import datestr2ts
-
-__all__ = ["get_rundown", "api_rundown"]
 
 
 def get_rundown(id_channel, start_time=False, end_time=False, db=False):
@@ -134,9 +105,9 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
             if as_start:
                 ts_broadcast = as_start
                 if as_stop:
-                    airstatus = AIRED
+                    airstatus = AssetState.AIRED
                 else:
-                    airstatus = ONAIR
+                    airstatus = AssetState.ONAIR
 
             item.meta["asset_mtime"] = asset["mtime"] if asset else 0
             item.meta["rundown_scheduled"] = ts_scheduled
@@ -147,27 +118,27 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
 
             istatus = 0
             if not asset:
-                istatus = ONLINE
+                istatus = AssetState.ONLINE
             elif airstatus:
                 istatus = airstatus
-            elif asset["status"] == OFFLINE:
-                istatus = OFFLINE
+            elif asset["status"] == AssetState.OFFLINE:
+                istatus = AssetState.OFFLINE
             elif pskey not in asset.meta:
-                istatus = REMOTE
-            elif asset[pskey]["status"] == OFFLINE:
-                istatus = REMOTE
-            elif asset[pskey]["status"] == ONLINE:
-                istatus = ONLINE
-            elif asset[pskey]["status"] == CORRUPTED:
-                istatus = CORRUPTED
+                istatus = AssetState.REMOTE
+            elif asset[pskey]["status"] == AssetState.OFFLINE:
+                istatus = AssetState.REMOTE
+            elif asset[pskey]["status"] == AssetState.ONLINE:
+                istatus = AssetState.ONLINE
+            elif asset[pskey]["status"] == AssetState.CORRUPTED:
+                istatus = AssetState.CORRUPTED
             else:
-                istatus = UNKNOWN
+                istatus = AssetState.UNKNOWN
 
             item.meta["status"] = istatus
             if asset and asset.id in pending_assets:
                 item.meta["transfer_progress"] = -1
 
-            if item["run_mode"] != RUN_SKIP:
+            if item["run_mode"] != RunMode.RUN_SKIP:
                 ts_scheduled += item.duration
                 ts_broadcast += item.duration
 
@@ -182,13 +153,13 @@ def api_rundown(**kwargs):
 
     if not (user.has_right("rundown_view", id_channel)
             or user.has_right("rundown_edit", id_channel)):
-        return NebulaResponse(ERROR_ACCESS_DENIED)
+        return NebulaResponse(401)
 
     process_start_time = time.time()
 
     if id_channel not in config["playout_channels"]:
         return NebulaResponse(
-            ERROR_BAD_REQUEST,
+            400,
             "Invalid playout channel specified"
         )
 

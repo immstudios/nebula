@@ -1,16 +1,13 @@
+__all__ = ["Asset", "Item", "Bin", "Event", "User", "anonymous"]
+
 import os
 
 from nxtools import logging, s2tc, log_traceback
 
-from nebulacore import (
-    config,
-    storages,
-    ASSET,
-    ITEM,
-    BIN,
-    EVENT,
-    USER
-)
+from nx.core import config, storages
+from nx.enum import ObjectType
+from nx.cache import cache
+from nx.server_object import ServerObject
 
 from nebulacore.base_objects import (
     AssetMixIn,
@@ -19,11 +16,6 @@ from nebulacore.base_objects import (
     EventMixIn,
     UserMixIn
 )
-
-from .cache import cache
-from .server_object import ServerObject
-
-__all__ = ["Asset", "Item", "Bin", "Event", "User", "anonymous"]
 
 
 class ObjectHelper:
@@ -257,11 +249,11 @@ class User(UserMixIn, ServerObject):
 #
 
 
-object_helper[ASSET] = Asset
-object_helper[ITEM] = Item
-object_helper[BIN] = Bin
-object_helper[EVENT] = Event
-object_helper[USER] = User
+object_helper[ObjectType.ASSET] = Asset
+object_helper[ObjectType.ITEM] = Item
+object_helper[ObjectType.BIN] = Bin
+object_helper[ObjectType.EVENT] = Event
+object_helper[ObjectType.USER] = User
 
 anonymous_data = {"login": "Anonymous"}
 anonymous = User(meta=anonymous_data)

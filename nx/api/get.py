@@ -1,32 +1,31 @@
+__all__ = ["api_get", "api_browse", "get_objects"]
+
 import json
 import string
 import time
 
 from nxtools import logging, slugify
 
+from nx.enum import ObjectType, MetaClass
 from nx import (
     NebulaResponse,
+    config,
+    meta_types,
     cache,
-    DB,
-    anonymous,
+    DB
+)
+
+from nx.objects import (
     Asset,
     Item,
     Bin,
     Event,
-    User
-)
-from nebulacore import config, meta_types
-
-from nebulacore.constants import (
-    INTEGER, NUMERIC, DATETIME, TIMECODE, COLOR,
-    ASSET, ERROR_UNAUTHORISED
+    User,
+    anonymous
 )
 
 
-__all__ = ["api_get", "api_browse", "get_objects"]
-
-
-def get_objects(ObjectType, **kwargs):
+def get_objects(ObjectClass, **kwargs):
     """objects lookup function. To be used inside services"""
 
     db = kwargs.get("db", DB())
@@ -57,15 +56,22 @@ def get_objects(ObjectType, **kwargs):
         if not order_trend.lower() in ["asc", "desc"]:
             order_trend = "ASC"
 
-        if order_key in ObjectType.db_cols + ["id"]:
+        if order_key in ObjectClass.db_cols + ["id"]:
             order = f"{order_key} {order_trend}"
         else:
             cast = None
             if order_key in meta_types:
                 cls = meta_types[order_key]["class"]
-                if cls in [NUMERIC, DATETIME, TIMECODE]:
+                if cls in [
+                    MetaClass.NUMERIC,
+                    MetaClass.DATETIME,
+                    MetaClass.TIMECODE
+                ]:
                     cast = "FLOAT"
-                elif cls in [INTEGER, COLOR]:
+                elif cls in [
+                    MetaClass.INTEGER,
+                    MetaClass.COLOR
+                ]:
                     cast = "INTEGER"
 
             if cast:
@@ -77,12 +83,12 @@ def get_objects(ObjectType, **kwargs):
         carr = {"count": len(objects)}
         # We do not do database lookup. Just returning objects by their ids
         for id_object in objects:
-            yield carr, ObjectType(id_object, db=db)
+            yield carr, ObjectClass(id_object, db=db)
         return
 
     if id_view \
             and id_view in config["views"] \
-            and ObjectType.object_type_id == ASSET:
+            and ObjectClass.object_type_id == ObjectType.ASSET:
         view_config = config["views"][id_view]
         for key, col in [
             ["folders", "id_folder"],
@@ -101,7 +107,7 @@ def get_objects(ObjectType, **kwargs):
 
     conds = []
     for cond in raw_conds:
-        for col in ObjectType.db_cols:
+        for col in ObjectClass.db_cols:
             if cond.startswith(col):
                 conds.append(cond)
                 break
@@ -138,7 +144,7 @@ def get_objects(ObjectType, **kwargs):
                     f"""
                     id IN (
                         SELECT id FROM ft
-                        WHERE object_type={ObjectType.object_type_id}
+                        WHERE object_type={ObjectClass.object_type_id}
                         AND value LIKE '{value}')
                     """
                 )
@@ -156,7 +162,7 @@ def get_objects(ObjectType, **kwargs):
     conds = " WHERE " + " AND ".join(conds) if conds else ""
     counter = ", count(id) OVER() AS full_count" if do_count else ", 0"
 
-    q = f"SELECT id, meta{counter} FROM {ObjectType.table_name}{conds}"
+    q = f"SELECT id, meta{counter} FROM {ObjectClass.table_name}{conds}"
     q += " ORDER BY {}".format(order) if order else ""
     q += " LIMIT {}".format(limit) if limit else ""
     q += " OFFSET {}".format(offset) if offset else ""
@@ -166,7 +172,7 @@ def get_objects(ObjectType, **kwargs):
 
     count = 0
     for id, meta, count in db.fetchall():
-        yield {"count": count or view_count}, ObjectType(meta=meta, db=db)
+        yield {"count": count or view_count}, ObjectClass(meta=meta, db=db)
 
     if count:
         cache.save("view-count-{}".format(id_view), count)
@@ -218,24 +224,24 @@ def api_get(**kwargs):
     as_folder = kwargs.get("as_folder", None)
 
     if not user:
-        return NebulaResponse(ERROR_UNAUTHORISED)
+        return NebulaResponse(401)
 
     start_time = time.time()
 
-    ObjectType = {
-                "asset": Asset,
-                "item": Item,
-                "bin": Bin,
-                "event": Event,
-                "user": User
-            }[object_type]
+    ObjectClass = {
+        "asset": Asset,
+        "item": Item,
+        "bin": Bin,
+        "event": Event,
+        "user": User
+    }[object_type]
 
     result = {
-            "message": "Incomplete query",
-            "response": 500,
-            "data": [],
-            "count": 0
-        }
+        "message": "Incomplete query",
+        "response": 500,
+        "data": [],
+        "count": 0
+    }
 
     rformat = None
     if result_format:
@@ -262,7 +268,7 @@ def api_get(**kwargs):
                     result_format.append(None)
             result_type[i] = form[0]
 
-        for response, obj in get_objects(ObjectType, **kwargs):
+        for response, obj in get_objects(ObjectClass, **kwargs):
             result["count"] |= response["count"]
             row = []
             for key, form in zip(result_type, result_format):
@@ -274,7 +280,7 @@ def api_get(**kwargs):
             result["data"].append(row)
 
     elif result_type == "form":
-        for response, obj in get_objects(ObjectType, **kwargs):
+        for response, obj in get_objects(ObjectClass, **kwargs):
             result["count"] |= response["count"]
             if as_folder is not None:
                 obj["id_folder"] = as_folder
@@ -296,13 +302,13 @@ def api_get(**kwargs):
 
     elif result_type == "ids":
         # Result is an array of matching object IDs
-        for response, obj in get_objects(ObjectType, **kwargs):
+        for response, obj in get_objects(ObjectClass, **kwargs):
             result["count"] |= response["count"]
             result["data"].append(obj.id)
 
     else:
         # Result is an array of asset metadata sets
-        for response, obj in get_objects(ObjectType, **kwargs):
+        for response, obj in get_objects(ObjectClass, **kwargs):
             result["count"] |= response["count"]
             result["data"].append(obj.meta)
 

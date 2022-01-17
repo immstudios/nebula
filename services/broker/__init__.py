@@ -1,9 +1,10 @@
 from nxtools import xml, logging
 
-from nx import DB, Asset, BaseService
+from nx.db import DB
+from nx.objects import Asset
+from nx.base_service import BaseService
 from nx.jobs import send_to, Action
-
-from nebulacore.constants import ONLINE
+from nx.enum import AssetState
 
 
 class Service(BaseService):
@@ -19,7 +20,7 @@ class Service(BaseService):
         db = DB()
         db.query(
             "SELECT id, meta FROM assets WHERE status=%s",
-            [ONLINE]
+            [AssetState.ONLINE]
         )
         for _, meta in db.fetchall():
             asset = Asset(meta=meta, db=db)

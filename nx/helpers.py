@@ -6,31 +6,19 @@ import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+from nxtools import logging, log_traceback, datestr2ts
+
+from nx.db import DB
+from nx.core import config, storages, get_hash
+from nx.messaging import messaging
+from nx.objects import Asset, Item, Event, Bin, User
+from nx.enum import MediaType, RunMode
+
 try:
-    import mistune
+    import mistune  # noqa
     has_mistune = True
 except ModuleNotFoundError:
     has_mistune = False
-
-from nxtools import (
-    logging,
-    log_traceback,
-    datestr2ts
-)
-
-from nebulacore import (
-    config,
-    storages,
-    get_hash,
-)
-from nebulacore.constants import (
-    FILE,
-    RUN_SKIP
-)
-
-from .db import DB
-from .messaging import messaging
-from .objects import Asset, Item, Event, Bin, User
 
 
 def get_user(login, password, db=False):
@@ -62,7 +50,7 @@ def asset_by_path(id_storage, path, db=False):
                 WHERE media_type = %s
                 AND meta->>'id_storage' = %s
                 AND meta->>'path' = %s
-        """, [FILE, id_storage, path])
+        """, [MediaType.FILE, id_storage, path])
     for id, meta in db.fetchall():
         return Asset(meta=meta, db=db)
     return False
@@ -202,7 +190,7 @@ def get_next_item(item, **kwargs):
                     next_item = current_bin.items[0]
                     next_item.asset
                     return next_item
-            if item["run_mode"] == RUN_SKIP:
+            if item["run_mode"] == RunMode.RUN_SKIP:
                 continue
             item.asset
             return item
