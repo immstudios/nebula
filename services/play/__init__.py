@@ -163,10 +163,7 @@ class Service(BaseService):
 
         if not kwargs["full_path"]:
             state = get_object_state_name(playout_status)
-            return NebulaResponse(
-                404,
-                f"Unable to cue {state} playout file"
-            )
+            return NebulaResponse(404, f"Unable to cue {state} playout file")
 
         kwargs["mark_in"] = item["mark_in"]
         kwargs["mark_out"] = item["mark_out"]

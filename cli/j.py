@@ -1,4 +1,7 @@
-from .common import *
+from cli.common import colored
+
+from nx.db import DB
+from nx.enum import JobState
 
 def format_status(key, asset):
     colored = "\033[{}m{:<8}\033[0m"

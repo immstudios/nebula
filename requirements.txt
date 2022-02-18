@@ -1,0 +1,9 @@
+nxtools
+cherryadmin
+pylibmc
+psutil
+psycopg2-binary
+PyYAML
+requests
+promexp
+conti

@@ -4,6 +4,7 @@ test.py
 _old/
 test-*
 tool*
+poetry.lock
 _import.py
 _scripts
 _res/
