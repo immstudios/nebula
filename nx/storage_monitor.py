@@ -41,7 +41,7 @@ class StorageMonitor(BaseAgent):
                                 storage_ident_path
                             ).readlines()
                         ]
-                        ):
+                ):
                     try:
                         with open(storage_ident_path, "a") as f:
                             f.write(storage_string+"\n")
@@ -105,17 +105,15 @@ class StorageMonitor(BaseAgent):
             if smbver:
                 smbopts["vers"] = smbver
 
-            executable = "mount.cifs"
             if smbopts:
                 opts = " -o '{}'".format(",".join(
-                        ["{}={}".format(k, smbopts[k]) for k in smbopts]
-                    ))
+                    ["{}={}".format(k, smbopts[k]) for k in smbopts]
+                ))
             else:
                 opts = ""
             cmd = f"mount.cifs {storage['path']} {storage.local_path}{opts}"
 
         elif storage["protocol"] == "nfs":
-            executable = "mount.nfs"
             cmd = f"mount.nfs {storage['path']} {storage.local_path}"
         else:
             return
@@ -124,4 +122,4 @@ class StorageMonitor(BaseAgent):
         while proc.poll() is None:
             time.sleep(.1)
         if proc.returncode:
-            logging.debug(executable, ":", proc.stderr().read().strip())
+            logging.error(f"Unable to mount {storage}")
