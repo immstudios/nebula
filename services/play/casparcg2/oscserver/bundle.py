@@ -47,7 +47,7 @@ class OSCBundle(object):
                 # Get the sub content size.
                 content_size, index = get_int(self._dgram, index)
                 # Get the datagram for the sub content.
-                content_dgram = self._dgram[index:index + content_size]
+                content_dgram = self._dgram[index : index + content_size]
                 # Increment our position index up to the next possible content.
                 index += content_size
                 # Parse the content into an OSC message or bundle.

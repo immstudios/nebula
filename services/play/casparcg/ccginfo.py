@@ -9,9 +9,11 @@ LIVE = -1
 
 __all__ = ["get_info_parser"]
 
+
 def basefname(fname):
     """Platform dependent path splitter (caspar is always on win)"""
     return os.path.splitext(fname.split("\\")[-1])[0]
+
 
 class BaseInfoParser(object):
     def __init__(self, caspar, channel, default_fps=25.0):
@@ -22,12 +24,7 @@ class BaseInfoParser(object):
 
         self.default_fps = default_fps
 
-        self.defaults = {
-                "current" : False,
-                "cued" : False,
-                "pos" : 0,
-                "dur" : 0
-            }
+        self.defaults = {"current": False, "cued": False, "pos": 0, "dur": 0}
 
     @property
     def seek_fps(self):
@@ -56,8 +53,6 @@ class BaseInfoParser(object):
             return None
         result = self.parse(layer_index)
         return result or self.defaults
-
-
 
 
 class Caspar207InfoParser(BaseInfoParser):
@@ -91,7 +86,7 @@ class Caspar207InfoParser(BaseInfoParser):
                 data["pos"] = 0
                 data["current"] = basefname(fg_prod.find("location").text)
             elif fg_prod.find("type").text == "empty-producer":
-                data["current"] = False # No video is playing right now
+                data["current"] = False  # No video is playing right now
             else:
                 data["pos"] = int(fg_prod.find("file-frame-number").text)
                 data["dur"] = int(fg_prod.find("file-nb-frames").text)
@@ -99,13 +94,17 @@ class Caspar207InfoParser(BaseInfoParser):
         except Exception:
             pass
 
-
         try:
-            bg_prod = video_layer.find("background").find("producer").find("destination").find("producer")
+            bg_prod = (
+                video_layer.find("background")
+                .find("producer")
+                .find("destination")
+                .find("producer")
+            )
             if bg_prod.find("type").text == "image-producer":
                 data["cued"] = basefname(bg_prod.find("location").text)
             elif bg_prod.find("type").text == "empty-producer":
-                data["cued"] = False # No video is cued
+                data["cued"] = False  # No video is cued
             else:
                 data["cued"] = basefname(bg_prod.find("filename").text)
         except Exception:
@@ -114,12 +113,8 @@ class Caspar207InfoParser(BaseInfoParser):
         return data
 
 
-
 class Caspar206InfoParser(Caspar207InfoParser):
     protocol = 2.06
-
-
-
 
 
 class Caspar21InfoParser(BaseInfoParser):
@@ -153,7 +148,7 @@ class Caspar21InfoParser(BaseInfoParser):
                 data["pos"] = 0
                 data["current"] = basefname(fg_prod.find("location").text)
             elif fg_prod.find("type").text == "empty-producer":
-                data["current"] = False # No video is playing right now
+                data["current"] = False  # No video is playing right now
             else:
                 data["pos"] = int(fg_prod.find("file-frame-number").text)
                 data["dur"] = int(fg_prod.find("file-nb-frames").text)
@@ -161,20 +156,23 @@ class Caspar21InfoParser(BaseInfoParser):
         except Exception:
             pass
 
-
         try:
-            bg_prod = video_layer.find("background").find("producer").find("destination").find("producer")
+            bg_prod = (
+                video_layer.find("background")
+                .find("producer")
+                .find("destination")
+                .find("producer")
+            )
             if bg_prod.find("type").text == "image-producer":
                 data["cued"] = basefname(bg_prod.find("location").text)
             elif bg_prod.find("type").text == "empty-producer":
-                data["cued"] = False # No video is cued
+                data["cued"] = False  # No video is cued
             else:
                 data["cued"] = basefname(bg_prod.find("filename").text)
         except Exception:
             data["cued"] = False
 
         return data
-
 
 
 class Caspar22InfoParser(BaseInfoParser):
@@ -187,7 +185,7 @@ class Caspar22InfoParser(BaseInfoParser):
             return False
         fpsn = int(frates[0].text)
         fpsd = int(frates[1].text)
-        return fpsn/fpsd
+        return fpsn / fpsd
 
     def parse(self, layer_index):
         try:
@@ -226,7 +224,7 @@ class Caspar22InfoParser(BaseInfoParser):
             f = fg.find("file")
             data["current"] = get_base_name(f.find("path").text)
 
-            #fps
+            # fps
             try:
                 fpstags = f.find("streams").find("file")[0].findall("fps")
             except:
@@ -252,8 +250,6 @@ class Caspar22InfoParser(BaseInfoParser):
         return data
 
 
-
-
 def get_info_parser(caspar):
     res = caspar.query("version")
     if res.is_error:
@@ -261,12 +257,12 @@ def get_info_parser(caspar):
         return False
 
     parsers = {
-            "2.3" : Caspar22InfoParser,
-            "2.2" : Caspar22InfoParser,
-            "2.1"   : Caspar21InfoParser,
-            "2.0.7" : Caspar207InfoParser,
-            "2.0.6" : Caspar206InfoParser, # Same xml as 2.0.7
-        }
+        "2.3": Caspar22InfoParser,
+        "2.2": Caspar22InfoParser,
+        "2.1": Caspar21InfoParser,
+        "2.0.7": Caspar207InfoParser,
+        "2.0.6": Caspar206InfoParser,  # Same xml as 2.0.7
+    }
 
     Parser = None
     for parser_name in parsers:

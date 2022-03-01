@@ -29,7 +29,7 @@ class BaseService(object):
             db = DB()
             db.query(
                 "UPDATE services SET last_seen = %s, state=1 WHERE id=%s",
-                [time.time(), self.id_service]
+                [time.time(), self.id_service],
             )
             db.commit()
         logging.goodnews("Service started")
@@ -54,8 +54,7 @@ class BaseService(object):
         if no_restart:
             db = DB()
             db.query(
-                "UPDATE services SET autostart=FALSE WHERE id=%s",
-                [self.id_service]
+                "UPDATE services SET autostart=FALSE WHERE id=%s", [self.id_service]
             )
             db.commit()
         self.on_shutdown()
@@ -73,13 +72,9 @@ class BaseService(object):
                 state = 1
             db.query(
                 "UPDATE services SET last_seen=%s, state=%s WHERE id=%s",
-                [time.time(), state, self.id_service]
+                [time.time(), state, self.id_service],
             )
             db.commit()
 
-        if state in [
-                ServiceState.STOPPED,
-                ServiceState.STOPPING,
-                ServiceState.KILL
-        ]:
+        if state in [ServiceState.STOPPED, ServiceState.STOPPING, ServiceState.KILL]:
             self.shutdown()

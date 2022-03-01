@@ -33,8 +33,7 @@ class NebulaFFMPEG(BaseEncoder):
                     except Exception:
                         log_traceback()
                         return NebulaResponse(
-                            500, 
-                            message="Error in task 'pre' script."
+                            500, message="Error in task 'pre' script."
                         )
 
             elif p.tag == "paramset" and eval(p.attrib["condition"]):
@@ -48,14 +47,12 @@ class NebulaFFMPEG(BaseEncoder):
                 id_storage = int(eval(p.attrib["storage"]))
                 if not storages[id_storage]:
                     return NebulaResponse(
-                        500, 
-                        message=f"Target storage {id_storage} is not mounted"
+                        500, message=f"Target storage {id_storage} is not mounted"
                     )
 
                 target_rel_path = eval(p.text)
                 target_path = os.path.join(
-                    storages[id_storage].local_path, 
-                    target_rel_path
+                    storages[id_storage].local_path, target_rel_path
                 )
                 target_dir = os.path.split(target_path)[0]
 
@@ -64,8 +61,7 @@ class NebulaFFMPEG(BaseEncoder):
 
                 if not temp_path:
                     return NebulaResponse(
-                        500, 
-                        message="Unable to create temp directory"
+                        500, message="Unable to create temp directory"
                     )
 
                 if not os.path.isdir(target_dir):
@@ -74,8 +70,8 @@ class NebulaFFMPEG(BaseEncoder):
                     except Exception:
                         log_traceback()
                         return NebulaResponse(
-                            500, 
-                            message=f"Unable to create output directory {target_dir}" # noqa
+                            500,
+                            message=f"Unable to create output directory {target_dir}",  # noqa
                         )
 
                 if not p.attrib.get("direct", False):
@@ -106,8 +102,7 @@ class NebulaFFMPEG(BaseEncoder):
         if self.proc.return_code > 0:
             logging.error(self.proc.stderr.read())
             return NebulaResponse(
-                500, 
-                message=f"Encoding failed\n{self.proc.error_log}"
+                500, message=f"Encoding failed\n{self.proc.error_log}"
             )
 
         for temp_path in self.files:
@@ -120,7 +115,7 @@ class NebulaFFMPEG(BaseEncoder):
                     500,
                     message=f"""Unable to move output file
     Source: {temp_path}
-    Target: {target_path}"""
+    Target: {target_path}""",
                 )
 
         return NebulaResponse(200, message="Task finished")

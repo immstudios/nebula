@@ -12,7 +12,7 @@ from nx.objects import Asset
 from nx.enum import AssetState, JobState
 
 # for scripts
-from nebulacore.constants import * # noqa
+from nebulacore.constants import *  # noqa
 
 MAX_RETRIES = 3
 
@@ -81,10 +81,7 @@ class Actions:
 
     def load(self, id_action):
         db = DB()
-        db.query(
-            "SELECT title, settings FROM actions WHERE id = %s",
-            [id_action]
-        )
+        db.query("SELECT title, settings FROM actions WHERE id = %s", [id_action])
         for title, settings in db.fetchall():
             self.data[id_action] = Action(id_action, title, xml(settings))
 
@@ -97,7 +94,7 @@ class Actions:
 actions = Actions()
 
 
-class Job():
+class Job:
     def __init__(self, id, db=False):
         self._db = db
         self.id = id
@@ -161,10 +158,20 @@ class Job():
                  message
             FROM jobs WHERE id=%s
             """,
-            [self.id]
+            [self.id],
         )
-        for id_action, id_asset, id_service, id_user, settings, priority, \
-                retries, status, progress, message in self.db.fetchall():
+        for (
+            id_action,
+            id_asset,
+            id_service,
+            id_user,
+            settings,
+            priority,
+            retries,
+            status,
+            progress,
+            message,
+        ) in self.db.fetchall():
             self.id_service = id_service
             self.id_user = id_user
             self.priority = priority
@@ -190,13 +197,12 @@ class Job():
                 progress=0
             WHERE id=%s AND id_service IS NULL
             """,
-            [id_service, now, self.id]
+            [id_service, now, self.id],
         )
         self.db.commit()
         self.db.query(
-                "SELECT id FROM jobs WHERE id=%s AND id_service=%s",
-                [self.id, id_service]
-            )
+            "SELECT id FROM jobs WHERE id=%s AND id_service=%s", [self.id, id_service]
+        )
         if self.db.fetchall():
             messaging.send(
                 "job_progress",
@@ -206,7 +212,7 @@ class Job():
                 stime=now,
                 status=1,
                 progress=0,
-                message="Starting..."
+                message="Starting...",
             )
             return True
         return False
@@ -222,7 +228,7 @@ class Job():
                 message=%s
             WHERE id=%s
             """,
-            [progress, message, self.id]
+            [progress, message, self.id],
         )
         db.commit()
         messaging.send(
@@ -232,7 +238,7 @@ class Job():
             id_action=self.id_action,
             status=JobState.IN_PROGRESS,
             progress=progress,
-            message=message
+            message=message,
         )
 
     def get_status(self):
@@ -251,7 +257,7 @@ class Job():
                 message=%s
             WHERE id=%s
             """,
-            [now, message, self.id]
+            [now, message, self.id],
         )
         self.db.commit()
         self.status = JobState.ABORTED
@@ -263,7 +269,7 @@ class Job():
             etime=now,
             status=JobState.ABORTED,
             progress=0,
-            message=message
+            message=message,
         )
 
     def restart(self, message="Restarted"):
@@ -280,7 +286,7 @@ class Job():
                 message=%s
             WHERE id=%s
             """,
-            [message, self.id]
+            [message, self.id],
         )
         self.db.commit()
         self.status = JobState.RESTART
@@ -293,7 +299,7 @@ class Job():
             etime=None,
             status=5,
             progress=0,
-            message=message
+            message=message,
         )
 
     def fail(self, message="Failed", critical=False):
@@ -312,7 +318,7 @@ class Job():
                 message=%s
             WHERE id=%s
             """,
-            [retries, max(0, self.priority-1), message, self.id]
+            [retries, max(0, self.priority - 1), message, self.id],
         )
         self.db.commit()
         self.status = JobState.FAILED
@@ -324,7 +330,7 @@ class Job():
             id_action=self.id_action,
             status=JobState.FAILED,
             progress=0,
-            message=message
+            message=message,
         )
 
     def done(self, message="Completed"):
@@ -338,7 +344,7 @@ class Job():
                 message=%s
             WHERE id=%s
             """,
-            [now, message, self.id]
+            [now, message, self.id],
         )
         self.db.commit()
         self.status = JobState.COMPLETED
@@ -351,7 +357,7 @@ class Job():
             status=JobState.COMPLETED,
             etime=now,
             progress=100,
-            message=message
+            message=message,
         )
 
 
@@ -394,8 +400,16 @@ def get_job(id_service, action_ids, db=False):
         """
     db.query(q, [tuple(action_ids), MAX_RETRIES])
 
-    for id_job, id_action, id_asset, id_user, settings, priority, \
-            retries, status in db.fetchall():
+    for (
+        id_job,
+        id_action,
+        id_asset,
+        id_user,
+        settings,
+        priority,
+        retries,
+        status,
+    ) in db.fetchall():
         asset = Asset(id_asset, db=db)
         action = actions[id_action]
         job = Job(id_job, db=db)
@@ -423,9 +437,7 @@ def get_job(id_service, action_ids, db=False):
                     log_traceback()
                     continue
         if not action:
-            logging.warning(
-                f"Unable to get job. No such action ID {id_action}"
-            )
+            logging.warning(f"Unable to get job. No such action ID {id_action}")
             continue
 
         if status != 5 and action.should_skip(asset):
@@ -439,7 +451,7 @@ def get_job(id_service, action_ids, db=False):
                     end_time=%s
                 WHERE id=%s
                 """,
-                [now, now, id_job]
+                [now, now, id_job],
             )
             db.commit()
             continue
@@ -459,7 +471,7 @@ def get_job(id_service, action_ids, db=False):
                 id_action=id_action,
                 status=status,
                 progress=0,
-                message="Waiting"
+                message="Waiting",
             )
             db.commit()
     return False
@@ -473,7 +485,7 @@ def send_to(
     priority=3,
     restart_existing=True,
     restart_running=False,
-    db=False
+    db=False,
 ):
     db = db or DB()
     if not id_asset:
@@ -488,7 +500,7 @@ def send_to(
         FROM jobs
         WHERE id_asset=%s AND id_action=%s AND settings=%s
         """,
-        [id_asset, id_action, json.dumps(settings)]
+        [id_asset, id_action, json.dumps(settings)],
     )
     res = db.fetchall()
     if res:
@@ -512,7 +524,7 @@ def send_to(
                     AND status NOT IN ({conds})
                 RETURNING id
                 """,
-                [id_user, time.time(), res[0][0]]
+                [id_user, time.time(), res[0][0]],
             )
             db.commit()
             if db.fetchall():
@@ -521,7 +533,7 @@ def send_to(
                     id=res[0][0],
                     id_asset=id_asset,
                     id_action=id_action,
-                    progress=0
+                    progress=0,
                 )
                 return NebulaResponse(201, message="Job restarted")
             return NebulaResponse(200, message="Job exists. Not restarting")
@@ -552,14 +564,7 @@ def send_to(
         )
         RETURNING id
         """,
-        [
-            id_asset,
-            id_action,
-            id_user,
-            json.dumps(settings),
-            priority,
-            time.time()
-        ]
+        [id_asset, id_action, id_user, json.dumps(settings), priority, time.time()],
     )
 
     try:

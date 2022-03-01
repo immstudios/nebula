@@ -30,26 +30,21 @@ class ViewMetrics(CherryAdminRawView):
                     "api_requests",
                     request_stats[user][method],
                     user=user,
-                    method=method
+                    method=method,
                 )
 
         db.query("select status, count(status) from jobs group by status;")
         for status, count in db.fetchall():
             status_label = [
-                        "Pending",
-                        "In progress",
-                        "Completed",
-                        "Failed",
-                        "Aborted",
-                        "Restart",
-                        "Skipped"
-                    ][status]
-            metrics.add(
-                "jobs",
-                count,
-                status=status,
-                status_label=status_label
-            )
+                "Pending",
+                "In progress",
+                "Completed",
+                "Failed",
+                "Aborted",
+                "Restart",
+                "Skipped",
+            ][status]
+            metrics.add("jobs", count, status=status, status_label=status_label)
 
         db.query(
             """
@@ -65,7 +60,7 @@ class ViewMetrics(CherryAdminRawView):
                 hostname=hostname,
                 id=id,
                 title=title,
-                service_type=stype
+                service_type=stype,
             )
             metrics.add(
                 "service_inactive_seconds",
@@ -73,12 +68,9 @@ class ViewMetrics(CherryAdminRawView):
                 hostname=hostname,
                 id=id,
                 title=title,
-                service_type=stype
+                service_type=stype,
             )
 
         self.is_raw = True
-        self.body = metrics.render(
-            prefix="nebula",
-            site_name=config["site_name"]
-        )
+        self.body = metrics.render(prefix="nebula", site_name=config["site_name"])
         self["mime"] = "text/txt"

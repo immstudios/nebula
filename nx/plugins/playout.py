@@ -27,9 +27,9 @@ class PlayoutPlugin:
     def __init__(self, service):
         self.service = service
         self.playout_dir = os.path.join(
-                storages[self.channel_config["playout_storage"]].local_path,
-                self.channel_config["playout_dir"]
-            )
+            storages[self.channel_config["playout_storage"]].local_path,
+            self.channel_config["playout_dir"],
+        )
         self.id_layer = 0
         self.slots = []
         self.tasks = []
@@ -45,11 +45,11 @@ class PlayoutPlugin:
         result = []
         for id_slot, slot in enumerate(self.slots):
             s = {
-                    "id": id_slot,
-                    "name": slot.name,
-                    "type": slot.type,
-                    "title": slot.title,
-                }
+                "id": id_slot,
+                "name": slot.name,
+                "type": slot.type,
+                "title": slot.title,
+            }
             for key in slot.opts:
                 if key in s:
                     continue

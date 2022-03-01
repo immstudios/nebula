@@ -2,10 +2,7 @@ import os
 import sys
 import psycopg2
 
-from nxtools import (
-    logging,
-    critical_error
-)
+from nxtools import logging, critical_error
 
 from .core import (  # noqa
     config,
@@ -17,14 +14,14 @@ from .core import (  # noqa
     meta_types,
     MetaType,
     ClassificationScheme,
-    clear_cs_cache
+    clear_cs_cache,
 )
 
 from .db import DB
 from .cache import cache, Cache  # noqa
 from .messaging import messaging
 from .mediaprobe import mediaprobe  # noqa
-from .base_service import BaseService # noqa
+from .base_service import BaseService  # noqa
 from .plugins import load_common_scripts
 
 
@@ -107,6 +104,7 @@ def load_settings(*args, **kwargs):
 
     def seismic_log(**kwargs):
         messaging.send("log", **kwargs)
+
     logging.add_handler(seismic_log)
 
     cache.configure()

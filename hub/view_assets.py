@@ -36,14 +36,14 @@ class ViewAssets(CherryAdminView):
         # Build view
 
         assets = api_get(
-                user=self["user"],
-                id_view=id_view,
-                fulltext=query or False,
-                count=False,
-                order="{} {}".format(order_key, order_trend),
-                limit=RECORDS_PER_PAGE + 1,
-                offset=(current_page - 1) * RECORDS_PER_PAGE
-            )
+            user=self["user"],
+            id_view=id_view,
+            fulltext=query or False,
+            count=False,
+            order="{} {}".format(order_key, order_trend),
+            limit=RECORDS_PER_PAGE + 1,
+            offset=(current_page - 1) * RECORDS_PER_PAGE,
+        )
 
         if len(assets["data"]) > RECORDS_PER_PAGE:
             page_count = current_page + 1
@@ -59,7 +59,7 @@ class ViewAssets(CherryAdminView):
             data = copy.copy(kwargs)
             for key in override:
                 if not override[key] and key in data:
-                    del(data[key])
+                    del data[key]
                 else:
                     data[key] = override[key]
             return "&".join(["{}={}".format(k, data[k]) for k in data])
@@ -78,6 +78,5 @@ class ViewAssets(CherryAdminView):
         self["order_trend"] = order_trend
         self["get_params"] = get_params
         self["view_list"] = sorted(
-            list(config["views"].keys()),
-            key=lambda x: config["views"][x]["position"]
+            list(config["views"].keys()), key=lambda x: config["views"][x]["position"]
         )

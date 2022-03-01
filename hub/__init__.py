@@ -41,7 +41,7 @@ SITE_JS = [
     "/static/js/vendor/gijgo-core.js",
     "/static/js/vendor/gijgo-datepicker.js",
     "/static/js/vendor/jquery.inputmask.min.js",
-    "/static/js/common.js"
+    "/static/js/common.js",
 ]
 
 
@@ -51,7 +51,7 @@ def login_helper(login, password):
         return False
     meta = user.meta
     if "password" in meta:
-        del(meta["password"])
+        del meta["password"]
     return meta
 
 
@@ -62,7 +62,7 @@ class SiteContext(object):
         "language": config.get("language", "en"),
         "webtools": webtools,
         "css": config.get("hub_css", SITE_CSS),
-        "js": config.get("hub_js", SITE_JS)
+        "js": config.get("hub_js", SITE_JS),
     }
 
     def __getitem__(self, key):
@@ -85,25 +85,13 @@ def user_context_helper(meta):
 
 static_dir = config.get(
     "hub_static_dir",
-    os.path.join(
-        config["nebula_root"],
-        "vendor",
-        "nebula-hub",
-        "dist",
-        "static"
-    )
+    os.path.join(config["nebula_root"], "vendor", "nebula-hub", "dist", "static"),
 )
 
 
 templates_dir = config.get(
     "hub_templates_dir",
-    os.path.join(
-        config["nebula_root"],
-        "vendor",
-        "nebula-hub",
-        "dist",
-        "templates"
-    )
+    os.path.join(config["nebula_root"], "vendor", "nebula-hub", "dist", "templates"),
 )
 
 
@@ -111,32 +99,31 @@ default_sessions_dir = os.path.join("/tmp", config["site_name"] + "-sessions")
 
 
 hub_config = {
-        "host": config.get("hub_host", "0.0.0.0"),
-        "port": config.get("hub_port", 8080),
-        "static_dir": static_dir,
-        "templates_dir": templates_dir,
-        "login_helper": login_helper,
-        "site_context_helper": site_context_helper,
-        "page_context_helper": page_context_helper,
-        "user_context_helper": user_context_helper,
-        "sessions_dir": config.get("hub_sessions_dir", default_sessions_dir),
-        "sessions_timeout": 60*24*120,
-        "hash_salt": config.get("hash_salt", "nebulaissalty"),
-        "blocking": True,
-        "minify_html": True,
-        "log_screen": False,
-        "views": {
-                "index": ViewDashboard,
-                "assets": ViewAssets,
-                "detail": ViewDetail,
-                "jobs": ViewJobs,
-                "metrics": ViewMetrics,
-                "tool": ViewTool,
-                "services": ViewServices,
-                "settings": ViewSettings,
-                "passreset": ViewPassReset,
-                "profile": ViewProfile,
-            },
-
-        "api_methods": api_methods
-    }
+    "host": config.get("hub_host", "0.0.0.0"),
+    "port": config.get("hub_port", 8080),
+    "static_dir": static_dir,
+    "templates_dir": templates_dir,
+    "login_helper": login_helper,
+    "site_context_helper": site_context_helper,
+    "page_context_helper": page_context_helper,
+    "user_context_helper": user_context_helper,
+    "sessions_dir": config.get("hub_sessions_dir", default_sessions_dir),
+    "sessions_timeout": 60 * 24 * 120,
+    "hash_salt": config.get("hash_salt", "nebulaissalty"),
+    "blocking": True,
+    "minify_html": True,
+    "log_screen": False,
+    "views": {
+        "index": ViewDashboard,
+        "assets": ViewAssets,
+        "detail": ViewDetail,
+        "jobs": ViewJobs,
+        "metrics": ViewMetrics,
+        "tool": ViewTool,
+        "services": ViewServices,
+        "settings": ViewSettings,
+        "passreset": ViewPassReset,
+        "profile": ViewProfile,
+    },
+    "api_methods": api_methods,
+}

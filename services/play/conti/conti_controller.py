@@ -40,7 +40,7 @@ class ContiController(object):
         settings = {
             "playlist_length": 2,
             "blocking": False,
-            "outputs": self.parent.channel_config.get("conti_outputs", [])
+            "outputs": self.parent.channel_config.get("conti_outputs", []),
         }
         settings.update(self.parent.channel_config.get("conti_settings", {}))
         self.conti = NebulaConti(None, **settings)
@@ -94,7 +94,7 @@ class ContiController(object):
             return NebulaResponse(500)
 
         if len(self.conti.playlist) > 1:
-            del(self.conti.playlist[1:])
+            del self.conti.playlist[1:]
         self.conti.playlist.append(self.cued)
 
         if not self.conti.started:

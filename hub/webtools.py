@@ -5,7 +5,7 @@ from nxtools import FileObject, logging, log_traceback
 from nx.plugins import get_plugin_path
 
 
-class WebTools():
+class WebTools:
     def __init__(self):
         self.load()
 
@@ -18,10 +18,7 @@ class WebTools():
         for plugin_entry in os.listdir(tooldir):
             entry_path = os.path.join(tooldir, plugin_entry)
             if os.path.isdir(entry_path):
-                plugin_module_path = os.path.join(
-                    entry_path,
-                    plugin_entry + ".py"
-                )
+                plugin_module_path = os.path.join(entry_path, plugin_entry + ".py")
                 if not os.path.exists(plugin_module_path):
                     continue
             elif not os.path.splitext(plugin_entry)[1] == ".py":

@@ -8,6 +8,7 @@ from .packet import OSCPacket
 from .bundle import _BUNDLE_PREFIX
 from .osc_types import OSCParseError
 
+
 class OSCHandler(socketserver.BaseRequestHandler):
     def handle(self) -> None:
         try:
@@ -19,11 +20,14 @@ class OSCHandler(socketserver.BaseRequestHandler):
         except OSCParseError:
             pass
 
+
 class OSCServer(socketserver.UDPServer):
-    def __init__(self, host: str, port:int, handler:FunctionType) -> None:
+    def __init__(self, host: str, port: int, handler: FunctionType) -> None:
         self.handle = handler
         super().__init__((host, port), OSCHandler)
 
-    def verify_request(self, request: List[bytes], client_address: Tuple[str, int]) -> bool:
+    def verify_request(
+        self, request: List[bytes], client_address: Tuple[str, int]
+    ) -> bool:
         data = request[0]
         return data.startswith(_BUNDLE_PREFIX) or data.startswith(b"/")

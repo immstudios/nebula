@@ -38,9 +38,7 @@ def create_ft_index(meta):
                 else:
                     ft[word] = max(ft[word], weight)
         except Exception:
-            logging.error(
-                f"Unable to slugify key {key} with value {meta[key]}"
-            )
+            logging.error(f"Unable to slugify key {key} with value {meta[key]}")
     return ft
 
 
@@ -95,9 +93,7 @@ class ServerObject(BaseObject):
         self.is_new = False
         if kwargs.get("notify", True):
             messaging.send(
-                "objects_changed",
-                objects=[self.id],
-                object_type=self.object_type
+                "objects_changed", objects=[self.id], object_type=self.object_type
             )
 
     def _insert(self, **kwargs):
@@ -115,10 +111,8 @@ class ServerObject(BaseObject):
 
         if cols:
             query = "INSERT INTO {} ({}) VALUES ({}) RETURNING id".format(
-                        self.table_name,
-                        ", ".join(cols),
-                        ", ".join(["%s"]*len(cols))
-                    )
+                self.table_name, ", ".join(cols), ", ".join(["%s"] * len(cols))
+            )
         else:
             query = f"""
                 INSERT INTO {self.table_name}
@@ -129,9 +123,9 @@ class ServerObject(BaseObject):
         if not self.id:
             self["id"] = self.db.fetchone()[0]
             self.db.query(
-                    f"UPDATE {self.table_name} SET meta=%s WHERE id=%s",
-                    [json.dumps(self.meta), self.id]
-                )
+                f"UPDATE {self.table_name} SET meta=%s WHERE id=%s",
+                [json.dumps(self.meta), self.id],
+            )
 
     def _update(self, **kwargs):
         assert self.id > 0
@@ -143,27 +137,26 @@ class ServerObject(BaseObject):
             vals.append(self[col])
 
         query = "UPDATE {} SET {} WHERE id=%s".format(
-                self.table_name,
-                ", ".join([key+"=%s" for key in cols])
-            )
-        self.db.query(query, vals+[self.id])
+            self.table_name, ", ".join([key + "=%s" for key in cols])
+        )
+        self.db.query(query, vals + [self.id])
 
     def update_ft_index(self, is_new=False):
         if not is_new:
             self.db.query(
                 "DELETE FROM ft WHERE object_type=%s AND id=%s",
-                [self.object_type_id, self.id]
+                [self.object_type_id, self.id],
             )
         ft = create_ft_index(self.meta)
         if not ft:
             return
         args = [(self.id, self.object_type_id, ft[word], word) for word in ft]
-        tpls = ','.join(['%s'] * len(args))
+        tpls = ",".join(["%s"] * len(args))
         self.db.query(
             f"""
             INSERT INTO ft (id, object_type, weight, value)
             VALUES {tpls}""",
-            args
+            args,
         )
 
     @property
@@ -192,12 +185,9 @@ class ServerObject(BaseObject):
         logging.info(f"Deleting {self}")
         cache.delete(self.cache_key)
         self.delete_children()
-        self.db.query(
-            "DELETE FROM {} WHERE id=%s".format(self.table_name),
-            [self.id]
-        )
+        self.db.query("DELETE FROM {} WHERE id=%s".format(self.table_name), [self.id])
         self.db.query(
             "DELETE FROM ft WHERE object_type=%s AND id=%s",
-            [self.object_type_id, self.id]
+            [self.object_type_id, self.id],
         )
         self.db.commit()

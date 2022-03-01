@@ -18,10 +18,7 @@ class Service(BaseService):
 
     def on_main(self):
         db = DB()
-        db.query(
-            "SELECT id, meta FROM assets WHERE status=%s",
-            [AssetState.ONLINE]
-        )
+        db.query("SELECT id, meta FROM assets WHERE status=%s", [AssetState.ONLINE])
         for _, meta in db.fetchall():
             asset = Asset(meta=meta, db=db)
             self.proc(asset)
@@ -32,16 +29,14 @@ class Service(BaseService):
                 continue
 
             if action.should_create(asset):
-                logging.info(
-                    f"{asset} matches action condition {action.title}"
-                )
+                logging.info(f"{asset} matches action condition {action.title}")
                 result = send_to(
-                        asset.id,
-                        action.id,
-                        restart_existing=False,
-                        restart_running=False,
-                        db=asset.db
-                    )
+                    asset.id,
+                    action.id,
+                    restart_existing=False,
+                    restart_running=False,
+                    db=asset.db,
+                )
 
                 if result:
                     logging.info(result.message)

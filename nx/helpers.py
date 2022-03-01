@@ -16,6 +16,7 @@ from nx.enum import MediaType, RunMode
 
 try:
     import mistune  # noqa
+
     has_mistune = True
 except ModuleNotFoundError:
     has_mistune = False
@@ -30,7 +31,7 @@ def get_user(login, password, db=False):
             SELECT meta FROM users
             WHERE login=%s AND password=%s
             """,
-            [login, get_hash(password)]
+            [login, get_hash(password)],
         )
     except ValueError:
         return False
@@ -45,12 +46,15 @@ def asset_by_path(id_storage, path, db=False):
     path = path.replace("\\", "/")
     if not db:
         db = DB()
-    db.query("""
+    db.query(
+        """
             SELECT id, meta FROM assets
                 WHERE media_type = %s
                 AND meta->>'id_storage' = %s
                 AND meta->>'path' = %s
-        """, [MediaType.FILE, id_storage, path])
+        """,
+        [MediaType.FILE, id_storage, path],
+    )
     for id, meta in db.fetchall():
         return Asset(meta=meta, db=db)
     return False
@@ -62,9 +66,7 @@ def asset_by_full_path(path, db=False):
     for id_storage in storages:
         if path.startswith(storages[id_storage].local_path):
             return asset_by_path(
-                id_storage,
-                path.lstrip(storages[id_storage]["path"]),
-                db=db
+                id_storage, path.lstrip(storages[id_storage]["path"]), db=db
             )
     return False
 
@@ -72,10 +74,7 @@ def asset_by_full_path(path, db=False):
 def meta_exists(key, value, db=False):
     if not db:
         db = DB()
-    db.query(
-        "SELECT id, meta FROM assets WHERE meta->>%s = %s",
-        [str(key), str(value)]
-    )
+    db.query("SELECT id, meta FROM assets WHERE meta->>%s = %s", [str(key), str(value)])
     for _, meta in db.fetchall():
         return Asset(meta=meta, db=db)
     return False
@@ -83,11 +82,8 @@ def meta_exists(key, value, db=False):
 
 def get_day_events(id_channel, date, num_days=1):
     chconfig = config["playout_channels"][id_channel]
-    start_time = datestr2ts(
-        date,
-        *chconfig.get("day_start", [6, 0])
-    )
-    end_time = start_time + (3600*24*num_days)
+    start_time = datestr2ts(date, *chconfig.get("day_start", [6, 0]))
+    end_time = start_time + (3600 * 24 * num_days)
     db = DB()
     db.query(
         """
@@ -97,7 +93,7 @@ def get_day_events(id_channel, date, num_days=1):
         AND start > %s
         AND start < %s
         """,
-        (id_channel, start_time, end_time)
+        (id_channel, start_time, end_time),
     )
     for _, meta in db.fetchall():
         yield Event(meta=meta)
@@ -112,7 +108,7 @@ def get_bin_first_item(id_bin, db=False):
         WHERE id_bin=%s
         ORDER BY position LIMIT 1
         """,
-        [id_bin]
+        [id_bin],
     )
     for _, meta in db.fetchall():
         return Item(meta=meta, db=db)
@@ -129,8 +125,7 @@ def get_item_event(id_item, **kwargs):
         AND i.id = {}
         AND e.id_channel in ({})
         """.format(
-            id_item,
-            ", ".join([str(f) for f in config["playout_channels"].keys()])
+            id_item, ", ".join([str(f) for f in config["playout_channels"].keys()])
         )
     )
     for _, meta in db.fetchall():
@@ -148,7 +143,7 @@ def get_item_runs(id_channel, from_ts, to_ts, db=False):
         AND start < %s
         ORDER BY start DESC
         """,
-        [int(from_ts), int(to_ts)]
+        [int(from_ts), int(to_ts)],
     )
     result = {}
     for id_item, start, stop in db.fetchall():
@@ -176,11 +171,9 @@ def get_next_item(item, **kwargs):
         items.reverse()
 
     for item in items:
-        if (force == "prev" and item["position"] < current_item["position"]) \
-                or (
-                    force != "prev" and
-                    item["position"] > current_item["position"]
-                ):
+        if (force == "prev" and item["position"] < current_item["position"]) or (
+            force != "prev" and item["position"] > current_item["position"]
+        ):
             if item["item_role"] == "lead_out" and not force:
                 logging.info("Cueing Lead In")
                 for i, r in enumerate(current_bin.items):
@@ -207,17 +200,14 @@ def get_next_item(item, **kwargs):
             WHERE id_channel = %s and start {direction} %s
             ORDER BY start {order} LIMIT 1
             """,
-            [current_event["id_channel"], current_event["start"]]
+            [current_event["id_channel"], current_event["start"]],
         )
         try:
             next_event = Event(meta=db.fetchall()[0][0], db=db)
             if not next_event.bin.items:
                 logging.debug("Next playlist is empty")
                 raise Exception
-            if next_event["run_mode"] and not kwargs.get(
-                "force_next_event",
-                False
-            ):
+            if next_event["run_mode"] and not kwargs.get("force_next_event", False):
                 logging.debug("Next playlist run mode is not auto")
                 raise Exception
             if force == "prev":
@@ -253,33 +243,32 @@ def bin_refresh(bins, **kwargs):
             e.id_magic IN ({bq})
         """
     )
-    for meta, in db.fetchall():
+    for (meta,) in db.fetchall():
         event = Event(meta=meta, db=db)
         if event.id not in changed_events:
             changed_events.append(event.id)
     logging.debug(
-        f"Bins changed {bins}.",
-        f"Initiator {kwargs.get('initiator', logging.user)}"
+        f"Bins changed {bins}.", f"Initiator {kwargs.get('initiator', logging.user)}"
     )
     messaging.send(
-            "objects_changed",
-            sender=sender,
-            objects=bins,
-            object_type="bin",
-            initiator=kwargs.get("initiator", None)
-        )
+        "objects_changed",
+        sender=sender,
+        objects=bins,
+        object_type="bin",
+        initiator=kwargs.get("initiator", None),
+    )
     if changed_events:
         logging.debug(
             f"Events changed {bins}."
             f"Initiator {kwargs.get('initiator', logging.user)}"
         )
         messaging.send(
-                "objects_changed",
-                sender=sender,
-                objects=changed_events,
-                object_type="event",
-                initiator=kwargs.get("initiator", None)
-            )
+            "objects_changed",
+            sender=sender,
+            objects=changed_events,
+            object_type="event",
+            initiator=kwargs.get("initiator", None),
+        )
     return True
 
 
@@ -312,8 +301,7 @@ def send_mail(to, subject, body, **kwargs):
     if type(to) == str:
         to = [to]
     default_reply_address = config.get(
-        "mail_from",
-        f"Nebula <{config['site_name']}@nebulabroadcast.com>"
+        "mail_from", f"Nebula <{config['site_name']}@nebulabroadcast.com>"
     )
     reply_address = kwargs.get("from", default_reply_address)
     smtp_host = config.get("smtp_host", "localhost")
@@ -325,9 +313,9 @@ def send_mail(to, subject, body, **kwargs):
     else:
         msg = MIMEText(body)
 
-    msg['Subject'] = subject
-    msg['From'] = reply_address
-    msg['To'] = ",".join(to)
+    msg["Subject"] = subject
+    msg["From"] = reply_address
+    msg["To"] = ",".join(to)
     if config.get("smtp_ssl", False):
         smtp_port = config.get("smtp_port", 25)
         s = smtplib.SMTP_SSL(smtp_host, port=smtp_port)

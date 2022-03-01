@@ -6,11 +6,13 @@ from nxtools import xml, critical_error, log_traceback, logging
 from nx.db import DB
 from nx.core import config
 
+
 def run(*args):
     id_service = args[0]
 
     if id_service == "hub":
         import hub
+
         try:
             hub_instance = hub.CherryAdmin(**hub.hub_config)
         except Exception:
@@ -24,7 +26,10 @@ def run(*args):
         critical_error("Service ID must be integer")
 
     db = DB()
-    db.query("SELECT service_type, title, host, loop_delay, settings FROM services WHERE id=%s", [id_service])
+    db.query(
+        "SELECT service_type, title, host, loop_delay, settings FROM services WHERE id=%s",
+        [id_service],
+    )
     try:
         agent, title, host, loop_delay, settings = db.fetchall()[0]
     except IndexError:
@@ -41,9 +46,7 @@ def run(*args):
         except Exception:
             log_traceback()
             logging.error("Malformed settings XML:\n", settings)
-            db.query(
-                "UPDATE services SET autostart=0 WHERE id=%s", [id_service]
-            )
+            db.query("UPDATE services SET autostart=0 WHERE id=%s", [id_service])
             db.commit()
             critical_error("Unable to start service")
 

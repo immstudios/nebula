@@ -18,18 +18,18 @@ class AudioTrack(dict):
 def parse_audio_track(**kwargs):
     result = {}
     for key in [
-                "channels",
-                "channel_layout",
-                "bit_rate",
-                "bits_per_sample",
-                "duration",
-                "index",
-                "sample_fmt",
-                "sample_rate",
-                "start_pts",
-                "start_time",
-                "time_base"
-            ]:
+        "channels",
+        "channel_layout",
+        "bit_rate",
+        "bits_per_sample",
+        "duration",
+        "index",
+        "sample_fmt",
+        "sample_rate",
+        "start_pts",
+        "start_time",
+        "time_base",
+    ]:
         if kwargs.get(key):
             result[key] = kwargs[key]
 
@@ -47,42 +47,39 @@ def guess_aspect(w, h):
     if 0 in [w, h]:
         return 0
     valid_aspects = [
-            (9, 16),    # Blasphemy
-            (3, 4),
-            (4, 5),
-            (2, 3),
-            (1, 1),     # Weird but OK I guess
-            (6, 5),     # A.K.A. 1.2:1, Fox movietone
-            (5, 4),
-            (4, 3),
-            (11, 8),    # Academy standard film ratio
-            (1.43, 1),  # IMAX
-            (3, 2),
-            (14, 9),
-            (16, 10),
-            (5, 3),
-            (16, 9),
-            (1.85, 1),
-            (2.35, 1),
-            (2.39, 1),
-            (2.4, 1),
-            (21, 9),
-            (2.76, 1),
-        ]
+        (9, 16),  # Blasphemy
+        (3, 4),
+        (4, 5),
+        (2, 3),
+        (1, 1),  # Weird but OK I guess
+        (6, 5),  # A.K.A. 1.2:1, Fox movietone
+        (5, 4),
+        (4, 3),
+        (11, 8),  # Academy standard film ratio
+        (1.43, 1),  # IMAX
+        (3, 2),
+        (14, 9),
+        (16, 10),
+        (5, 3),
+        (16, 9),
+        (1.85, 1),
+        (2.35, 1),
+        (2.39, 1),
+        (2.4, 1),
+        (21, 9),
+        (2.76, 1),
+    ]
     ratio = float(w) / float(h)
     return "{}/{}".format(
-            *min(
-                valid_aspects,
-                key=lambda x: abs((float(x[0])/x[1])-ratio)
-                )
-        )
+        *min(valid_aspects, key=lambda x: abs((float(x[0]) / x[1]) - ratio))
+    )
 
 
 def find_start_timecode(dump):
     tc_places = [
-            dump["format"].get("tags", {}).get("timecode", "00:00:00:00"),
-            dump["format"].get("timecode", "00:00:00:00"),
-        ]
+        dump["format"].get("tags", {}).get("timecode", "00:00:00:00"),
+        dump["format"].get("timecode", "00:00:00:00"),
+    ]
     tc = "00:00:00:00"
     for i, tcp in enumerate(tc_places):
         if tcp != "00:00:00:00":
@@ -119,9 +116,7 @@ def mediaprobe(source_file):
                 continue
 
             # Frame rate detection
-            fps_n, fps_d = [
-                float(e) for e in stream["r_frame_rate"].split("/")
-            ]
+            fps_n, fps_d = [float(e) for e in stream["r_frame_rate"].split("/")]
             meta["video/fps_f"] = fps_n / fps_d
             meta["video/fps"] = "{}/{}".format(int(fps_n), int(fps_d))
 
@@ -160,8 +155,9 @@ def mediaprobe(source_file):
 
     # Duration
 
-    meta["duration"] = float(format_info.get("duration", 0)) \
-        or source_vdur or source_adur
+    meta["duration"] = (
+        float(format_info.get("duration", 0)) or source_vdur or source_adur
+    )
     try:
         meta["num_frames"] = meta["duration"] * meta["video/fps_f"]
     except Exception:
@@ -193,7 +189,7 @@ def mediaprobe(source_file):
             "album": ("album", None),
             "genre": ("genre", None),
             "comment": ("notes", None),
-            "date": ("year", lambda x: int(x) if len(str(x)) == 4 else 0)
+            "date": ("year", lambda x: int(x) if len(str(x)) == 4 else 0),
         }
 
         for tag, value in format_info["tags"].items():
@@ -209,6 +205,6 @@ def mediaprobe(source_file):
     keys = list(meta.keys())
     for k in keys:
         if meta[k] is None:
-            del(meta[k])
+            del meta[k]
 
     return meta

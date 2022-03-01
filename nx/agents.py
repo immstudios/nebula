@@ -6,7 +6,7 @@ import threading
 from nxtools import logging, log_traceback, critical_error
 
 
-class BaseAgent():
+class BaseAgent:
     def __init__(self, once=False):
         self.first_run = True
         self.thread = None

@@ -29,32 +29,26 @@ def update_host_info():
     p.collect()
     for metric in list(p.metrics.data.keys()):
         mname, tags = metric
-        if mname in [
-            "storage_bytes_total",
-            "storage_bytes_free",
-            "storage_usage"
-        ]:
+        if mname in ["storage_bytes_total", "storage_bytes_free", "storage_usage"]:
             id_storage = mp2id.get(tags["mountpoint"])
             if id_storage is None:
                 continue
             value = p.metrics.data[metric]
-            del (p.metrics.data[metric])
+            del p.metrics.data[metric]
             p.metrics.add(
                 f"shared_{mname}",
                 value,
                 id=id_storage,
-                title=storages[id_storage].title
+                title=storages[id_storage].title,
             )
 
-    status = {
-        "metrics": p.metrics.dump()
-    }
+    status = {"metrics": p.metrics.dump()}
 
     db = DB()
     db.query(
-            "UPDATE hosts SET last_seen=%s, status=%s WHERE hostname=%s",
-            [time.time(), json.dumps(status), hostname]
-        )
+        "UPDATE hosts SET last_seen=%s, status=%s WHERE hostname=%s",
+        [time.time(), json.dumps(status), hostname],
+    )
     db.commit()
 
 
@@ -68,7 +62,7 @@ class SystemMonitor(BaseAgent):
                 INSERT INTO hosts(hostname, last_seen)
                 VALUES (%s, %s) ON CONFLICT DO NOTHING
                 """,
-                [config["host"], time.time()]
+                [config["host"], time.time()],
             )
         except psycopg2.IntegrityError:
             pass

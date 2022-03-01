@@ -4,13 +4,7 @@ import psycopg2
 
 from nxtools import format_time, logging
 
-from nx import (
-    NebulaResponse,
-    DB,
-    config,
-    meta_types,
-    messaging
-)
+from nx import NebulaResponse, DB, config, meta_types, messaging
 
 from nx.objects import (
     Asset,
@@ -25,8 +19,8 @@ def api_schedule(**kwargs):
     id_channel = kwargs.get("id_channel", 0)
     start_time = kwargs.get("start_time", 0)
     end_time = kwargs.get("end_time", 0)
-    events = kwargs.get("events", []) # Events to add/update
-    delete = kwargs.get("delete", []) # Event ids to delete
+    events = kwargs.get("events", [])  # Events to add/update
+    delete = kwargs.get("delete", [])  # Event ids to delete
     db = kwargs.get("db", DB())
     user = kwargs.get("user", anonymous)
     initiator = kwargs.get("initiator", None)
@@ -80,7 +74,10 @@ def api_schedule(**kwargs):
             return NebulaResponse(423, "You are not allowed to edit this channel")
         id_event = event_data.get("id", False)
 
-        db.query("SELECT meta FROM events WHERE id_channel=%s and start=%s", [id_channel, event_data["start"]])
+        db.query(
+            "SELECT meta FROM events WHERE id_channel=%s and start=%s",
+            [id_channel, event_data["start"]],
+        )
         try:
             event_at_pos_meta = db.fetchall()[0][0]
             event_at_pos = Event(meta=event_at_pos_meta, db=db)
@@ -155,20 +152,27 @@ def api_schedule(**kwargs):
         event.save(notify=False)
 
     if changed_event_ids:
-        messaging.send("objects_changed", objects=changed_event_ids, object_type="event", initiator=initiator)
-
+        messaging.send(
+            "objects_changed",
+            objects=changed_event_ids,
+            object_type="event",
+            initiator=initiator,
+        )
 
     #
     # Return existing events
     #
 
-    #TODO: ACL scheduler view
+    # TODO: ACL scheduler view
 
     result = []
     if start_time and end_time:
-        logging.debug(f"Requested events of channel {id_channel} from {format_time(start_time)} to {format_time(end_time)}")
+        logging.debug(
+            f"Requested events of channel {id_channel} from {format_time(start_time)} to {format_time(end_time)}"
+        )
 
-        db.query("""
+        db.query(
+            """
                 SELECT e.meta, o.meta FROM events AS e, bins AS o
                 WHERE
                     e.id_channel=%s
@@ -176,18 +180,19 @@ def api_schedule(**kwargs):
                     AND e.start < %s
                     AND e.id_magic = o.id
                 ORDER BY start ASC""",
-                [id_channel, start_time, end_time]
-            )
+            [id_channel, start_time, end_time],
+        )
         res = db.fetchall()
-        db.query("""
+        db.query(
+            """
                 SELECT e.meta, o.meta FROM events AS e, bins AS o
                 WHERE
                     e.id_channel=%s
                     AND start <= %s
                     AND e.id_magic = o.id
                 ORDER BY start DESC LIMIT 1""",
-                [id_channel, start_time]
-            )
+            [id_channel, start_time],
+        )
         res = db.fetchall() + res
 
         for event_meta, alt_meta in res:

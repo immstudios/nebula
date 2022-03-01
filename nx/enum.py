@@ -4,14 +4,14 @@ import enum
 class AssetState(enum.IntEnum):
     OFFLINE = 0
     ONLINE = 1
-    CREATING = 2       # File exists, but was changed recently.
-    TRASHED = 3        # File has been moved to trash location.
-    ARCHIVED = 4       # File has been moved to archive location.
-    RESET = 5          # Reset metadata action has been invoked.
+    CREATING = 2  # File exists, but was changed recently.
+    TRASHED = 3  # File has been moved to trash location.
+    ARCHIVED = 4  # File has been moved to archive location.
+    RESET = 5  # Reset metadata action has been invoked.
     CORRUPTED = 6
     REMOTE = 7
     UNKNOWN = 8
-    AIRED = 9          # Auxiliary value.
+    AIRED = 9  # Auxiliary value.
     ONAIR = 10
     RETRIEVING = 11
 
@@ -46,18 +46,18 @@ class MediaType(enum.IntEnum):
 
 
 class MetaClass(enum.IntEnum):
-    STRING = 0    # Single-line plain text (default)
-    TEXT = 1      # Multiline text. 'syntax' can be provided in config
-    INTEGER = 2   # Integer only value (for db keys etc)
-    NUMERIC = 3   # Any integer of float number
-    BOOLEAN = 4   # Boolean value stored as... boolean value
+    STRING = 0  # Single-line plain text (default)
+    TEXT = 1  # Multiline text. 'syntax' can be provided in config
+    INTEGER = 2  # Integer only value (for db keys etc)
+    NUMERIC = 3  # Any integer of float number
+    BOOLEAN = 4  # Boolean value stored as... boolean value
     DATETIME = 5  # Date and time information. Stored as timestamp
     TIMECODE = 6  # Timecode information, stored as float (number of seconds)
-    OBJECT = 7    # Arbitrary JSON-serializable object
+    OBJECT = 7  # Arbitrary JSON-serializable object
     FRACTION = 8  # 16/9 etc...
-    SELECT = 9    # Select one value from list. always stored as string
-    LIST = 10     # Select 0 or more values from list, stored as array of strings
-    COLOR = 11    # stored as integer
+    SELECT = 9  # Select one value from list. always stored as string
+    LIST = 10  # Select 0 or more values from list, stored as array of strings
+    COLOR = 11  # stored as integer
 
 
 class ObjectType(enum.IntEnum):

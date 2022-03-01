@@ -25,10 +25,10 @@ def format_title(key, asset):
 
 
 formats = {
-        "id": lambda key, asset: f"{asset[key]:<5}",
-        "status": format_status,
-        "title": format_title,
-    }
+    "id": lambda key, asset: f"{asset[key]:<5}",
+    "status": format_status,
+    "title": format_title,
+}
 
 
 def a(*args):
@@ -49,12 +49,7 @@ def a(*args):
     else:
         ft = False
 
-    for _, asset in get_objects(
-        Asset,
-        order="id DESC",
-        id_view=id_view,
-        fulltext=ft
-    ):
+    for _, asset in get_objects(Asset, order="id DESC", id_view=id_view, fulltext=ft):
         line = ""
         for key in cols:
             line += " " + str(

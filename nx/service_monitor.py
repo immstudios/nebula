@@ -17,17 +17,11 @@ class ServiceMonitor(BaseAgent):
     def on_init(self):
         self.services = {}
         db = DB()
-        db.query(
-            "SELECT id, pid FROM services WHERE host=%s",
-            [config["host"]]
-        )
+        db.query("SELECT id, pid FROM services WHERE host=%s", [config["host"]])
         for _, pid in db.fetchall():
             if pid:
                 self.kill_service(pid)
-        db.query(
-            "UPDATE services SET state = 0 WHERE host=%s",
-            [config["host"]]
-        )
+        db.query("UPDATE services SET state = 0 WHERE host=%s", [config["host"]])
         db.commit()
 
     def on_shutdown(self):
@@ -57,7 +51,7 @@ class ServiceMonitor(BaseAgent):
             FROM services
             WHERE host=%s
             """,
-            [config["host"]]
+            [config["host"]],
         )
 
         #
@@ -71,7 +65,7 @@ class ServiceMonitor(BaseAgent):
                 state=state,
                 autostart=autostart,
                 last_seen=last_seen,
-                last_seen_before=max(0, int(time.time() - last_seen))
+                last_seen_before=max(0, int(time.time() - last_seen)),
             )
             if state == ServiceState.STARTING:  # Start service
                 if id not in self.services.keys():
@@ -105,7 +99,7 @@ class ServiceMonitor(BaseAgent):
             FROM services
             WHERE host=%s AND state=0 AND autostart=true
             """,
-            [config["host"]]
+            [config["host"]],
         )
         for id, title, state, autostart in db.fetchall():
             if id not in self.services.keys():
@@ -117,17 +111,17 @@ class ServiceMonitor(BaseAgent):
             os.path.join(config["nebula_root"], "manage.py"),
             "run",
             str(id_service),
-            "\"{}\"".format(title)
-            ]
+            '"{}"'.format(title),
+        ]
         if config.get("daemon_mode"):
             proc_cmd.append("--daemon")
 
         logging.info(f"Starting service ID {id_service} ({title})")
 
         self.services[id_service] = [
-                subprocess.Popen(proc_cmd, cwd=config["nebula_root"]),
-                title
-            ]
+            subprocess.Popen(proc_cmd, cwd=config["nebula_root"]),
+            title,
+        ]
 
     def stop_service(self, id_service, title, db=False):
         logging.info(f"Stopping service ID {id_service} ({title})")
@@ -138,10 +132,4 @@ class ServiceMonitor(BaseAgent):
         if pid == os.getpid() or pid == 0:
             return
         logging.info(f"Attempting to kill PID {pid}")
-        os.system(
-            os.path.join(
-                config["nebula_root"],
-                "support",
-                f"kill_tree.sh {pid}"
-            )
-        )
+        os.system(os.path.join(config["nebula_root"], "support", f"kill_tree.sh {pid}"))

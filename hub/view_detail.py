@@ -89,10 +89,7 @@ class ViewDetail(CherryAdminView):
     def build(self, *args, **kwargs):
         self["name"] = "detail"
         self["title"] = "Asset detail"
-        self["js"] = [
-            "/static/js/vendor/resumable.js",
-            "/static/js/detail.js"
-        ]
+        self["js"] = ["/static/js/vendor/resumable.js", "/static/js/detail.js"]
 
         try:
             id_asset = int(args[-1].split("-")[0])
@@ -125,11 +122,11 @@ class ViewDetail(CherryAdminView):
                 self.context.message(error_message, level="error")
             else:
                 response = api_set(
-                        user=self["user"],
-                        objects=[asset.id],
-                        data={k: asset[k] for k in kwargs},
-                        db=db
-                    )
+                    user=self["user"],
+                    objects=[asset.id],
+                    data={k: asset[k] for k in kwargs},
+                    db=db,
+                )
                 if response.is_success:
                     self.context.message("Asset saved")
                 else:
@@ -143,11 +140,7 @@ class ViewDetail(CherryAdminView):
             fconfig = config["folders"][min(config["folders"].keys())]
 
         # Get available actions
-        actions = api_actions(
-                    user=self["user"],
-                    db=db,
-                    ids=[id_asset]
-                )
+        actions = api_actions(user=self["user"], db=db, ids=[id_asset])
 
         self["asset"] = asset
         self["title"] = asset["title"] if asset.id else "New asset"
@@ -155,17 +148,16 @@ class ViewDetail(CherryAdminView):
         self["main_keys"] = fconfig["meta_set"]
         self["extended_keys"] = sorted(
             [
-                k for k in asset.meta
+                k
+                for k in asset.meta
                 if k in asset.meta_types
                 and asset.meta_types[k]["ns"] not in ["f", "q"]
                 and k not in [mlist[0] for mlist in fconfig["meta_set"]]
             ],
-            key=lambda k: asset.meta_types[k]["ns"])
+            key=lambda k: asset.meta_types[k]["ns"],
+        )
 
         self["technical_keys"] = sorted(
-            [
-                k for k in asset.meta
-                if asset.meta_types[k]["ns"] in ["f", "q"]
-            ]
+            [k for k in asset.meta if asset.meta_types[k]["ns"] in ["f", "q"]]
         )
         self["actions"] = actions.data if actions.is_success else []

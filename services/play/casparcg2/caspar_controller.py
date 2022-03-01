@@ -7,7 +7,7 @@ import threading
 from nxtools import logging, log_traceback
 from nxtools.caspar import CasparCG
 
-from nx.core import NebulaResponse 
+from nx.core import NebulaResponse
 from nx.objects import Item
 from nx.helpers import bin_refresh
 
@@ -103,7 +103,7 @@ class CasparController(object):
                 self.main()
             except Exception:
                 log_traceback()
-            time.sleep(1/self.fps)
+            time.sleep(1 / self.fps)
         logging.info("Controller work thread shutdown")
 
     def main(self):
@@ -127,17 +127,17 @@ class CasparController(object):
         self.paused = foreground.paused
         self.loop = foreground.loop
 
-#        if cued_fname and (not self.paused) and (pos == self.pos) and (not self.parent.current_live) and self.cued_item and (not self.cued_item["run_mode"]):
-#            if self.stalled and self.stalled < time.time() - 5:
-#                logging.warning("Stalled for a long time")
-#                logging.warning("Taking stalled clip (pos: {})".format(self.pos))
-#                self.take()
-#            elif not self.stalled:
-#                logging.debug("Playback is stalled")
-#                self.stalled = time.time()
-#        elif self.stalled:
-#            logging.debug("No longer stalled")
-#            self.stalled = False
+        #        if cued_fname and (not self.paused) and (pos == self.pos) and (not self.parent.current_live) and self.cued_item and (not self.cued_item["run_mode"]):
+        #            if self.stalled and self.stalled < time.time() - 5:
+        #                logging.warning("Stalled for a long time")
+        #                logging.warning("Taking stalled clip (pos: {})".format(self.pos))
+        #                self.take()
+        #            elif not self.stalled:
+        #                logging.debug("Playback is stalled")
+        #                self.stalled = time.time()
+        #        elif self.stalled:
+        #            logging.debug("No longer stalled")
+        #            self.stalled = False
 
         self.pos = pos
         self.dur = dur
@@ -148,8 +148,12 @@ class CasparController(object):
 
         advanced = False
         if self.parent.cued_live:
-            if (background.producer == "empty") and (foreground.producer != "empty") and not self.cueing:
-                self.current_item  = self.cued_item
+            if (
+                (background.producer == "empty")
+                and (foreground.producer != "empty")
+                and not self.cueing
+            ):
+                self.current_item = self.cued_item
                 self.current_fname = "LIVE"
                 advanced = True
                 self.cued_item = False
@@ -158,7 +162,7 @@ class CasparController(object):
         else:
             if (not cued_fname) and (current_fname):
                 if current_fname == self.cued_fname:
-                    self.current_item  = self.cued_item
+                    self.current_item = self.cued_item
                     self.current_fname = self.cued_fname
                     advanced = True
                 self.cued_item = False
@@ -194,7 +198,13 @@ class CasparController(object):
                     self.cueing = False
                     self.parent.cue_next()
 
-        elif not self.cueing and self.cued_item and cued_fname and cued_fname != self.cued_fname and not self.parent.cued_live:
+        elif (
+            not self.cueing
+            and self.cued_item
+            and cued_fname
+            and cued_fname != self.cued_fname
+            and not self.parent.cued_live
+        ):
             logging.error(f"Cue mismatch: IS: {cued_fname} SHOULDBE: {self.cued_fname}")
             self.cued_item = False
 
@@ -231,7 +241,7 @@ class CasparController(object):
         result = self.query(query)
 
         if result.is_error:
-            message = f"Unable to cue \"{fname}\" {result.data}"
+            message = f'Unable to cue "{fname}" {result.data}'
             self.cued_item = Item()
             self.cued_fname = False
             self.cueing = False
@@ -271,7 +281,12 @@ class CasparController(object):
             return NebulaResponse(409, "Unable to retake live item")
         seekparams = "SEEK " + str(int(self.current_item.mark_in() * self.channel_fps))
         if self.current_item.mark_out():
-            seekparams += " LENGTH " + str(int((self.current_item.mark_out() - self.current_item.mark_in()) * self.channel_fps))
+            seekparams += " LENGTH " + str(
+                int(
+                    (self.current_item.mark_out() - self.current_item.mark_in())
+                    * self.channel_fps
+                )
+            )
         query = f"PLAY {self.caspar_channel}-{layer} {self.current_fname} {seekparams}"
         result = self.query(query)
         if result.is_success:
@@ -304,7 +319,10 @@ class CasparController(object):
             seek = int(self.cued_item.mark_in() * self.channel_fps)
             query += f" SEEK {seek}"
         if self.cued_item.mark_out():
-            length = int((self.cued_item.mark_out() - self.cued_item.mark_in()) * self.channel_fps)
+            length = int(
+                (self.cued_item.mark_out() - self.cued_item.mark_in())
+                * self.channel_fps
+            )
             query += f" LENGTH {length}"
         result = self.query(query)
         return NebulaResponse(result.response, result.data)
@@ -312,7 +330,9 @@ class CasparController(object):
     def set(self, key, value):
         if key == "loop":
             do_loop = int(str(value) in ["1", "True", "true"])
-            result = self.query(f"CALL {self.caspar_channel}-{self.caspar_feed_layer} LOOP {do_loop}")
+            result = self.query(
+                f"CALL {self.caspar_channel}-{self.caspar_feed_layer} LOOP {do_loop}"
+            )
             if self.current_item and bool(self.current_item["loop"] != bool(do_loop)):
                 self.current_item["loop"] = bool(do_loop)
                 self.current_item.save(notify=False)

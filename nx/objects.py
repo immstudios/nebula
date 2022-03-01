@@ -14,7 +14,7 @@ from nebulacore.base_objects import (
     ItemMixIn,
     BinMixIn,
     EventMixIn,
-    UserMixIn
+    UserMixIn,
 )
 
 
@@ -42,7 +42,7 @@ class Asset(AssetMixIn, ServerObject):
         "status",
         "version_of",
         "ctime",
-        "mtime"
+        "mtime",
     ]
 
     def invalidate(self):
@@ -51,7 +51,7 @@ class Asset(AssetMixIn, ServerObject):
             view = config["views"][id_view]
             for id_folder in view.get("folders", config["folders"].keys()):
                 if self["id_folder"] == id_folder:
-                    cache.delete("view-count-"+str(id_view))
+                    cache.delete("view-count-" + str(id_view))
                     break
 
     def load_sidecar_metadata(self):
@@ -72,8 +72,7 @@ class Asset(AssetMixIn, ServerObject):
             return ""
         if not hasattr(self, "_proxy_full_path"):
             self._proxy_full_path = os.path.join(
-                storages[self.proxy_storage].local_path,
-                self.proxy_path
+                storages[self.proxy_storage].local_path, self.proxy_path
             )
         return self._proxy_full_path
 
@@ -87,7 +86,7 @@ class Asset(AssetMixIn, ServerObject):
             return ""
         if not hasattr(self, "_proxy_path"):
             tpl = config.get("proxy_path", ".nx/proxy/{id1000:04d}/{id}.mp4")
-            id1000 = int(self.id/1000)
+            id1000 = int(self.id / 1000)
             self._proxy_path = tpl.format(id1000=id1000, **self.meta)
         return self._proxy_path
 
@@ -103,18 +102,17 @@ class Asset(AssetMixIn, ServerObject):
     def get_playout_path(self, id_channel):
         container = config["playout_channels"][id_channel]["playout_container"]
         return os.path.join(
-                config["playout_channels"][id_channel]["playout_dir"],
-                self.get_playout_name(id_channel) + "." + container
-            )
+            config["playout_channels"][id_channel]["playout_dir"],
+            self.get_playout_name(id_channel) + "." + container,
+        )
 
     def get_playout_full_path(self, id_channel):
         id_storage = self.get_playout_storage(id_channel)
         if not id_storage:
             return None
         return os.path.join(
-                storages[id_storage].local_path,
-                self.get_playout_path(id_channel)
-            )
+            storages[id_storage].local_path, self.get_playout_path(id_channel)
+        )
 
 
 class Item(ItemMixIn, ServerObject):
@@ -163,11 +161,10 @@ class Bin(BinMixIn, ServerObject):
                     SELECT meta FROM items
                     WHERE id_bin=%s ORDER BY position ASC, id ASC
                     """,
-                    [self.id]
+                    [self.id],
                 )
                 self._items = [
-                    Item(meta=meta, db=self.db)
-                    for meta, in self.db.fetchall()
+                    Item(meta=meta, db=self.db) for meta, in self.db.fetchall()
                 ]
         return self._items
 
@@ -188,7 +185,7 @@ class Bin(BinMixIn, ServerObject):
                 SELECT meta FROM events
                 WHERE id_magic=%s
                 """,
-                [self.id]
+                [self.id],
             )  # TODO: playout only
             try:
                 self._event = Event(meta=self.db.fetchall()[0][0])

@@ -3,6 +3,7 @@ from nxtools import logging, critical_error
 from nx.db import DB
 from nx.objects import User
 
+
 def passwd(*args):
     print()
     try:

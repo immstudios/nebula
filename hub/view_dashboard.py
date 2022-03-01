@@ -54,23 +54,21 @@ class ViewDashboard(CherryAdminView):
         )
 
         tagmap = {
-                "cpu_usage": "cpu",
-                "memory_bytes_total": "mem_total",
-                "memory_bytes_free": "mem_free",
-                "swap_bytes_total": "swp_total",
-                "swap_bytes_free": "swp_free"
-            }
+            "cpu_usage": "cpu",
+            "memory_bytes_total": "mem_total",
+            "memory_bytes_free": "mem_free",
+            "swap_bytes_total": "swp_total",
+            "swap_bytes_free": "swp_free",
+        }
 
         sinfo = {id: {"title": storages[id].title} for id in storages}
 
         for hostname, last_seen, status in db.fetchall():
             host_info = {}
             for name, tags, value in status.get("metrics", []):
-                if name == "storage_bytes_total" \
-                        and tags.get("mountpoint") == "/":
+                if name == "storage_bytes_total" and tags.get("mountpoint") == "/":
                     host_info["root_total"] = value
-                elif name == "storage_bytes_free" \
-                        and tags.get("mountpoint") == "/":
+                elif name == "storage_bytes_free" and tags.get("mountpoint") == "/":
                     host_info["root_free"] = value
 
                 elif name == "shared_storage_bytes_total":
@@ -83,7 +81,8 @@ class ViewDashboard(CherryAdminView):
                     host_info[tagmap[name]] = value
             hosts[hostname] = host_info
         storage_info = [
-            {"id": id, **d} for id, d in sinfo.items()
+            {"id": id, **d}
+            for id, d in sinfo.items()
             if d.get("total") and d.get("free")
         ]
 

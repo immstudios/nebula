@@ -24,7 +24,7 @@ class Service(BaseService):
             self.restart_on_update = None
         logging.debug(
             "Following actions will be restarted on source update:",
-            self.restart_on_update
+            self.restart_on_update,
         )
 
         for cond in self.settings.findall("cond"):
@@ -40,8 +40,7 @@ class Service(BaseService):
         self.mounted_storages = []
         for id_storage in storages:
             storage_path = storages[id_storage].local_path
-            if os.path.exists(storage_path) \
-                    and len(os.listdir(storage_path)) != 0:
+            if os.path.exists(storage_path) and len(os.listdir(storage_path)) != 0:
                 self.mounted_storages.append(id_storage)
 
         db = DB()
@@ -51,7 +50,7 @@ class Service(BaseService):
             SELECT id, meta FROM assets
             WHERE media_type=%s AND status NOT IN (3, 4)
             """,
-            [MediaType.FILE]
+            [MediaType.FILE],
         )
         i = 0
         for id, meta in db.fetchall():
@@ -89,7 +88,7 @@ class Service(BaseService):
             if asset["status"] in [
                 AssetState.ONLINE,
                 AssetState.RESET,
-                AssetState.CREATING
+                AssetState.CREATING,
             ]:
                 logging.warning(f"{asset}: Turning offline")
                 asset["status"] = AssetState.OFFLINE
@@ -100,22 +99,20 @@ class Service(BaseService):
         fsize = int(asset_file.size)
 
         if fsize == 0:
-            if asset["status"] not in \
-                    [AssetState.OFFLINE, AssetState.RETRIEVING]:
+            if asset["status"] not in [AssetState.OFFLINE, AssetState.RETRIEVING]:
                 logging.warning(f"{asset}: Turning offline (empty file)")
                 asset["status"] = AssetState.OFFLINE
                 asset.save()
             return
 
-        if fmtime != asset["file/mtime"] \
-                or asset["status"] in \
-                [AssetState.RESET, AssetState.RETRIEVING]:
+        if fmtime != asset["file/mtime"] or asset["status"] in [
+            AssetState.RESET,
+            AssetState.RETRIEVING,
+        ]:
             try:
                 f = asset_file.open("rb")
             except Exception:
-                logging.debug(
-                    f"{asset} is not readable (transfer in progress?)"
-                )
+                logging.debug(f"{asset} is not readable (transfer in progress?)")
                 return
             else:
                 f.seek(0, 2)
@@ -127,33 +124,28 @@ class Service(BaseService):
 
             # Filesize must be changed to update metadata automatically.
 
-            if fsize == asset["file/size"] \
-                    and asset["status"] not in [
-                        AssetState.RESET,
-                        AssetState.RETRIEVING
-                        ]:
+            if fsize == asset["file/size"] and asset["status"] not in [
+                AssetState.RESET,
+                AssetState.RETRIEVING,
+            ]:
                 logging.debug(
                     f"{asset}: File mtime has been changed. Updating metadata."
                 )
                 asset["file/mtime"] = fmtime
                 asset.save(set_mtime=False, notify=False)
-            elif fsize != asset["file/size"] \
-                    or asset["status"] in \
-                    [AssetState.RESET, AssetState.RETRIEVING]:
-                if asset["status"] in \
-                        [AssetState.RESET, AssetState.RETRIEVING]:
-                    logging.info(
-                        f"{asset}: Reset requested. Updating metadata."
-                    )
+            elif fsize != asset["file/size"] or asset["status"] in [
+                AssetState.RESET,
+                AssetState.RETRIEVING,
+            ]:
+                if asset["status"] in [AssetState.RESET, AssetState.RETRIEVING]:
+                    logging.info(f"{asset}: Reset requested. Updating metadata.")
                 else:
-                    logging.info(
-                        f"{asset}: File has been changed. Updating metadata."
-                    )
+                    logging.info(f"{asset}: File has been changed. Updating metadata.")
 
                 keys = list(asset.meta.keys())
                 for key in keys:
                     if meta_types[key]["ns"] in ("f", "q"):
-                        del (asset.meta[key])
+                        del asset.meta[key]
 
                 asset["file/size"] = fsize
                 asset["file/mtime"] = fmtime
@@ -177,8 +169,7 @@ class Service(BaseService):
                     asset["status"] = AssetState.CREATING
                 asset.save()
 
-        if asset["status"] == AssetState.CREATING \
-                and asset["mtime"] + 15 > time.time():
+        if asset["status"] == AssetState.CREATING and asset["mtime"] + 15 > time.time():
             logging.debug(f"{asset}: Waiting for completion assurance")
             asset.save(set_mtime=False, notify=False)
 
@@ -212,14 +203,13 @@ class Service(BaseService):
                         {action_cond}
                     RETURNING id
                     """,
-                    [time.time(), asset.id]
+                    [time.time(), asset.id],
                 )
 
                 res = db.fetchall()
                 if res:
                     joblist = ", ".join([str(jid[0]) for jid in res])
                     logging.info(
-                        f"{asset} has been changed.",
-                        f"Restarting jobs {joblist}"
+                        f"{asset} has been changed.", f"Restarting jobs {joblist}"
                     )
                 db.commit()

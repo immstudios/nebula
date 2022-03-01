@@ -9,12 +9,13 @@ MAX_RETRIES = 5
 
 try:
     import pylibmc  # noqa
+
     has_pylibmc = True
 except ModuleNotFoundError:
     has_pylibmc = False
 
 
-class Cache():
+class Cache:
     def __init__(self):
         if "cache_host" in config:
             self.configure()
@@ -60,7 +61,7 @@ class Cache():
                 break
             except Exception:
                 log_traceback(f"Cache save failed ({key})")
-                time.sleep(.1)
+                time.sleep(0.1)
                 self.connect()
         else:
             critical_error("Memcache save failed. This should never happen.")
@@ -76,7 +77,7 @@ class Cache():
                 break
             except Exception:
                 log_traceback(f"Cache delete failed ({key})")
-                time.sleep(.3)
+                time.sleep(0.3)
                 self.connect()
         else:
             critical_error("Memcache delete failed. This should never happen.")
@@ -107,12 +108,10 @@ class Cache():
                     break
                 except Exception:
                     log_traceback(f"Cache save failed ({key})")
-                    time.sleep(.3)
+                    time.sleep(0.3)
                     self.connect()
             else:
-                critical_error(
-                    "Memcache save failed. This should never happen."
-                )
+                critical_error("Memcache save failed. This should never happen.")
         self.pool.relinquish()
         return True
 
@@ -127,12 +126,10 @@ class Cache():
                     break
                 except Exception:
                     log_traceback(f"Cache delete failed ({key})")
-                    time.sleep(.3)
+                    time.sleep(0.3)
                     self.connect()
             else:
-                critical_error(
-                    "Memcache delete failed. This should never happen."
-                )
+                critical_error("Memcache delete failed. This should never happen.")
         self.pool.relinquish()
         return True
 

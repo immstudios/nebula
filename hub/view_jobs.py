@@ -32,10 +32,8 @@ class ViewJobs(CherryAdminView):
             if id_asset and id_action:
                 # TODO: how to select restert_existing/running?
                 response = api_send(
-                       ids=[id_asset],
-                       id_action=id_action,
-                       user=self["user"]
-                    )
+                    ids=[id_asset], id_action=id_action, user=self["user"]
+                )
 
                 if response.is_error:
                     self.context.message(response.message, level="error")
@@ -48,11 +46,7 @@ class ViewJobs(CherryAdminView):
         if id_asset:
             db = DB()
             asset = Asset(id_asset, db=db)
-            actions = api_actions(
-                user=self["user"],
-                db=db,
-                ids=[id_asset]
-            )
+            actions = api_actions(user=self["user"], db=db, ids=[id_asset])
         else:
             actions = NebulaResponse(404)
             asset = False

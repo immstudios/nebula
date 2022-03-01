@@ -12,18 +12,11 @@ from nx.base_service import BaseService
 from nx.mediaprobe import mediaprobe
 from nx.enum import AssetState
 
-from nebulacore.constants import (
-    get_object_state_name
-)
+from nebulacore.constants import get_object_state_name
 
 SCHEDULE_INTERVAL = 60
 UNSCHEDULE_INTERVAL = 86400
-DEFAULT_STATUS = {
-        "status": AssetState.OFFLINE,
-        "size": 0,
-        "mtime": 0,
-        "duration": 0
-    }
+DEFAULT_STATUS = {"status": AssetState.OFFLINE, "size": 0, "mtime": 0, "duration": 0}
 
 STORAGE_STATUS = {}
 
@@ -50,7 +43,7 @@ def get_scheduled_assets(id_channel, **kwargs):
             ORDER BY
                 dist ASC
         """,
-        [id_channel]
+        [id_channel],
     )
     for meta, dist in db.fetchall():
         yield Asset(meta=meta, db=db), dist < 86400
@@ -80,8 +73,9 @@ class PlayoutStorageTool(object):
         self.scheduled_ids = []
 
     def __len__(self):
-        return self.playout_config.get("playout_storage", 0) \
-            and self.playout_config.get("playout_path", 0)
+        return self.playout_config.get(
+            "playout_storage", 0
+        ) and self.playout_config.get("playout_path", 0)
 
     def main(self):
         db = self.db
@@ -127,10 +121,7 @@ class PlayoutStorageTool(object):
             # if file changed, check using ffprobe
             if file_status == AssetState.ONLINE:
                 if omtime != file_mtime or osize != file_size:
-                    file_status, duration = check_file_validity(
-                        asset,
-                        self.id_channel
-                    )
+                    file_status, duration = check_file_validity(asset, self.id_channel)
                 else:
                     if ostatus == AssetState.CREATING:
                         if now - file_mtime > 10 and omtime == file_mtime:
@@ -141,39 +132,34 @@ class PlayoutStorageTool(object):
                         if now - file_mtime > 10:
                             file_status = AssetState.CORRUPTED
 
-            if ostatus != file_status \
-                    or omtime != file_mtime \
-                    or osize != file_size:
+            if ostatus != file_status or omtime != file_mtime or osize != file_size:
                 fs = get_object_state_name(file_status)
                 logging.info(f"Set {asset} playout status to {fs}")
                 asset[self.status_key] = {
                     "status": file_status,
                     "size": file_size,
                     "mtime": file_mtime,
-                    "duration": duration
+                    "duration": duration,
                 }
                 asset.save()
 
-            if file_status not in [
-                    AssetState.ONLINE,
-                    AssetState.CREATING,
-                    AssetState.CORRUPTED
-                    ] \
-                    and self.send_action \
-                    and asset["status"] == AssetState.ONLINE \
-                    and scheduled:
+            if (
+                file_status
+                not in [AssetState.ONLINE, AssetState.CREATING, AssetState.CORRUPTED]
+                and self.send_action
+                and asset["status"] == AssetState.ONLINE
+                and scheduled
+            ):
                 result = send_to(
                     asset.id,
                     self.send_action,
                     restart_existing=True,
                     restart_running=False,
-                    db=db
+                    db=db,
                 )
                 chtitle = self.playout_config["title"]
                 if result.response == 201:
-                    logging.info(
-                        f"Sending {asset} to {chtitle}: {result.message}"
-                    )
+                    logging.info(f"Sending {asset} to {chtitle}: {result.message}")
 
 
 class Service(BaseService):

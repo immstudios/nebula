@@ -11,9 +11,7 @@ from services.conv.encoders import NebulaFFMPEG
 
 FORCE_INFO_EVERY = 20
 
-available_encoders = {
-        "ffmpeg": NebulaFFMPEG
-    }
+available_encoders = {"ffmpeg": NebulaFFMPEG}
 
 
 class Service(BaseService):
@@ -49,9 +47,9 @@ class Service(BaseService):
                 id_service=%s AND STATUS IN (0,1,5)
             RETURNING id
             """,
-            [self.id_service]
+            [self.id_service],
         )
-        for id_job, in db.fetchall():
+        for (id_job,) in db.fetchall():
             logging.info(f"Restarting job ID {id_job} (converter restarted)")
         db.commit()
 
@@ -73,10 +71,8 @@ class Service(BaseService):
     def on_main(self):
         db = DB()
         self.job = get_job(
-                self.id_service,
-                [action.id for action in self.actions],
-                db=db
-            )
+            self.id_service, [action.id for action in self.actions], db=db
+        )
         if not self.job:
             return
         logging.info("Got {}".format(self.job))
@@ -100,8 +96,7 @@ class Service(BaseService):
                     continue
             except KeyError:
                 self.job.fail(
-                    f"Wrong encoder type specified for task {id_task}",
-                    critical=True
+                    f"Wrong encoder type specified for task {id_task}", critical=True
                 )
                 return
 
@@ -141,6 +136,4 @@ class Service(BaseService):
         duration = asset["duration"] or 1
         speed = duration / elapsed_time
 
-        self.job.done(
-            f"Finished in {s2words(elapsed_time)} ({speed:.02f}x realtime)"
-        )
+        self.job.done(f"Finished in {s2words(elapsed_time)} ({speed:.02f}x realtime)")

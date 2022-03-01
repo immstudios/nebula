@@ -31,10 +31,7 @@ class ViewTool(CherryAdminRawView):
         self["title"] = title
 
         if not (plugin.public or self["user"]):
-            raise cherrypy.HTTPError(
-                403,
-                "You are not allowed to run this tool"
-            )
+            raise cherrypy.HTTPError(403, "You are not allowed to run this tool")
 
         body = plugin.build(*args, **kwargs)
         if plugin.native:

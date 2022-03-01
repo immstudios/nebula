@@ -42,5 +42,3 @@ def get_validator(object_type, **kwargs):
         logging.error(f"No plugin class found in {f.base_name}")
         return
     return py_mod.Plugin(**kwargs)
-
-

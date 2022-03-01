@@ -29,32 +29,22 @@ class StorageMonitor(BaseAgent):
 
             if storage:
                 storage_string = f"{config['site_name']}:{storage.id}"
-                storage_ident_path = os.path.join(
-                    storage.local_path,
-                    ".nebula_root"
-                )
+                storage_ident_path = os.path.join(storage.local_path, ".nebula_root")
 
                 if not (
-                        os.path.exists(storage_ident_path)
-                        and storage_string in [
-                            line.strip() for line in open(
-                                storage_ident_path
-                            ).readlines()
-                        ]
+                    os.path.exists(storage_ident_path)
+                    and storage_string
+                    in [line.strip() for line in open(storage_ident_path).readlines()]
                 ):
                     try:
                         with open(storage_ident_path, "a") as f:
-                            f.write(storage_string+"\n")
+                            f.write(storage_string + "\n")
                     except Exception:
                         if self.first_run:
-                            logging.warning(
-                                f"{storage} is mounted, but read only"
-                            )
+                            logging.warning(f"{storage} is mounted, but read only")
                     else:
                         if self.first_run:
-                            logging.info(
-                                f"{storage} is mounted and root is writable"
-                            )
+                            logging.info(f"{storage} is mounted and root is writable")
                 continue
 
             s, i, lcheck = storage_status.get(id_storage, [True, 2, 0])
@@ -69,9 +59,7 @@ class StorageMonitor(BaseAgent):
                     os.mkdir(storage.local_path)
                 except Exception:
                     if s:
-                        logging.error(
-                            f"Unable to create mountpoint for {storage}"
-                        )
+                        logging.error(f"Unable to create mountpoint for {storage}")
                     storage_status[id_storage] = [False, 240, time.time()]
                     continue
 
@@ -88,7 +76,7 @@ class StorageMonitor(BaseAgent):
                     logging.error(f"{storage} mounting failed")
                 storage_status[id_storage][0] = False
                 check_interval = storage_status[id_storage][1]
-                storage_status[id_storage][1] = min(240, check_interval*2)
+                storage_status[id_storage][1] = min(240, check_interval * 2)
 
             storage_status[id_storage][2] = time.time()
 
@@ -106,9 +94,9 @@ class StorageMonitor(BaseAgent):
                 smbopts["vers"] = smbver
 
             if smbopts:
-                opts = " -o '{}'".format(",".join(
-                    ["{}={}".format(k, smbopts[k]) for k in smbopts]
-                ))
+                opts = " -o '{}'".format(
+                    ",".join(["{}={}".format(k, smbopts[k]) for k in smbopts])
+                )
             else:
                 opts = ""
             cmd = f"mount.cifs {storage['path']} {storage.local_path}{opts}"
@@ -120,6 +108,6 @@ class StorageMonitor(BaseAgent):
 
         proc = subprocess.Popen(cmd, shell=True)
         while proc.poll() is None:
-            time.sleep(.1)
+            time.sleep(0.1)
         if proc.returncode:
             logging.error(f"Unable to mount {storage}")

@@ -28,15 +28,19 @@ def create_controller(parent):
     engine = parent.channel_config.get("engine")
     if engine == "vlc":
         from .vlc import VlcController
+
         return VlcController(parent)
     elif engine == "conti":
         from .conti import ContiController
+
         return ContiController(parent)
     elif engine == "casparcg":
         from .casparcg import CasparController
+
         return CasparController(parent)
     elif engine == "casparcg2":
         from .casparcg2 import CasparController
+
         return CasparController(parent)
 
 
@@ -78,26 +82,24 @@ class Service(BaseService):
         port = int(self.channel_config.get("controller_port", 42100))
         logging.info(f"Using port {port} for the HTTP interface.")
 
-        self.server = HTTPServer(('', port), PlayoutRequestHandler)
+        self.server = HTTPServer(("", port), PlayoutRequestHandler)
         self.server.service = self
         self.server.methods = {
-                "take": self.take,
-                "cue": self.cue,
-                "cue_forward": self.cue_forward,
-                "cue_backward": self.cue_backward,
-                "freeze": self.freeze,
-                "set": self.set,
-                "retake": self.retake,
-                "abort": self.abort,
-                "stat": self.stat,
-                "plugin_list": self.plugin_list,
-                "plugin_exec": self.plugin_exec,
-                "recover": self.channel_recover
-            }
+            "take": self.take,
+            "cue": self.cue,
+            "cue_forward": self.cue_forward,
+            "cue_backward": self.cue_backward,
+            "freeze": self.freeze,
+            "set": self.set,
+            "retake": self.retake,
+            "abort": self.abort,
+            "stat": self.stat,
+            "plugin_list": self.plugin_list,
+            "plugin_exec": self.plugin_exec,
+            "recover": self.channel_recover,
+        }
         self.server_thread = threading.Thread(
-            target=self.server.serve_forever,
-            args=(),
-            daemon=True
+            target=self.server.serve_forever, args=(), daemon=True
         )
         self.server_thread.start()
         self.plugins.load()
@@ -120,11 +122,11 @@ class Service(BaseService):
 
         if "item" in kwargs and isinstance(kwargs["item"], Item):
             item = kwargs["item"]
-            del(kwargs["item"])
+            del kwargs["item"]
         elif "id_item" in kwargs:
             item = Item(int(kwargs["id_item"]), db=db, cache=lcache)
             item.asset
-            del(kwargs["id_item"])
+            del kwargs["id_item"]
         else:
             return NebulaResponse(400, "Unable to cue. No item specified")
 
@@ -149,15 +151,16 @@ class Service(BaseService):
         if playout_status in [
             AssetState.ONLINE,
             AssetState.CREATING,
-            AssetState.UNKNOWN
+            AssetState.UNKNOWN,
         ]:
-            kwargs['fname'] = asset.get_playout_name(self.id_channel)
-            kwargs['full_path'] = asset.get_playout_full_path(self.id_channel)
+            kwargs["fname"] = asset.get_playout_name(self.id_channel)
+            kwargs["full_path"] = asset.get_playout_full_path(self.id_channel)
 
-        if not kwargs["full_path"] \
-                and self.channel_config.get("allow_remote") \
-                and asset["status"] in \
-                (AssetState.ONLINE, AssetState.CREATING):
+        if (
+            not kwargs["full_path"]
+            and self.channel_config.get("allow_remote")
+            and asset["status"] in (AssetState.ONLINE, AssetState.CREATING)
+        ):
             kwargs["fname"] = kwargs["full_path"] = asset.file_path
             kwargs["remote"] = True
 
@@ -176,7 +179,7 @@ class Service(BaseService):
         kwargs["loop"] = bool(item["loop"])
 
         self.cued_live = False
-        return self.controller.cue(item=item,  **kwargs)
+        return self.controller.cue(item=item, **kwargs)
 
     def cue_forward(self, **kwargs):
         cc = self.controller.cued_item
@@ -209,10 +212,7 @@ class Service(BaseService):
             return
 
         item_next = get_next_item(
-            item.id,
-            db=db,
-            cache=lcache,
-            force_next_event=bool(self.auto_event)
+            item.id, db=db, cache=lcache, force_next_event=bool(self.auto_event)
         )
 
         if item_next["run_mode"] == 1:
@@ -230,12 +230,7 @@ class Service(BaseService):
             logging.warning(
                 f"Unable to cue {item_next} ({result.message}). Trying next."
             )
-            item_next = self.cue_next(
-                item=item_next,
-                db=db,
-                level=level+1,
-                play=play
-            )
+            item_next = self.cue_next(item=item_next, db=db, level=level + 1, play=play)
         return item_next
 
     def take(self, **kwargs):
@@ -251,7 +246,7 @@ class Service(BaseService):
         return self.controller.abort(**kwargs)
 
     def set(self, **kwargs):
-        """ Set a controller property.
+        """Set a controller property.
         This is controller specific.
         Args:
             key (str): Name of the property
@@ -274,11 +269,13 @@ class Service(BaseService):
         for id_plugin, plugin in enumerate(self.plugins):
             if not plugin.slots:
                 continue
-            result.append({
-                "id": id_plugin,
-                "title": plugin.title,
-                "slots": plugin.slot_manifest,
-            })
+            result.append(
+                {
+                    "id": id_plugin,
+                    "title": plugin.title,
+                    "slots": plugin.slot_manifest,
+                }
+            )
         return NebulaResponse(200, data=result)
 
     def plugin_exec(self, **kwargs):
@@ -318,31 +315,26 @@ class Service(BaseService):
             "paused": self.controller.paused,
             "position": self.controller.position,
             "duration": self.controller.duration,
-
             # This is a transitional option. In future versions,
             # frames will be deprecated
             "time_unit": self.controller.time_unit,
-
-            "current_item": self.controller.current_item.id \
-            if self.controller.current_item else False,
-
-            "cued_item": self.controller.cued_item.id \
-            if self.controller.cued_item else False,
-
-            "current_title": self.controller.current_item["title"] \
-            if self.controller.current_item else "(no clip)",
-
-            "cued_title": self.controller.cued_item["title"] \
-            if self.controller.cued_item else "(no clip)",
-
-            "loop": self.controller.loop \
-            if hasattr(self.controller, "loop") else False,
-
-            "cueing": self.controller.cueing \
-            if hasattr(self.controller, "cueing") else False,
-
-            "id_event": self.current_event.id \
-            if self.current_event else False,
+            "current_item": self.controller.current_item.id
+            if self.controller.current_item
+            else False,
+            "cued_item": self.controller.cued_item.id
+            if self.controller.cued_item
+            else False,
+            "current_title": self.controller.current_item["title"]
+            if self.controller.current_item
+            else "(no clip)",
+            "cued_title": self.controller.cued_item["title"]
+            if self.controller.cued_item
+            else "(no clip)",
+            "loop": self.controller.loop if hasattr(self.controller, "loop") else False,
+            "cueing": self.controller.cueing
+            if hasattr(self.controller, "cueing")
+            else False,
+            "id_event": self.current_event.id if self.current_event else False,
         }
 
     #
@@ -354,7 +346,7 @@ class Service(BaseService):
             # fix the race condition, when on_progress is created,
             # but not yet added to the service
             return
-        if time.time() - self.last_info > .3:
+        if time.time() - self.last_info > 0.3:
             messaging.send("playout_status", **self.playout_status)
             self.last_info = time.time()
 
@@ -378,7 +370,7 @@ class Service(BaseService):
                 """
                 UPDATE asrun SET stop = %s
                 WHERE id = %s""",
-                [int(time.time()), self.last_run]
+                [int(time.time()), self.last_run],
             )
             db.commit()
 
@@ -388,7 +380,7 @@ class Service(BaseService):
                 INSERT INTO asrun (id_channel, id_item, start)
                 VALUES (%s, %s, %s)
                 """,
-                [self.id_channel, item.id, time.time()]
+                [self.id_channel, item.id, time.time()],
             )
             self.last_run = db.lastid()
             db.commit()
@@ -444,7 +436,7 @@ class Service(BaseService):
                 AND i.id_bin = e.id_magic
             ORDER BY e.start ASC LIMIT 1
             """,
-            [self.id_channel, current_event["start"], time.time()]
+            [self.id_channel, current_event["start"], time.time()],
         )
 
         try:
@@ -475,11 +467,11 @@ class Service(BaseService):
                 if r["item_role"] == "lead_out":
                     try:
                         self.cue(
-                                id_channel=self.id_channel,
-                                id_item=current_event.bin.items[i+1].id,
-                                db=db,
-                                play=play
-                            )
+                            id_channel=self.id_channel,
+                            id_item=current_event.bin.items[i + 1].id,
+                            db=db,
+                            play=play,
+                        )
                         self.auto_event = next_event.id
                         break
                     except IndexError:
@@ -492,23 +484,14 @@ class Service(BaseService):
                 if not self.controller.cued_item:
                     return
                 if id_item != self.controller.cued_item.id:
-                    self.cue(
-                            id_channel=self.id_channel,
-                            id_item=id_item,
-                            db=db
-                        )
+                    self.cue(id_channel=self.id_channel, id_item=id_item, db=db)
                     self.auto_event = next_event.id
                 return
 
         elif run_mode == RunMode.RUN_HARD:
             logging.info("Hard cue", next_event)
             id_item = next_event.bin.items[0].id
-            self.cue(
-                    id_channel=self.id_channel,
-                    id_item=id_item,
-                    play=True,
-                    db=db
-                )
+            self.cue(id_channel=self.id_channel, id_item=id_item, play=True, db=db)
             self.auto_event = next_event.id
             return
 
@@ -521,7 +504,7 @@ class Service(BaseService):
             SELECT id_item, start FROM asrun
             WHERE id_channel = %s ORDER BY id DESC LIMIT 1
             """,
-            [self.id_channel]
+            [self.id_channel],
         )
         try:
             last_id_item, last_start = db.fetchall()[0]

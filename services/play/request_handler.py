@@ -10,7 +10,7 @@ from nx.core import NebulaResponse
 
 
 class PlayoutRequestHandler(BaseHTTPRequestHandler):
-    def log_request(self, code='-', size='-'):
+    def log_request(self, code="-", size="-"):
         pass
 
     def _do_headers(self, mime="application/json", response=200, headers=[]):
@@ -19,7 +19,7 @@ class PlayoutRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
         for h in headers:
             self.send_header(h[0], h[1])
-        self.send_header('Content-type', mime)
+        self.send_header("Content-type", mime)
         self.end_headers()
 
     def _echo(self, istring):
@@ -31,10 +31,7 @@ class PlayoutRequestHandler(BaseHTTPRequestHandler):
 
     def error(self, response, message=""):
         self._do_headers()  # return 200 anyway
-        self._echo(json.dumps({
-                "response": response,
-                "message": message
-            }))
+        self._echo(json.dumps({"response": response, "message": message}))
 
     def do_GET(self):
         pass
@@ -45,11 +42,8 @@ class PlayoutRequestHandler(BaseHTTPRequestHandler):
             self.error(400, "Play service received a bad request.")
             return
 
-        length = int(self.headers.get('content-length'))
-        postvars = urllib.parse.parse_qs(
-            self.rfile.read(length),
-            keep_blank_values=1
-        )
+        length = int(self.headers.get("content-length"))
+        postvars = urllib.parse.parse_qs(self.rfile.read(length), keep_blank_values=1)
 
         method = self.path.lstrip("/").split("/")[0]
         params = {}

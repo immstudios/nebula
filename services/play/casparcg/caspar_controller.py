@@ -94,10 +94,10 @@ class CasparController(object):
         while True:
             try:
                 self.main()
-                time.sleep(.01)
+                time.sleep(0.01)
             except Exception:
                 log_traceback()
-            time.sleep(.3)
+            time.sleep(0.3)
 
     def main(self):
         info = self.parser.get_info(self.caspar_feed_layer)
@@ -111,7 +111,7 @@ class CasparController(object):
                 else:
                     logging.error("Connection call failed")
                     time.sleep(2)
-            time.sleep(.3)
+            time.sleep(0.3)
             return
         else:
             self.request_time = time.time()
@@ -124,12 +124,19 @@ class CasparController(object):
         #
         # Auto recovery
         #
-#        if not current_fname and time.time() - self.recovery_time > 20:
-#            self.parent.channel_recover()
-#            return
-#        self.recovery_time = time.time()
+        #        if not current_fname and time.time() - self.recovery_time > 20:
+        #            self.parent.channel_recover()
+        #            return
+        #        self.recovery_time = time.time()
 
-        if cued_fname and (not self.paused) and (info["pos"] == self.fpos) and  not self.parent.current_live and self.cued_item and (not self.cued_item["run_mode"]):
+        if (
+            cued_fname
+            and (not self.paused)
+            and (info["pos"] == self.fpos)
+            and not self.parent.current_live
+            and self.cued_item
+            and (not self.cued_item["run_mode"])
+        ):
             if self.stalled and self.stalled < time.time() - 5:
                 logging.warning("Stalled for a long time")
                 logging.warning("Taking stalled clip (pos: {})".format(self.fpos))
@@ -150,7 +157,12 @@ class CasparController(object):
 
         advanced = False
 
-        if self.cueing and self.cueing == current_fname and not cued_fname and not self.parent.cued_live:
+        if (
+            self.cueing
+            and self.cueing == current_fname
+            and not cued_fname
+            and not self.parent.cued_live
+        ):
             logging.warning("Using short clip workaround")
             self.current_item = self.cued_item
             self.current_fname = current_fname
@@ -203,8 +215,15 @@ class CasparController(object):
             else:
                 logging.debug("Cueing", self.cueing)
 
-        if self.cued_item and cued_fname and cued_fname != self.cued_fname and not self.cueing:
-            logging.warning("Cue mismatch: IS: {} SHOULDBE: {}".format(cued_fname, self.cued_fname))
+        if (
+            self.cued_item
+            and cued_fname
+            and cued_fname != self.cued_fname
+            and not self.cueing
+        ):
+            logging.warning(
+                "Cue mismatch: IS: {} SHOULDBE: {}".format(cued_fname, self.cued_fname)
+            )
             self.cued_item = False
 
         try:
@@ -228,37 +247,32 @@ class CasparController(object):
         if mark_in:
             marks += " SEEK {}".format(int(mark_in * self.parser.seek_fps))
         if mark_out and mark_out < item["duration"] and mark_out > mark_in:
-            marks += " LENGTH {}".format(int((mark_out - mark_in) * self.parser.seek_fps))
+            marks += " LENGTH {}".format(
+                int((mark_out - mark_in) * self.parser.seek_fps)
+            )
 
         if play:
-            q = "PLAY {}-{} {}{}".format(
-                    self.caspar_channel,
-                    layer,
-                    fname,
-                    marks
-                )
+            q = "PLAY {}-{} {}{}".format(self.caspar_channel, layer, fname, marks)
         else:
             q = "LOADBG {}-{} {} {} {}".format(
-                    self.caspar_channel,
-                    layer,
-                    fname,
-                    ["","AUTO"][auto],
-                    marks
-                )
+                self.caspar_channel, layer, fname, ["", "AUTO"][auto], marks
+            )
 
         self.cueing = fname
         result = self.query(q)
 
         if result.is_error:
-            message = "Unable to cue \"{}\" {} - args: {}".format(fname, result.data, str(kwargs))
-            self.cued_item= Item()
+            message = 'Unable to cue "{}" {} - args: {}'.format(
+                fname, result.data, str(kwargs)
+            )
+            self.cued_item = Item()
             self.cued_fname = False
             self.cueing = False
         else:
             self.cued_item = item
             self.cued_fname = fname
-            self.cued_in = mark_in*self.fps
-            self.cued_out = mark_out*self.fps
+            self.cued_in = mark_in * self.fps
+            self.cued_out = mark_out * self.fps
             message = "Cued item {} ({})".format(self.cued_item, fname)
         return NebulaResponse(result.response, message)
 
@@ -289,8 +303,15 @@ class CasparController(object):
             return NebulaResponse(409, "Unable to retake live item")
         seekparam = str(int(self.current_item.mark_in() * self.fps))
         if self.current_item.mark_out():
-            seekparam += " LENGTH {}".format(int((self.current_item.mark_out() - self.current_item.mark_in()) * self.parser.seek_fps))
-        q = "PLAY {}-{} {} SEEK {}".format(self.caspar_channel, layer, self.current_fname, seekparam)
+            seekparam += " LENGTH {}".format(
+                int(
+                    (self.current_item.mark_out() - self.current_item.mark_in())
+                    * self.parser.seek_fps
+                )
+            )
+        q = "PLAY {}-{} {} SEEK {}".format(
+            self.caspar_channel, layer, self.current_fname, seekparam
+        )
         self.paused = False
         result = self.query(q)
         if result.is_success:
@@ -301,7 +322,6 @@ class CasparController(object):
         else:
             message = "Take command failed: " + result.data
         return NebulaResponse(result.response, message)
-
 
     def freeze(self, **kwargs):
         layer = kwargs.get("layer", self.caspar_feed_layer)
@@ -315,16 +335,12 @@ class CasparController(object):
             if self.parser.protocol >= 2.07:
                 q = "RESUME {}-{}".format(self.caspar_channel, layer)
             else:
-                length = "LENGTH {}".format(int(
-                    (self.current_out or self.fdur) - self.fpos
-                    ))
+                length = "LENGTH {}".format(
+                    int((self.current_out or self.fdur) - self.fpos)
+                )
                 q = "PLAY {}-{} {} SEEK {} {}".format(
-                        self.caspar_channel,
-                        layer,
-                        self.current_fname,
-                        self.fpos,
-                        length
-                    )
+                    self.caspar_channel, layer, self.current_fname, self.fpos, length
+                )
             message = "Playback resumed"
             new_val = False
 
@@ -345,8 +361,13 @@ class CasparController(object):
         if self.cued_item.mark_in():
             q += " SEEK {}".format(int(self.cued_item.mark_in() * self.parser.seek_fps))
         if self.cued_item.mark_out():
-            q += " LENGTH {}".format(int((self.cued_item.mark_out() - self.cued_item.mark_in()) * self.parser.seek_fps))
-        result =  self.query(q)
+            q += " LENGTH {}".format(
+                int(
+                    (self.cued_item.mark_out() - self.cued_item.mark_in())
+                    * self.parser.seek_fps
+                )
+            )
+        result = self.query(q)
         if result.is_success:
             self.paused = True
         return NebulaResponse(result.response, result.data)

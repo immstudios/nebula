@@ -25,11 +25,11 @@ def format_log_message(message):
                 1: "INFO     ",
                 2: "WARNING  ",
                 3: "ERROR    ",
-                4: "GOOD NEWS"
+                4: "GOOD NEWS",
             }[message.data["message_type"]],
             message.data["user"],
             message.host,
-            message.data["message"]
+            message.data["message"],
         )
     except Exception:
         log_traceback()

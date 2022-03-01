@@ -18,10 +18,9 @@ class WebToolPlugin(object):
 
     def render(self, template):
         import jinja2
+
         tpl_dir = os.path.join(get_plugin_path("webtools"), self.name)
-        jinja = jinja2.Environment(
-                    loader=jinja2.FileSystemLoader(tpl_dir)
-                )
+        jinja = jinja2.Environment(loader=jinja2.FileSystemLoader(tpl_dir))
         jinja.filters["format_time"] = format_time
         jinja.filters["s2tc"] = s2tc
         jinja.filters["slugify"] = slugify

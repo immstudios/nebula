@@ -17,7 +17,7 @@ from nx.api import (
     api_actions,
     api_send,
     api_solve,
-    api_system
+    api_system,
 )
 
 
@@ -28,7 +28,8 @@ class APIMethods(dict):
 
     def load(self):
         self.clear()
-        self.update({
+        self.update(
+            {
                 "get": api_get,
                 "set": api_set,
                 "browse": api_browse,
@@ -43,7 +44,8 @@ class APIMethods(dict):
                 "send": api_send,
                 "solve": api_solve,
                 "system": api_system,
-            })
+            }
+        )
         logging.info("Reloading API methods")
         apidir = get_plugin_path("api")
         if not apidir:
@@ -52,10 +54,7 @@ class APIMethods(dict):
         for plugin_entry in os.listdir(apidir):
             entry_path = os.path.join(apidir, plugin_entry)
             if os.path.isdir(entry_path):
-                plugin_module_path = os.path.join(
-                    entry_path,
-                    plugin_entry + ".py"
-                )
+                plugin_module_path = os.path.join(entry_path, plugin_entry + ".py")
                 if not os.path.exists(plugin_module_path):
                     continue
             elif not os.path.splitext(plugin_entry)[1] == ".py":

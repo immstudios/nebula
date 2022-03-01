@@ -28,10 +28,7 @@ def api_system(**kwargs):
 
     db = DB()
 
-    request = kwargs.get("request", [
-            "services",
-            "hosts"
-        ])
+    request = kwargs.get("request", ["services", "hosts"])
 
     if "stop" in kwargs:
         id_service = kwargs["stop"]
@@ -41,7 +38,9 @@ def api_system(**kwargs):
             return NebulaResponse(403, "You are not allowed to control this service")
         db.query("UPDATE services SET state=3 WHERE id=%s AND state = 1", [id_service])
         db.commit()
-        logging.info(f"{user} requested service ID {id_service} ({config['services'][id_service]['title']}) stop")
+        logging.info(
+            f"{user} requested service ID {id_service} ({config['services'][id_service]['title']}) stop"
+        )
         message = "Service is stopping"
 
     if "start" in kwargs:
@@ -52,7 +51,9 @@ def api_system(**kwargs):
             return NebulaResponse(403, "You are not allowed to control this service")
         db.query("UPDATE services SET state=2 WHERE id=%s AND state = 0", [id_service])
         db.commit()
-        logging.info(f"{user} requested service ID {id_service} ({config['services'][id_service]['title']}) start")
+        logging.info(
+            f"{user} requested service ID {id_service} ({config['services'][id_service]['title']}) start"
+        )
         message = "Service is starting"
 
     if "kill" in kwargs:
@@ -63,7 +64,9 @@ def api_system(**kwargs):
             return NebulaResponse(403, "You are not allowed to control this service")
         db.query("UPDATE services SET state=4 WHERE id=%s AND state = 3", [id_service])
         db.commit()
-        logging.info(f"{user} requested service ID {id_service} ({config['services'][id_service]['title']}) kill")
+        logging.info(
+            f"{user} requested service ID {id_service} ({config['services'][id_service]['title']}) kill"
+        )
         message = "Attempting to kill the service"
 
     if "autostart" in kwargs:
@@ -72,26 +75,32 @@ def api_system(**kwargs):
             return NebulaResponse(400, "Invalid ID service to set autostart")
         if not user.has_right("service_control", id_service):
             return NebulaResponse(403, "You are not allowed to control this service")
-        db.query("UPDATE services SET autostart=NOT autostart WHERE id=%s", [id_service])
-        logging.info(f"{user} requested service ID {id_service} ({config['services'][id_service]['title']}) autostart")
+        db.query(
+            "UPDATE services SET autostart=NOT autostart WHERE id=%s", [id_service]
+        )
+        logging.info(
+            f"{user} requested service ID {id_service} ({config['services'][id_service]['title']}) autostart"
+        )
         db.commit()
         message = "Service auto-start updated"
 
     result = {}
     if "services" in request:
         services = []
-        db.query("SELECT id, service_type, host, title, autostart, state, last_seen FROM services ORDER BY id ASC")
+        db.query(
+            "SELECT id, service_type, host, title, autostart, state, last_seen FROM services ORDER BY id ASC"
+        )
         for id, service_type, host, title, autostart, state, last_seen in db.fetchall():
             service = {
-                    "id": id,
-                    "type": service_type,
-                    "host": host,
-                    "title": title,
-                    "autostart": autostart,
-                    "state": state,
-                    "last_seen": last_seen,
-                    "last_seen_before": time.time() - last_seen
-                }
+                "id": id,
+                "type": service_type,
+                "host": host,
+                "title": title,
+                "autostart": autostart,
+                "state": state,
+                "last_seen": last_seen,
+                "last_seen_before": time.time() - last_seen,
+            }
             services.append(service)
         result["services"] = services
 

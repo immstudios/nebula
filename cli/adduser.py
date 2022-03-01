@@ -10,8 +10,7 @@ def adduser(*args):
         login = input("Login: ").strip()
         password = input("Password (will be echoed): ").strip()
         is_admin = input("Admin (yes/no): ").strip()
-        full_name = input(f"Full name (default: {login}): ").strip() \
-            or login
+        full_name = input(f"Full name (default: {login}): ").strip() or login
         email = input("Email: ").strip()
     except KeyboardInterrupt:
         print()

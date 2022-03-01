@@ -15,18 +15,17 @@ class ViewServices(CherryAdminView):
             FROM services ORDER BY id
             """
         )
-        for id, service_type, host, title, autostart, \
-                state, last_seen in db.fetchall():
+        for id, service_type, host, title, autostart, state, last_seen in db.fetchall():
             service = {
-                    "id": id,
-                    "service_type": service_type,
-                    "host": host,
-                    "title": title,
-                    "autostart": autostart,
-                    "state": state,
-                    "last_seen": last_seen,
-                    "message":  ""
-                }
+                "id": id,
+                "service_type": service_type,
+                "host": host,
+                "title": title,
+                "autostart": autostart,
+                "state": state,
+                "last_seen": last_seen,
+                "message": "",
+            }
             if time.time() - last_seen > 120:
                 nrtime = s2words(time.time() - last_seen)
                 service["message"] = f"Not responding for {nrtime}"

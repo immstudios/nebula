@@ -34,11 +34,7 @@ class BaseEncoder:
 
 
 def temp_file(id_storage, ext):
-    temp_dir = os.path.join(
-            storages[id_storage].local_path,
-            ".nx",
-            "creating"
-        )
+    temp_dir = os.path.join(storages[id_storage].local_path, ".nx", "creating")
     if not os.path.isdir(temp_dir):
         try:
             os.makedirs(temp_dir)

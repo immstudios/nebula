@@ -11,10 +11,7 @@ def api_actions(**kwargs):
     user = kwargs.get("user", anonymous)
 
     if not user:
-        return NebulaResponse(
-            401,
-            "You are not allowed to execute any actions"
-        )
+        return NebulaResponse(401, "You are not allowed to execute any actions")
 
     if not objects:
         return NebulaResponse(400, "No asset selected")

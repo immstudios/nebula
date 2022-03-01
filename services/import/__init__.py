@@ -14,11 +14,7 @@ from nebulacore.constants import file_types
 
 
 def temp_file(id_storage, ext):
-    temp_dir = os.path.join(
-            storages[id_storage].local_path,
-            ".nx",
-            "creating"
-        )
+    temp_dir = os.path.join(storages[id_storage].local_path, ".nx", "creating")
     if not os.path.isdir(temp_dir):
         try:
             os.makedirs(temp_dir)
@@ -46,7 +42,7 @@ def version_backup(asset):
         ".nx",
         "versions",
         f"{int(asset.id/1000):04d}",
-        f"{asset.id:d}"
+        f"{asset.id:d}",
     )
 
     ext = os.path.splitext(asset.file_path)[1]
@@ -58,10 +54,7 @@ def version_backup(asset):
         except IOError:
             pass
     try:
-        os.rename(
-            asset.file_path,
-            os.path.join(target_dir, target_fname)
-        )
+        os.rename(asset.file_path, os.path.join(target_dir, target_fname))
     except IOError:
         log_traceback()
         logging.warning(f"Unable to create version backup of {asset}")
@@ -111,9 +104,8 @@ def do_import(parent, import_file, asset):
                 os.remove(import_file.path)
             else:
                 backup_path = os.path.join(
-                        backup_dir,
-                        os.path.basename(asset.file_path)
-                    )
+                    backup_dir, os.path.basename(asset.file_path)
+                )
                 logging.debug(f"Creating backup of {asset} to {backup_path}")
                 if os.path.exists(backup_path):
                     os.remove(backup_path)
@@ -126,7 +118,7 @@ def do_import(parent, import_file, asset):
     allkeys = list(asset.meta)
     for key in allkeys:
         if meta_types[key]["ns"] in ["q", "f"]:
-            del(asset.meta[key])
+            del asset.meta[key]
     asset["status"] = AssetState.CREATING
 
     asset.save()
@@ -154,10 +146,7 @@ class Service(BaseService):
         except Exception:
             self.identifier = "id/main"
 
-        self.exts = [
-            f for f in file_types.keys()
-            if file_types[f] == ContentType.VIDEO
-        ]
+        self.exts = [f for f in file_types.keys() if file_types[f] == ContentType.VIDEO]
         self.versioning = True
 
         self.conditions = {}
@@ -213,9 +202,9 @@ class Service(BaseService):
                 SELECT meta FROM assets
                 WHERE meta->>%s = %s
                 """,
-                [self.identifier, idec]
+                [self.identifier, idec],
             )
-            for meta, in db.fetchall():
+            for (meta,) in db.fetchall():
                 asset = Asset(meta=meta, db=db)
 
                 if not (asset["id_storage"] and asset["path"]):

@@ -40,7 +40,9 @@ def api_order(**kwargs):
         return NebulaResponse(403, "You are not allowed to edit this rundown")
 
     if not (id_bin and order):
-        return NebulaResponse(400, f"Bad \"order\" request<br>id_bin: {id_bin}<br>order: {order}")
+        return NebulaResponse(
+            400, f'Bad "order" request<br>id_bin: {id_bin}<br>order: {order}'
+        )
 
     logging.info(f"{user} executes bin_order method")
     affected_bins = [id_bin]
@@ -60,7 +62,8 @@ def api_order(**kwargs):
                 item = Item(id_object, db=db)
                 if not item["id_bin"]:
                     logging.error(
-                        f"Attempted asset data insertion ({object_type} ID {id_object} {meta}) to item. This should never happen")
+                        f"Attempted asset data insertion ({object_type} ID {id_object} {meta}) to item. This should never happen"
+                    )
                     continue
 
                 if not item:
@@ -75,13 +78,15 @@ def api_order(**kwargs):
             asset = Asset(id_object, db=db)
             if not asset:
                 logging.error(
-                    f"Unable to append {object_type} ID {id_object}. Asset does not exist")
+                    f"Unable to append {object_type} ID {id_object}. Asset does not exist"
+                )
                 continue
             try:
                 can_append = eval(append_cond)
             except Exception:
                 log_traceback(
-                    "Unable to evaluate rundown accept condition: {append_cond}")
+                    "Unable to evaluate rundown accept condition: {append_cond}"
+                )
                 continue
             if not can_append:
                 logging.error(f"Unable to append {asset}. Does not match conditions.")
@@ -95,7 +100,8 @@ def api_order(**kwargs):
             item.meta.update(meta)
         else:
             logging.error(
-                f"Unable to append {object_type} ID {id_object} {meta}. Unexpected object")
+                f"Unable to append {object_type} ID {id_object} {meta}. Unexpected object"
+            )
             continue
 
         if not item or item["position"] != pos or item["id_bin"] != id_bin:

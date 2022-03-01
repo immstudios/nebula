@@ -7,22 +7,9 @@ import time
 from nxtools import logging, slugify
 
 from nx.enum import ObjectType, MetaClass
-from nx import (
-    NebulaResponse,
-    config,
-    meta_types,
-    cache,
-    DB
-)
+from nx import NebulaResponse, config, meta_types, cache, DB
 
-from nx.objects import (
-    Asset,
-    Item,
-    Bin,
-    Event,
-    User,
-    anonymous
-)
+from nx.objects import Asset, Item, Bin, Event, User, anonymous
 
 
 def get_objects(ObjectClass, **kwargs):
@@ -62,16 +49,9 @@ def get_objects(ObjectClass, **kwargs):
             cast = None
             if order_key in meta_types:
                 cls = meta_types[order_key]["class"]
-                if cls in [
-                    MetaClass.NUMERIC,
-                    MetaClass.DATETIME,
-                    MetaClass.TIMECODE
-                ]:
+                if cls in [MetaClass.NUMERIC, MetaClass.DATETIME, MetaClass.TIMECODE]:
                     cast = "FLOAT"
-                elif cls in [
-                    MetaClass.INTEGER,
-                    MetaClass.COLOR
-                ]:
+                elif cls in [MetaClass.INTEGER, MetaClass.COLOR]:
                     cast = "INTEGER"
 
             if cast:
@@ -86,9 +66,11 @@ def get_objects(ObjectClass, **kwargs):
             yield carr, ObjectClass(id_object, db=db)
         return
 
-    if id_view \
-            and id_view in config["views"] \
-            and ObjectClass.object_type_id == ObjectType.ASSET:
+    if (
+        id_view
+        and id_view in config["views"]
+        and ObjectClass.object_type_id == ObjectType.ASSET
+    ):
         view_config = config["views"][id_view]
         for key, col in [
             ["folders", "id_folder"],
@@ -112,7 +94,7 @@ def get_objects(ObjectClass, **kwargs):
                 conds.append(cond)
                 break
         else:
-            conds.append("meta->>"+cond)
+            conds.append("meta->>" + cond)
 
     view_count = 0
     if fulltext:
@@ -121,23 +103,17 @@ def get_objects(ObjectClass, **kwargs):
             key, value = fulltext.split(":", 1)
             key = key.strip()
             value = value.strip().lower()
-            value = value\
-                .replace("%", "%%") \
-                .replace("*", "%") \
-                .replace("?", "_")
+            value = value.replace("%", "%%").replace("*", "%").replace("?", "_")
             conds.append("meta->>'{}' ILIKE '{}'".format(key, value))
         else:
             ft = slugify(
                 fulltext,
                 make_set=True,
-                slug_whitelist=string.ascii_letters+string.digits+"%*_",
-                split_chars=" "
+                slug_whitelist=string.ascii_letters + string.digits + "%*_",
+                split_chars=" ",
             )
             for value in ft:
-                value = value \
-                    .replace("%", "%%") \
-                    .replace("*", "%") \
-                    .replace("?", "_")
+                value = value.replace("%", "%%").replace("*", "%").replace("?", "_")
                 if not value.endswith("%"):
                     value += "%"
                 conds.append(
@@ -183,18 +159,18 @@ def api_browse(**kwargs):
     # user = kwargs.get("user", anonymous)
 
     params = {
-            "id_view": int(kwargs.get("v", min(config["views"].keys()))),
-            "limit": int(kwargs.get("l", 50)),
-            "offset": (max(0, int(kwargs.get("p", 1)) - 1))*50,
-            "fulltext": kwargs.get("q", "")
-        }
+        "id_view": int(kwargs.get("v", min(config["views"].keys()))),
+        "limit": int(kwargs.get("l", 50)),
+        "offset": (max(0, int(kwargs.get("p", 1)) - 1)) * 50,
+        "fulltext": kwargs.get("q", ""),
+    }
 
     result = {
         "response": 200,
         "message": "OK",
         "data": [],
         "id_view": params["id_view"],
-        "count": 0
+        "count": 0,
     }
 
     columns = config["views"][params["id_view"]]["columns"]
@@ -233,22 +209,14 @@ def api_get(**kwargs):
         "item": Item,
         "bin": Bin,
         "event": Event,
-        "user": User
+        "user": User,
     }[object_type]
 
-    result = {
-        "message": "Incomplete query",
-        "response": 500,
-        "data": [],
-        "count": 0
-    }
+    result = {"message": "Incomplete query", "response": 500, "data": [], "count": 0}
 
     rformat = None
     if result_format:
-        rformat = {
-                "result": result_format,
-                "language": result_lang
-            }
+        rformat = {"result": result_format, "language": result_lang}
 
     if type(result_type) == list:
         result_format = []
@@ -293,7 +261,7 @@ def api_get(**kwargs):
                 "duration": obj["duration"],
                 "mark_in": obj["mark_in"],
                 "mark_out": obj["mark_out"],
-                "form": {}
+                "form": {},
             }
             for key, _ in config["folders"][obj["id_folder"]]["meta_set"]:
                 row["form"][key] = obj.show(key, result="full")
@@ -319,8 +287,6 @@ def api_get(**kwargs):
 
     result["response"] = 200
     result["message"] = "{} {}s returned in {:.02}s".format(
-            len(result["data"]),
-            object_type,
-            time.time() - start_time
-        )
+        len(result["data"]), object_type, time.time() - start_time
+    )
     return result

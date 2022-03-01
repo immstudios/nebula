@@ -10,8 +10,6 @@ except ImportError:
     critical_error("Unable to import psycopg2")
 
 
-
-
 class DB(object):
     def __init__(self, **kwargs):
         self.pmap = {
@@ -22,11 +20,7 @@ class DB(object):
         }
 
         self.settings = {
-            key: kwargs.get(
-                self.pmap[key],
-                config[self.pmap[key]]
-            )
-            for key in self.pmap
+            key: kwargs.get(self.pmap[key], config[self.pmap[key]]) for key in self.pmap
         }
 
         self.conn = psycopg2.connect(**self.settings)

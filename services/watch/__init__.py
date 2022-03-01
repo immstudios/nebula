@@ -1,13 +1,7 @@
 import os
 import time
 
-from nxtools import (
-    s2time,
-    logging,
-    get_files,
-    get_base_name,
-    log_traceback
-)
+from nxtools import s2time, logging, get_files, get_base_name, log_traceback
 
 from nx.db import DB
 from nx.core import config, storages
@@ -27,7 +21,7 @@ class Service(BaseService):
         self.existing = []
         start_time = time.time()
         db.query("SELECT meta FROM assets WHERE media_type=1 AND status=1")
-        for meta, in db.fetchall():
+        for (meta,) in db.fetchall():
             asset = Asset(meta=meta, db=db)
             file_path = asset.file_path
             self.existing.append(file_path)
@@ -39,30 +33,23 @@ class Service(BaseService):
         for wf_settings in self.settings.findall("folder"):
             id_storage = int(wf_settings.attrib["id_storage"])
             rel_wf_path = wf_settings.attrib["path"]
-            quarantine_time = int(
-                wf_settings.attrib.get("quarantine_time", "10")
-            )
+            quarantine_time = int(wf_settings.attrib.get("quarantine_time", "10"))
             id_folder = int(wf_settings.attrib.get("id_folder", 12))
 
             storage_path = storages[id_storage].local_path
             watchfolder_path = os.path.join(storage_path, rel_wf_path)
 
             if not os.path.exists(watchfolder_path):
-                logging.warning(
-                    "Skipping non-existing watchfolder",
-                    watchfolder_path
-                )
+                logging.warning("Skipping non-existing watchfolder", watchfolder_path)
                 continue
 
             i = 0
             for file_object in get_files(
-                        watchfolder_path,
-                        recursive=wf_settings.attrib.get("recursive", False),
-                        hidden=wf_settings.attrib.get("hidden", False),
-                        case_sensitive_exts=wf_settings.get(
-                            "case_sensitive_exts", False
-                        )
-                    ):
+                watchfolder_path,
+                recursive=wf_settings.attrib.get("recursive", False),
+                hidden=wf_settings.attrib.get("hidden", False),
+                case_sensitive_exts=wf_settings.get("case_sensitive_exts", False),
+            ):
                 i += 1
                 if i % 100 == 0 and config.get("debug_mode", False):
                     logging.debug("{} files scanned".format(i))
@@ -87,8 +74,7 @@ class Service(BaseService):
 
                 base_name = get_base_name(asset_path)
 
-                if quarantine_time \
-                        and now - file_object.mtime < quarantine_time:
+                if quarantine_time and now - file_object.mtime < quarantine_time:
                     logging.debug(f"{base_name} is too young. Skipping")
                     continue
 
@@ -110,9 +96,7 @@ class Service(BaseService):
                     try:
                         exec(post_script.text)
                     except Exception:
-                        log_traceback(
-                            f"Error executing post-script on {asset}"
-                        )
+                        log_traceback(f"Error executing post-script on {asset}")
                         failed = True
 
                 if not failed:

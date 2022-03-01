@@ -19,16 +19,12 @@ def api_solve(**kwargs):
 
     if not (items and solver_name):
         return NebulaResponse(
-            400,
-            "You must specify placeholder item ID and a solver name"
+            400, "You must specify placeholder item ID and a solver name"
         )
 
     Solver = get_solver(solver_name)
     if Solver is None:
-        return NebulaResponse(
-            500,
-            "Unable to load the solver. Check logs for details"
-        )
+        return NebulaResponse(500, "Unable to load the solver. Check logs for details")
 
     db = DB()
     for id_item in items:

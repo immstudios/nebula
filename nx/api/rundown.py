@@ -29,7 +29,7 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
             """SELECT id_asset FROM jobs
             WHERE id_action=%s AND status in (0, 5)
             """,
-            [channel_config["send_action"]]
+            [channel_config["send_action"]],
         )
         pending_assets = [r[0] for r in db.fetchall()]
     else:
@@ -63,7 +63,7 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
             i.position ASC,
             i.id ASC
         """,
-        (id_channel, start_time, end_time)
+        (id_channel, start_time, end_time),
     )
 
     current_event_id = None
@@ -71,8 +71,7 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
 
     ts_broadcast = ts_scheduled = 0
     pskey = "playout_status/{}".format(id_channel)
-    for id_event, emeta, imeta, ameta in \
-            db.fetchall() + [(-1, None, None, None)]:
+    for id_event, emeta, imeta, ameta in db.fetchall() + [(-1, None, None, None)]:
         if id_event != current_event_id:
             if event:
                 yield event
@@ -89,8 +88,9 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
             if event["run_mode"]:
                 ts_broadcast = 0
             event.meta["rundown_scheduled"] = ts_scheduled = event["start"]
-            event.meta["rundown_broadcast"] = \
-                ts_broadcast = ts_broadcast or ts_scheduled
+            event.meta["rundown_broadcast"] = ts_broadcast = (
+                ts_broadcast or ts_scheduled
+            )
 
         if imeta:
             item = Item(meta=imeta, db=db)
@@ -151,17 +151,16 @@ def api_rundown(**kwargs):
     id_channel = int(kwargs.get("id_channel", -1))
     start_time = kwargs.get("start_time", 0)
 
-    if not (user.has_right("rundown_view", id_channel)
-            or user.has_right("rundown_edit", id_channel)):
+    if not (
+        user.has_right("rundown_view", id_channel)
+        or user.has_right("rundown_edit", id_channel)
+    ):
         return NebulaResponse(401)
 
     process_start_time = time.time()
 
     if id_channel not in config["playout_channels"]:
-        return NebulaResponse(
-            400,
-            "Invalid playout channel specified"
-        )
+        return NebulaResponse(400, "Invalid playout channel specified")
 
     rows = []
     i = 0
@@ -180,7 +179,5 @@ def api_rundown(**kwargs):
 
     process_time = time.time() - process_start_time
     return NebulaResponse(
-        200,
-        f"Rundown loaded in {process_time:.02f} seconds",
-        data=rows
+        200, f"Rundown loaded in {process_time:.02f} seconds", data=rows
     )

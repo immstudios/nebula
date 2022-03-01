@@ -17,10 +17,10 @@ class VlcMedia(object):
     time_unit = "f"
 
     def __init__(self, instance, full_path, item, **kwargs):
-        self.auto       = kwargs.get("auto", True)
-        loop       = kwargs.get("loop", False)
-        self.mark_in    = item.mark_in()
-        self.mark_out   = item.mark_out()
+        self.auto = kwargs.get("auto", True)
+        loop = kwargs.get("loop", False)
+        self.mark_in = item.mark_in()
+        self.mark_out = item.mark_out()
 
         self.item = item
         self.fname = full_path
@@ -36,7 +36,8 @@ class VlcMedia(object):
             self.media.add_option(":stop-time=%f" % self.mark_out)
 
         self.media.event_manager().event_attach(
-            vlc.EventType.MediaParsedChanged, self.parse_callback)
+            vlc.EventType.MediaParsedChanged, self.parse_callback
+        )
 
         ret = self.media.parse_with_options(0, -1)
         if ret != 0:
@@ -62,6 +63,7 @@ class VlcMedia(object):
     def mark_out_ms(self):
         return self.mark_out * 1000
 
+
 class VlcController(object):
     def __init__(self, parent):
         self.parent = parent
@@ -69,7 +71,7 @@ class VlcController(object):
         # VLC always uses milliseconds for timestamps
         self.parent.fps = 1000
 
-        self.caspar_feed_layer   = int(parent.channel_config.get("caspar_feed_layer", 10))
+        self.caspar_feed_layer = int(parent.channel_config.get("caspar_feed_layer", 10))
 
         self.current = None
         self.cued = None
@@ -81,7 +83,8 @@ class VlcController(object):
         if parent.channel_config.get("vlc_fullscreen", True):
             self.media_player.set_fullscreen(True)
         self.media_player.event_manager().event_attach(
-            vlc.EventType.MediaPlayerEndReached, self.next_item_callback)
+            vlc.EventType.MediaPlayerEndReached, self.next_item_callback
+        )
         # MediaPlayerMediaChanged
 
         thread.start_new_thread(self.work, ())
@@ -165,7 +168,7 @@ class VlcController(object):
                 self.main()
             except Exception:
                 log_traceback()
-            time.sleep(.3)
+            time.sleep(0.3)
 
     def next_item_callback(self, event):
         print(event.u)
@@ -182,11 +185,10 @@ class VlcController(object):
         except Exception:
             log_traceback("Playout on_main failed")
 
-
     def cue(self, item, full_path, **kwargs):
         self.cued = VlcMedia(self.instance, full_path, item, **kwargs)
-        layer      = kwargs.get("layer", self.caspar_feed_layer)
-        play       = kwargs.get("play", False)
+        layer = kwargs.get("layer", self.caspar_feed_layer)
+        play = kwargs.get("play", False)
 
         if play:
             return self.take()
@@ -195,14 +197,12 @@ class VlcController(object):
 
         return NebulaResponse(200, message)
 
-
     def clear(self, **kwargs):
         layer = layer or self.caspar_feed_layer
         self.media_player.stop()
         self.current = None
         self.cued = None
         return NebulaResponse(200, "all items removed")
-
 
     def take(self, **kwargs):
         layer = kwargs.get("layer", self.caspar_feed_layer)
@@ -228,7 +228,6 @@ class VlcController(object):
             message = "Take command failed"
         return NebulaResponse(code, message)
 
-
     def retake(self, **kwargs):
         layer = kwargs.get("layer", self.caspar_feed_layer)
         if self.parent.current_live:
@@ -239,7 +238,6 @@ class VlcController(object):
         message = "Retake OK"
         self.parent.cue_next()
         return NebulaResponse(200, message)
-
 
     def freeze(self, **kwargs):
         layer = kwargs.get("layer", self.caspar_feed_layer)
@@ -253,7 +251,6 @@ class VlcController(object):
             message = "Playback resumed"
 
         return NebulaResponse(200, message)
-
 
     def abort(self, **kwargs):
         layer = kwargs.get("layer", self.caspar_feed_layer)

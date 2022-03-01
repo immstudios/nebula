@@ -25,7 +25,7 @@ def string2cs(key, value):
             best_match = ckey
             max_ratio = r
 
-    if max_ratio < .85:
+    if max_ratio < 0.85:
         return None
     return best_match
 

@@ -17,7 +17,7 @@ def get_plugin_path(group=False):
     try:
         plugin_path = os.path.join(
             storages[int(config.get("plugin_storage", 1))].local_path,
-            config.get("plugin_root", ".nx/scripts/v5")
+            config.get("plugin_root", ".nx/scripts/v5"),
         )
     except Exception:
         log_traceback()
@@ -38,7 +38,9 @@ def get_plugin_path(group=False):
 def load_common_scripts():
     if get_plugin_path():
         common_dir = get_plugin_path("common")
-        if os.path.isdir(common_dir) \
-                and os.listdir(common_dir) \
-                and common_dir not in sys.path:
+        if (
+            os.path.isdir(common_dir)
+            and os.listdir(common_dir)
+            and common_dir not in sys.path
+        ):
             sys.path.insert(0, common_dir)

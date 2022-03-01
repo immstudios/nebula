@@ -52,13 +52,13 @@ class ViewProfile(CherryAdminView):
         self["name"] = "profile"
         self["title"] = "User profile"
         self["rights"] = [
-            ["asset_edit",      "Edit assets", "folders"],
-            ["asset_create",    "Create assets", "folders"],
-            ["rundown_view",    "View rundown", "playout_channels"],
-            ["rundown_edit",    "Edit rundown", "playout_channels"],
-            ["scheduler_view",  "View scheduler", "playout_channels"],
-            ["scheduler_edit",  "Modify scheduler", "playout_channels"],
-            ["job_control",     "Control jobs", "actions"],
+            ["asset_edit", "Edit assets", "folders"],
+            ["asset_create", "Create assets", "folders"],
+            ["rundown_view", "View rundown", "playout_channels"],
+            ["rundown_edit", "Edit rundown", "playout_channels"],
+            ["scheduler_view", "View scheduler", "playout_channels"],
+            ["scheduler_edit", "Modify scheduler", "playout_channels"],
+            ["job_control", "Control jobs", "actions"],
             ["service_control", "Control services", "services"],
-            ["mcr",             "Control playout", "playout_channels"],
+            ["mcr", "Control playout", "playout_channels"],
         ]

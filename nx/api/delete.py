@@ -4,20 +4,13 @@ import psycopg2
 
 from nx import NebulaResponse, DB
 from nx.helpers import bin_refresh
-from nx.objects import (
-    Asset,
-    Item,
-    Bin,
-    Event,
-    anonymous
-)
+from nx.objects import Asset, Item, Bin, Event, anonymous
 
 
 def api_delete(**kwargs):
     object_type = kwargs.get("object_type", "asset")
     # TODO: ids is deprecated. use objects instead
-    objects = kwargs.get("objects") \
-        or kwargs.get("ids", [])
+    objects = kwargs.get("objects") or kwargs.get("ids", [])
     db = kwargs.get("db", DB())
     user = kwargs.get("user", anonymous)
     initiator = kwargs.get("initiator", None)
@@ -47,17 +40,11 @@ def api_delete(**kwargs):
             try:
                 obj.delete()
             except psycopg2.IntegrityError:
-                return NebulaResponse(
-                    423,
-                    f"Unable to delete {obj}. Already aired."
-                )
+                return NebulaResponse(423, f"Unable to delete {obj}. Already aired.")
             if obj["id_bin"] not in affected_bins:
                 affected_bins.append(obj["id_bin"])
         else:
-            return NebulaResponse(
-                501,
-                f"{object_type} deletion is not implemented"
-            )
+            return NebulaResponse(501, f"{object_type} deletion is not implemented")
 
         num += 1
 
