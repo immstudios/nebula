@@ -1,4 +1,3 @@
-import time
 import socketserver
 
 from typing import Tuple, List
@@ -14,7 +13,6 @@ class OSCHandler(socketserver.BaseRequestHandler):
         try:
             packet = OSCPacket(self.request[0])
             for timed_msg in packet.messages:
-                now = time.time()
                 message = timed_msg.message
                 self.server.handle(message.address, *message.params)
         except OSCParseError:

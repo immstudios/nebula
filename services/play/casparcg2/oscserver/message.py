@@ -3,7 +3,17 @@
 __all__ = ["OSCMessage"]
 
 
-from .osc_types import *
+from .osc_types import (
+    OSCParseError,
+    get_string,
+    get_int,
+    get_float,
+    get_double,
+    get_blob,
+    get_rgba,
+    get_midi,
+    get_timetag,
+)
 
 from typing import List, Iterator, Any
 
@@ -64,7 +74,7 @@ class OSCMessage(object):
                     param_stack.append(array)
                 elif param == "]":  # Array stop.
                     if len(param_stack) < 2:
-                        raise ParseError(
+                        raise OSCParseError(
                             "Unexpected closing bracket in type tag: {0}".format(
                                 type_tag
                             )
@@ -72,17 +82,16 @@ class OSCMessage(object):
                     param_stack.pop()
                 # TODO: Support more exotic types as described in the specification.
                 else:
-                    logging.warning("Unhandled parameter type: {0}".format(param))
                     continue
                 if param not in "[]":
                     param_stack[-1].append(val)
             if len(param_stack) != 1:
-                raise ParseError(
+                raise OSCParseError(
                     "Missing closing bracket in type tag: {0}".format(type_tag)
                 )
             self._parameters = params
         except OSCParseError as pe:
-            raise ParseError("Found incorrect datagram, ignoring it", pe)
+            raise OSCParseError("Found incorrect datagram, ignoring it", pe)
 
     @property
     def address(self) -> str:

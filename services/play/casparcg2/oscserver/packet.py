@@ -6,9 +6,9 @@ It lets you access easily to OscMessage and OscBundle instances in the packet.
 import time
 import collections
 
-from typing import Union, List
+from typing import List
 
-from .osc_types import *
+from .osc_types import OSCParseError, IMMEDIATELY
 from .bundle import OSCBundle
 from .message import OSCMessage
 
@@ -59,13 +59,13 @@ class OSCPacket(object):
                     _timed_msg_of_bundle(OSCBundle(dgram), now), key=lambda x: x.time
                 )
             elif OSCMessage.dgram_is_message(dgram):
-                self._messages = [TimedMessage(now, OscMessage(dgram))]
+                self._messages = [TimedMessage(now, OSCMessage(dgram))]
             else:
                 raise OSCParseError(
                     "OSC Packet should at least contain an OscMessage or an OscBundle."
                 )
         except (OSCParseError) as pe:
-            raise ParseError(f"Could not parse packet {pe}")
+            raise OSCParseError(f"Could not parse packet {pe}")
 
     @property
     def messages(self) -> List[TimedMessage]:
