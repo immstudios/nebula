@@ -9,8 +9,7 @@ from nx.mediaprobe import mediaprobe
 from nx.base_service import BaseService
 from nx.objects import Asset
 from nx.enum import AssetState, ContentType
-
-from nebulacore.constants import file_types
+from nx.filetypes import FileTypes
 
 
 def temp_file(id_storage, ext):
@@ -146,7 +145,7 @@ class Service(BaseService):
         except Exception:
             self.identifier = "id/main"
 
-        self.exts = [f for f in file_types.keys() if file_types[f] == ContentType.VIDEO]
+        self.exts = FileTypes.exts_by_type(ContentType.VIDEO)
         self.versioning = True
 
         self.conditions = {}

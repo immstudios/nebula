@@ -8,8 +8,9 @@ from nx.core import config, storages
 from nx.objects import Asset
 from nx.base_service import BaseService
 from nx.helpers import asset_by_path
+from nx.filetypes import FileTypes
 
-from nebulacore.constants import FILE, CREATING, file_types
+from nebulacore.constants import FILE, CREATING
 
 
 class Service(BaseService):
@@ -64,7 +65,7 @@ class Service(BaseService):
                 now = time.time()
                 asset_path = full_path.replace(storage_path, "", 1).lstrip("/")
                 ext = os.path.splitext(asset_path)[1].lstrip(".").lower()
-                if ext not in file_types:
+                if ext not in FileTypes.exts():
                     continue
 
                 asset = asset_by_path(id_storage, asset_path, db=db)
@@ -79,7 +80,7 @@ class Service(BaseService):
                     continue
 
                 asset = Asset(db=db)
-                asset["content_type"] = file_types[ext]
+                asset["content_type"] = FileTypes.by_ext(ext)
                 asset["media_type"] = FILE
                 asset["id_storage"] = id_storage
                 asset["path"] = asset_path
