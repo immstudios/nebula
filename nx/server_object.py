@@ -5,11 +5,10 @@ import json
 from nxtools import logging, slugify
 
 from nx.db import DB
-from nx.core import meta_types
 from nx.cache import cache
+from nx.core.base_objects import BaseObject
+from nx.core.metadata import meta_types
 from nx.messaging import messaging
-
-from nebulacore.base_objects import BaseObject
 
 
 def create_ft_index(meta):

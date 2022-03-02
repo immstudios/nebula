@@ -6,9 +6,9 @@ import subprocess
 
 from nxtools import logging
 
-from nx.db import DB
-from nx.core import config, storages, Storage, ismount
 from nx.agents import BaseAgent
+from nx.core.common import config, storages, Storage, ismount
+from nx.db import DB
 
 
 # id_storage: is_alive, check_interval, last_check

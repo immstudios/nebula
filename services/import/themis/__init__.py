@@ -276,9 +276,7 @@ class Themis(object):
             cmd.extend(output.build())
 
         is_success = ffmpeg(
-            *cmd,
-            debug=self["debug"],
-            progress_handler=progress_handler
+            *cmd, debug=self["debug"], progress_handler=progress_handler
         )
 
         if self["use_temp_file"]:

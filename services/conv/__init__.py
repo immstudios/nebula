@@ -4,7 +4,7 @@ from nxtools import xml, logging, s2words, log_traceback
 
 from nx.db import DB
 from nx.base_service import BaseService
-from nx.enum import JobState
+from nx.core.enum import JobState
 from nx.jobs import Action, get_job
 
 from services.conv.encoders import NebulaFFMPEG

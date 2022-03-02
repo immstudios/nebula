@@ -5,7 +5,7 @@ from nxtools import EMAIL_REGEXP, GUID_REGEXP, log_traceback, get_guid
 from cherryadmin import CherryAdminView
 
 from nx.db import DB
-from nx.core import config
+from nx.core.common import config
 from nx.objects import User
 from nx.helpers import send_mail
 

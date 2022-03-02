@@ -2,7 +2,8 @@ __all__ = ["api_send"]
 
 from nxtools import logging
 
-from nx import NebulaResponse, DB
+from nx.core.common import NebulaResponse
+from nx.db import DB
 from nx.jobs import send_to
 from nx.objects import anonymous
 

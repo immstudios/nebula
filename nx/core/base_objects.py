@@ -6,8 +6,8 @@ import pprint
 from nxtools import logging
 
 from .metadata import MetaTypes
-from .constants import VIRTUAL, TEXT, FILE
 from .common import storages, config, get_hash
+from nx.legacy.constants import VIRTUAL, TEXT, FILE
 
 __all__ = [
     "BaseObject",

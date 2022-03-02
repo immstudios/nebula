@@ -1,6 +1,6 @@
 """Return system settings."""
 
-from nx import NebulaResponse, config, storages
+from nx.core.common import NebulaResponse, config, storages
 
 __all__ = ["api_settings"]
 

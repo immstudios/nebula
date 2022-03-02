@@ -2,9 +2,9 @@ import copy
 
 from cherryadmin import CherryAdminView
 
-from nx.core import config
-from nx.objects import Asset
 from nx.api import api_get
+from nx.core.common import config
+from nx.objects import Asset
 
 
 RECORDS_PER_PAGE = 100

@@ -2,10 +2,11 @@ import cherrypy
 from cherryadmin import CherryAdminView
 
 from nxtools import logging, log_traceback, datestr2ts, tc2s
+
 from nx.db import DB
-from nx.core import config
+from nx.core.common import config
+from nx.core.enum import MetaClass
 from nx.objects import Asset
-from nx.enum import MetaClass
 from nx.api import api_set, api_actions
 
 

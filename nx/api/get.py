@@ -6,9 +6,11 @@ import time
 
 from nxtools import logging, slugify
 
-from nx.enum import ObjectType, MetaClass
-from nx import NebulaResponse, config, meta_types, cache, DB
-
+from nx.cache import cache
+from nx.core.enum import ObjectType, MetaClass
+from nx.core.common import NebulaResponse, config
+from nx.core.metadata import meta_types
+from nx.db import DB
 from nx.objects import Asset, Item, Bin, Event, User, anonymous
 
 

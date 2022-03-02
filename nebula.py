@@ -7,10 +7,10 @@ import os
 import sys
 import time
 
-from nx.core import config
-from nx.plugins import get_plugin_path
 from nxtools import logging, log_traceback, critical_error
 
+from nx.core.common import config
+from nx.plugins import get_plugin_path
 
 #
 # Start agents only if this script is executed (not imported)
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         for agent in agents:
             agent.shutdown()
         while are_running(agents):
-            time.sleep(.5)
+            time.sleep(0.5)
 
     agents = []
     for Agent in [StorageMonitor, ServiceMonitor, SystemMonitor]:
@@ -114,10 +114,10 @@ else:
 
     from nx.db import *  # noqa
     from nx.plugins import *  # noqa
-    from nx.core import *  # noqa
+    from nx.core.common import *  # noqa
     from nx.helpers import *  # noqa
     from nx.objects import *  # noqa
     from nx.cache import *  # noqa
     from nx.messaging import *  # noqa
 
-    from nebulacore.constants import *  # noqa
+    from nx.legacy.constants import *  # noqa

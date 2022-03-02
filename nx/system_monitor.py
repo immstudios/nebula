@@ -7,8 +7,8 @@ import psycopg2
 from nxtools import log_traceback
 from promexp import Promexp
 
+from nx.core.common import config, storages
 from nx.db import DB
-from nx.core import config, storages
 from nx.messaging import messaging
 from nx.agents import BaseAgent
 

@@ -1,7 +1,7 @@
 __all__ = ["DB"]
 
 from nxtools import log_traceback, critical_error
-from nx.core import config
+from nx.core.common import config
 
 try:
     import psycopg2

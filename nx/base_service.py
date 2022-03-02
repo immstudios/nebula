@@ -3,8 +3,8 @@ import time
 
 from nxtools import logging, log_traceback
 
-from nx.core import config
-from nx.enum import ServiceState
+from nx.core.common import config
+from nx.core.enum import ServiceState
 from nx.db import DB
 
 

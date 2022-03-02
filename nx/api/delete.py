@@ -2,7 +2,8 @@ __all__ = ["api_delete"]
 
 import psycopg2
 
-from nx import NebulaResponse, DB
+from nx.core.common import NebulaResponse
+from nx.db import DB
 from nx.helpers import bin_refresh
 from nx.objects import Asset, Item, Bin, Event, anonymous
 

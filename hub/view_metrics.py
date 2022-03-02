@@ -3,8 +3,8 @@ from cherryadmin import CherryAdminRawView
 from cherryadmin.stats import request_stats
 from promexp.metrics import Metrics
 
+from nx.core.common import config
 from nx.db import DB
-from nx.core import config
 
 
 class ViewMetrics(CherryAdminRawView):

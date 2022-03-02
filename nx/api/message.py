@@ -1,6 +1,6 @@
 __all__ = ["api_message"]
 
-from nx import NebulaResponse
+from nx.core.common import NebulaResponse
 
 
 def api_message(**kwargs):

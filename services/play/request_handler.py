@@ -6,7 +6,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from nxtools import logging, log_traceback
 
-from nx.core import NebulaResponse
+from nx.core.common import NebulaResponse
 
 
 class PlayoutRequestHandler(BaseHTTPRequestHandler):

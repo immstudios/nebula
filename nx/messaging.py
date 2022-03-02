@@ -6,6 +6,8 @@ import socket
 import queue
 import threading
 
+from nxtools import logging, log_traceback, critical_error
+
 try:
     import pika
 
@@ -13,8 +15,7 @@ try:
 except ModuleNotFoundError:
     has_pika = False
 
-from nxtools import logging, log_traceback, critical_error
-from nx.core import config
+from nx.core.common import config
 
 
 class RabbitSender:

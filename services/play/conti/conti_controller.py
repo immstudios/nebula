@@ -5,7 +5,7 @@ import time
 from nxtools import logging
 from conti import CONTI_DEBUG, Conti, ContiSource
 
-from nx.core import NebulaResponse
+from nx.core.common import NebulaResponse
 
 CONTI_DEBUG["source"] = False
 CONTI_DEBUG["encoder"] = False

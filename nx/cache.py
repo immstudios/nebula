@@ -1,11 +1,13 @@
 __all__ = ["cache", "Cache"]
 
 import time
-
-from nebulacore import config
 from nxtools import log_traceback, critical_error
 
+from nx.core.common import config
+
+
 MAX_RETRIES = 5
+
 
 try:
     import pylibmc  # noqa

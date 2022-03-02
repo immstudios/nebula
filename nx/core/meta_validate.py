@@ -1,17 +1,4 @@
-from .constants import (
-    STRING,
-    TEXT,
-    INTEGER,
-    NUMERIC,
-    BOOLEAN,
-    DATETIME,
-    TIMECODE,
-    REGIONS,
-    FRACTION,
-    SELECT,
-    LIST,
-    COLOR,
-)
+from .enum import MetaClass
 
 
 class NebulaInvalidValueError(Exception):
@@ -114,16 +101,16 @@ def validate_color(meta_type, value):
 
 validators = {
     -1: validate_default,
-    STRING: validate_string,
-    TEXT: validate_text,
-    INTEGER: validate_integer,
-    NUMERIC: validate_numeric,
-    BOOLEAN: validate_boolean,
-    DATETIME: validate_datetime,
-    TIMECODE: validate_timecode,
-    REGIONS: validate_regions,
-    FRACTION: validate_fract,
-    SELECT: validate_select,
-    LIST: validate_list,
-    COLOR: validate_color,
+    MetaClass.STRING: validate_string,
+    MetaClass.TEXT: validate_text,
+    MetaClass.INTEGER: validate_integer,
+    MetaClass.NUMERIC: validate_numeric,
+    MetaClass.BOOLEAN: validate_boolean,
+    MetaClass.DATETIME: validate_datetime,
+    MetaClass.TIMECODE: validate_timecode,
+    MetaClass.OBJECT: validate_regions,
+    MetaClass.FRACTION: validate_fract,
+    MetaClass.SELECT: validate_select,
+    MetaClass.LIST: validate_list,
+    MetaClass.COLOR: validate_color,
 }

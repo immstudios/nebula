@@ -4,7 +4,7 @@ import time
 from nxtools import xml, critical_error, log_traceback, logging
 
 from nx.db import DB
-from nx.core import config
+from nx.core.common import config
 
 
 def run(*args):
@@ -27,13 +27,16 @@ def run(*args):
 
     db = DB()
     db.query(
-        "SELECT service_type, title, host, loop_delay, settings FROM services WHERE id=%s",
+        """
+        SELECT service_type, title, host, loop_delay, settings 
+        FROM services WHERE id=%s
+        """,
         [id_service],
     )
     try:
         agent, title, host, loop_delay, settings = db.fetchall()[0]
     except IndexError:
-        critical_error("Unable to start service {}. No such service".format(id_service))
+        critical_error(f"Unable to start service {id_service}. No such service")
 
     config["user"] = logging.user = title
 

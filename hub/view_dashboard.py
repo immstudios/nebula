@@ -2,7 +2,7 @@ import cherrypy
 
 from cherryadmin import CherryAdminView
 
-from nx.core import storages
+from nx.core.common import storages
 from nx.db import DB
 
 

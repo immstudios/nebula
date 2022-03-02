@@ -6,9 +6,9 @@ import subprocess
 
 from nxtools import logging
 
+from nx.core.common import config
+from nx.core.enum import ServiceState
 from nx.db import DB
-from nx.core import config
-from nx.enum import ServiceState
 from nx.messaging import messaging
 from nx.agents import BaseAgent
 

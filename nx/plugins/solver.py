@@ -3,7 +3,8 @@ import imp
 
 from nxtools import logging, format_time, log_traceback, FileObject
 
-from nx import NebulaResponse, DB
+from nx.core.common import NebulaResponse
+from nx.db import DB
 from nx.objects import Bin, Item, Event
 from nx.helpers import bin_refresh
 from nx.plugins.common import get_plugin_path
@@ -28,12 +29,16 @@ class SolverPlugin(object):
     def next_event(self):
         if not self._next_event:
             self.db.query(
-                "SELECT meta FROM events WHERE id_channel = %s AND start > %s ORDER BY start ASC LIMIT 1",
+                """
+                SELECT meta FROM events
+                WHERE id_channel = %s AND start > %s
+                ORDER BY start ASC LIMIT 1
+                """,
                 [self.event["id_channel"], self.event["start"]],
             )
             try:
                 self._next_event = Event(meta=self.db.fetchall()[0][0], db=self.db)
-            except:
+            except IndexError:
                 self._next_event = Event(
                     meta={
                         "id_channel": self.event["id_channel"],
@@ -63,11 +68,12 @@ class SolverPlugin(object):
     def block_split(self, tc):
         if tc <= self.event["start"] or tc >= self.next_event["start"]:
             logging.error(
-                "Timecode of block split must be between the current and next event start times"
+                "Timecode of block split must be between "
+                "the current and next event start times"
             )
             return False
 
-        logging.info("Splitting {} at {}".format(self.event, format_time(tc)))
+        logging.info(f"Splitting {self.event} at {format_time(tc)}")
         logging.info(
             "Next event is {} at {}".format(
                 self.next_event, self.next_event.show("start")
@@ -172,14 +178,14 @@ def get_solver(solver_name):
             try:
                 py_mod = imp.load_source(solver_name, f.path)
                 break
-            except:
+            except Exception:
                 log_traceback("Unable to load plugin {}".format(solver_name))
                 return
     else:
         logging.error("{} does not exist".format(f))
         return
 
-    if not "Plugin" in dir(py_mod):
+    if "Plugin" not in dir(py_mod):
         logging.error("No plugin class found in {}".format(f))
         return
     return py_mod.Plugin

@@ -4,15 +4,14 @@ import stat
 
 from nxtools import logging
 
+from nx.base_service import BaseService
+from nx.core.common import storages, config
+from nx.core.enum import AssetState
 from nx.db import DB
-from nx.core import storages, config
 from nx.jobs import send_to
 from nx.objects import Asset
-from nx.base_service import BaseService
 from nx.mediaprobe import mediaprobe
-from nx.enum import AssetState
-
-from nebulacore.constants import get_object_state_name
+from nx.legacy.constants import get_object_state_name
 
 SCHEDULE_INTERVAL = 60
 UNSCHEDULE_INTERVAL = 86400

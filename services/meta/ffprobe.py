@@ -3,8 +3,8 @@ import difflib
 from nxtools import slugify, logging, get_base_name
 
 from nx.mediaprobe import mediaprobe
-from nx.core import meta_types
-from nx.enum import MetaClass
+from nx.core.enum import MetaClass
+from nx.core.metadata import meta_types
 
 
 def string2cs(key, value):

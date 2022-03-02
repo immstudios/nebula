@@ -3,14 +3,13 @@ import time
 
 from nxtools import s2time, logging, get_files, get_base_name, log_traceback
 
+from nx.core.common import config, storages
 from nx.db import DB
-from nx.core import config, storages
 from nx.objects import Asset
 from nx.base_service import BaseService
 from nx.helpers import asset_by_path
 from nx.filetypes import FileTypes
-
-from nebulacore.constants import FILE, CREATING
+from nx.legacy.constants import FILE, CREATING
 
 
 class Service(BaseService):

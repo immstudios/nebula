@@ -1,6 +1,7 @@
 __all__ = ["api_solve"]
 
-from nx import DB, NebulaResponse
+from nx.core.common import NebulaResponse
+from nx.db import DB
 from nx.objects import Item, anonymous
 from nx.plugins.solver import get_solver
 

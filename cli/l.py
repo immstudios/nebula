@@ -2,8 +2,8 @@ import time
 import socket
 import json
 
-from nxtools import logging, log_traceback
-from nx.core import config
+from nxtools import logging
+from nx.core.common import config
 
 
 def log_message(message):

@@ -1,19 +1,9 @@
 from nxtools import format_filesize, format_time, s2time, unaccent, logging
 
 from .common import config, storages
-from .constants import (
-    STRING,
-    TEXT,
-    INTEGER,
-    NUMERIC,
-    BOOLEAN,
-    DATETIME,
-    TIMECODE,
-    REGIONS,
-    FRACTION,
-    SELECT,
-    LIST,
-    COLOR,
+from .enum import MetaClass
+
+from nx.legacy.constants import (
     get_content_type_name,
     get_object_state_name,
     get_media_type_name,
@@ -165,14 +155,23 @@ def format_select(meta_type, value, **kwargs):
                 }
             )
         if meta_type.get("mode") == "tree":
-            sort_mode = lambda x: "".join([n.zfill(5) for n in x["value"].split(".")])
+
+            def sort_mode(x):
+                return "".join([n.zfill(5) for n in x["value"].split(".")])
+
             result.sort(key=sort_mode)
             tree_indent(result)
         else:
             if meta_type.get("order") == "alias":
-                sort_mode = lambda x: unaccent(str(x["alias"]))
+
+                def sort_mode(x):
+                    return unaccent(str(x["alias"]))
+
             else:
-                sort_mode = lambda x: unaccent(str(x["value"]))
+
+                def sort_mode(x):
+                    return unaccent(str(x["value"]))
+
             result.sort(key=sort_mode)
         if not has_selected:
             if has_zero:
@@ -231,14 +230,23 @@ def format_list(meta_type, value, **kwargs):
                 }
             )
         if meta_type.get("mode") == "tree":
-            sort_mode = lambda x: "".join([n.zfill(3) for n in x["value"].split(".")])
+
+            def sort_mode(x):
+                return "".join([n.zfill(3) for n in x["value"].split(".")])
+
             result.sort(key=sort_mode)
             tree_indent(result)
         else:
             if meta_type.get("order") == "alias":
-                sort_mode = lambda x: unaccent(str(x["alias"]))
+
+                def sort_mode(x):
+                    return unaccent(str(x["alias"]))
+
             else:
-                sort_mode = lambda x: unaccent(str(x["value"]))
+
+                def sort_mode(x):
+                    return unaccent(str(x["value"]))
+
             result.sort(key=sort_mode)
         return result
 
@@ -261,16 +269,16 @@ def format_color(meta_type, value, **kwargs):
 
 humanizers = {
     -1: None,
-    STRING: format_text,
-    TEXT: format_text,
-    INTEGER: format_integer,
-    NUMERIC: format_numeric,
-    BOOLEAN: format_boolean,
-    DATETIME: format_datetime,
-    TIMECODE: format_timecode,
-    REGIONS: format_regions,
-    FRACTION: format_fract,
-    SELECT: format_select,
-    LIST: format_list,
-    COLOR: format_color,
+    MetaClass.STRING: format_text,
+    MetaClass.TEXT: format_text,
+    MetaClass.INTEGER: format_integer,
+    MetaClass.NUMERIC: format_numeric,
+    MetaClass.BOOLEAN: format_boolean,
+    MetaClass.DATETIME: format_datetime,
+    MetaClass.TIMECODE: format_timecode,
+    MetaClass.OBJECT: format_regions,
+    MetaClass.FRACTION: format_fract,
+    MetaClass.SELECT: format_select,
+    MetaClass.LIST: format_list,
+    MetaClass.COLOR: format_color,
 }

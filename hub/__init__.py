@@ -5,9 +5,10 @@ import os
 from nxtools import logging
 from cherryadmin import CherryAdmin
 
-from nx.core import config, meta_types
-from nx.objects import User
+from nx.core.common import config
+from nx.core.metadata import meta_types
 from nx.helpers import get_user
+from nx.objects import User
 
 from hub.webtools import webtools
 from hub.apimethods import api_methods

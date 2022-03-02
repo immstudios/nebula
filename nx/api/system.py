@@ -4,7 +4,8 @@ import time
 
 from nxtools import logging
 
-from nx import DB, config, NebulaResponse
+from nx.core.common import config, NebulaResponse
+from nx.db import DB
 from nx.objects import anonymous
 
 

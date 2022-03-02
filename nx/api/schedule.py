@@ -4,7 +4,10 @@ import psycopg2
 
 from nxtools import format_time, logging
 
-from nx import NebulaResponse, DB, config, meta_types, messaging
+from nx.core.common import NebulaResponse, config
+from nx.core.metadata import meta_types
+from nx.db import DB
+from nx.messaging import messaging
 
 from nx.objects import (
     Asset,

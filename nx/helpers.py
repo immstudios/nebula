@@ -9,10 +9,10 @@ from email.mime.multipart import MIMEMultipart
 from nxtools import logging, log_traceback, datestr2ts
 
 from nx.db import DB
-from nx.core import config, storages, get_hash
+from nx.core.common import config, storages, get_hash
+from nx.core.enum import MediaType, RunMode
 from nx.messaging import messaging
 from nx.objects import Asset, Item, Event, Bin, User
-from nx.enum import MediaType, RunMode
 
 try:
     import mistune  # noqa

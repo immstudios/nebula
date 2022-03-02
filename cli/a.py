@@ -1,11 +1,9 @@
 import sys
 
-from nx.core import config
-from nx.enum import AssetState
+from nx.core.common import config
+from nx.core.enum import AssetState
 from nx.objects import Asset
 from nx.api.get import get_objects
-
-from cli.common import colored
 
 
 def format_status(key, asset):

@@ -2,7 +2,7 @@ import time
 from nxtools import s2words, critical_error
 
 from nx.db import DB
-from nx.enum import ServiceState
+from nx.core.enum import ServiceState
 from cli.common import colored
 
 

@@ -4,7 +4,7 @@ import imp
 
 from nxtools import FileObject, log_traceback, logging
 
-from nx import DB
+from nx.db import DB
 from nx.plugins.common import get_plugin_path
 
 

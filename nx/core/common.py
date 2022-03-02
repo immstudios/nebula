@@ -4,9 +4,8 @@ import json
 import hashlib
 import socket
 
+from http import HTTPStatus
 from nxtools import PLATFORM, logging, log_traceback, critical_error
-
-from .constants import DEFAULT_RESPONSE_MESSAGES
 
 
 logging.show_time = True
@@ -112,9 +111,7 @@ class NebulaResponse(object):
 
     @property
     def message(self):
-        return self["message"] or DEFAULT_RESPONSE_MESSAGES.get(
-            self.response, "(no message)"
-        )
+        return self["message"] or HTTPStatus(self.response).name
 
     @property
     def data(self):

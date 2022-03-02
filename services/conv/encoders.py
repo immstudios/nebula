@@ -3,7 +3,7 @@ import os
 from nxtools import log_traceback, logging
 from nxtools.media import FFMPEG
 
-from nx.core import storages, NebulaResponse
+from nx.core.common import storages, NebulaResponse
 
 from .common import BaseEncoder, temp_file
 

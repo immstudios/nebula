@@ -4,7 +4,7 @@ from nx.db import DB
 from nx.objects import Asset
 from nx.base_service import BaseService
 from nx.jobs import send_to, Action
-from nx.enum import AssetState
+from nx.core.enum import AssetState
 
 
 class Service(BaseService):

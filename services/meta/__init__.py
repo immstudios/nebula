@@ -4,10 +4,11 @@ import time
 from nxtools import logging, s2time, FileObject
 
 from nx.db import DB
-from nx.core import config, storages, meta_types
+from nx.core.common import config, storages
+from nx.core.enum import AssetState, MediaType
+from nx.core.metadata import meta_types
 from nx.objects import Asset
 from nx.base_service import BaseService
-from nx.enum import AssetState, MediaType
 
 from .ffprobe import ffprobe_asset
 

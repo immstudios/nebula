@@ -6,13 +6,13 @@ import time
 from nxtools import xml, logging, log_traceback
 
 from nx.db import DB
-from nx.core import NebulaResponse
+from nx.core.common import NebulaResponse
 from nx.messaging import messaging
 from nx.objects import Asset
-from nx.enum import AssetState, JobState
 
-# for scripts
-from nebulacore.constants import *  # noqa
+from nx.core.enum import AssetState, JobState
+from nx.legacy.constants import *  # noqa
+
 
 MAX_RETRIES = 3
 

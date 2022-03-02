@@ -5,7 +5,7 @@ import requests
 
 from nxtools import log_traceback
 
-from nx import NebulaResponse, config
+from nx.core.common import NebulaResponse, config
 from nx.objects import anonymous
 
 

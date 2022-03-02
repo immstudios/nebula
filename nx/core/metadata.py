@@ -3,22 +3,7 @@ __all__ = ["meta_types", "MetaType", "ClassificationScheme"]
 import copy
 
 from .common import config
-
-from .constants import (
-    STRING,
-    TEXT,
-    INTEGER,
-    NUMERIC,
-    BOOLEAN,
-    DATETIME,
-    TIMECODE,
-    REGIONS,
-    FRACTION,
-    SELECT,
-    LIST,
-    COLOR,
-)
-
+from .enum import MetaClass
 from .meta_validate import validators
 from .meta_format import humanizers
 from .meta_utils import filter_match, CachedObject
@@ -29,18 +14,18 @@ default_meta_type = {"ns": "", "class": -1, "fulltext": 0, "editable": 0, "alias
 
 defaults = {
     -1: None,
-    STRING: "",
-    TEXT: "",
-    INTEGER: 0,
-    NUMERIC: 0,
-    BOOLEAN: False,
-    DATETIME: 0,
-    TIMECODE: 0,
-    REGIONS: [],
-    FRACTION: "1/1",
-    SELECT: "",
-    LIST: [],
-    COLOR: 0x006FD5,
+    MetaClass.STRING: "",
+    MetaClass.TEXT: "",
+    MetaClass.INTEGER: 0,
+    MetaClass.NUMERIC: 0,
+    MetaClass.BOOLEAN: False,
+    MetaClass.DATETIME: 0,
+    MetaClass.TIMECODE: 0,
+    MetaClass.OBJECT: [],
+    MetaClass.FRACTION: "1/1",
+    MetaClass.SELECT: "",
+    MetaClass.LIST: [],
+    MetaClass.COLOR: 0x006FD5,
 }
 
 

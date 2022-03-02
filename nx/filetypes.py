@@ -1,5 +1,5 @@
 from typing import List
-from nx.enum import ContentType
+from nx.core.enum import ContentType
 
 
 class FileTypes:
@@ -28,7 +28,6 @@ class FileTypes:
         "m3u8": ContentType.VIDEO,
         "mpd": ContentType.VIDEO,
         "webm": ContentType.VIDEO,
-
         "wav": ContentType.AUDIO,
         "aiff": ContentType.AUDIO,
         "aif": ContentType.AUDIO,
@@ -38,7 +37,6 @@ class FileTypes:
         "m2a": ContentType.AUDIO,
         "aac": ContentType.AUDIO,
         "flac": ContentType.AUDIO,
-
         "jpg": ContentType.IMAGE,
         "jpeg": ContentType.IMAGE,
         "png": ContentType.IMAGE,
@@ -51,7 +49,7 @@ class FileTypes:
         "bmp": ContentType.IMAGE,
         "gif": ContentType.IMAGE,
         "psd": ContentType.IMAGE,
-        "xcf": ContentType.IMAGE
+        "xcf": ContentType.IMAGE,
     }
 
     @classmethod

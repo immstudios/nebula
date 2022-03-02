@@ -1,18 +1,19 @@
-from cli.common import colored
+import sys
 
 from nx.db import DB
-from nx.enum import JobState
+from nx.objects import Asset
+from nx.core.enum import AssetState
 
 
 def format_status(key, asset):
     colored = "\033[{}m{:<8}\033[0m"
     return {
-        OFFLINE: colored.format(31, "OFFLINE"),
-        ONLINE: colored.format(32, "ONLINE"),
-        CREATING: colored.format(33, "CREATING"),
-        TRASHED: colored.format(34, "TRASHED"),
-        ARCHIVED: colored.format(34, "ARCHIVE"),
-        RESET: colored.format(33, "RESET"),
+        AssetState.OFFLINE: colored.format(31, "OFFLINE"),
+        AssetState.ONLINE: colored.format(32, "ONLINE"),
+        AssetState.CREATING: colored.format(33, "CREATING"),
+        AssetState.TRASHED: colored.format(34, "TRASHED"),
+        AssetState.ARCHIVED: colored.format(34, "ARCHIVE"),
+        AssetState.RESET: colored.format(33, "RESET"),
     }[asset[key]]
 
 
@@ -76,11 +77,11 @@ def j(*args):
     ) in db.fetchall():
         asset = Asset(meta=meta)
 
-        l = "{:<30}".format(asset)
-        l += "{} {:.02f}%\n".format(status, progress)
+        line = "{:<30}".format(asset)
+        line += "{} {:.02f}%\n".format(status, progress)
 
         try:
-            sys.stdout.write(l)
+            sys.stdout.write(line)
             sys.stdout.flush()
         except IOError:
             pass

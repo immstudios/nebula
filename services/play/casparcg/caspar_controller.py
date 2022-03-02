@@ -6,7 +6,7 @@ import _thread as thread
 from nxtools import logging, log_traceback
 from nxtools.caspar import CasparCG
 
-from nx.core import NebulaResponse
+from nx.core.common import NebulaResponse
 from nx.objects import Item
 
 from .ccginfo import get_info_parser

@@ -7,8 +7,8 @@ import requests
 
 from nxtools import logging, log_traceback, critical_error
 
-from nx.core import config
 from nx.base_service import BaseService
+from nx.core.common import config
 from nx.messaging import messaging
 
 from .loki import LokiLogger

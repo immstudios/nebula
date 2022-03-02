@@ -5,7 +5,7 @@ import sys
 
 from nxtools import log_traceback
 
-from nx import storages, config
+from nx.core.common import storages, config
 
 
 #

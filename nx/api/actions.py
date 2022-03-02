@@ -1,7 +1,9 @@
 __all__ = ["api_actions"]
 
 from nxtools import xml, log_traceback
-from nx import NebulaResponse, DB
+
+from nx.core.common import NebulaResponse
+from nx.db import DB
 from nx.objects import Asset, anonymous
 
 

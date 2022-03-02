@@ -1,7 +1,7 @@
 import os
 from nxtools import log_traceback, get_temp
 
-from nx.core import storages
+from nx.core.common import storages
 
 
 class BaseEncoder:

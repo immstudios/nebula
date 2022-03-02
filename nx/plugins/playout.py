@@ -2,7 +2,8 @@ import os
 import threading
 
 from nxtools import log_traceback
-from nx import storages
+
+from nx.core.common import storages
 
 
 class PlayoutPluginSlot:
