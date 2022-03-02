@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 
+from cli import *
+from nxtools import logging, log_traceback, critical_error
 import os
 import sys
-import rex  # noqa
 
 orig_dir = os.getcwd()
 if orig_dir != "/opt/nebula":
     os.chdir("/opt/nebula")
 
-from nxtools import logging, log_traceback, critical_error
-from cli import *
 
 logging.user = "nebula"
 

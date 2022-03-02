@@ -6,7 +6,6 @@ if __name__ == "__main__":
 import os
 import sys
 import time
-import rex # noqa
 
 from nx.core import config
 from nx.plugins import get_plugin_path

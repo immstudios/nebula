@@ -1,5 +1,0 @@
-{
-    "https://github.com/immstudios/nebula-core" : {"python-path" : true},
-    "https://github.com/immstudios/themis2" : {"python-path" : true},
-    "https://github.com/immstudios/nebula-hub" : {}
-}

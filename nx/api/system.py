@@ -39,7 +39,8 @@ def api_system(**kwargs):
         db.query("UPDATE services SET state=3 WHERE id=%s AND state = 1", [id_service])
         db.commit()
         logging.info(
-            f"{user} requested service ID {id_service} ({config['services'][id_service]['title']}) stop"
+            f"{user} requested service ID {id_service} "
+            f"({config['services'][id_service]['title']}) stop"
         )
         message = "Service is stopping"
 
@@ -52,7 +53,8 @@ def api_system(**kwargs):
         db.query("UPDATE services SET state=2 WHERE id=%s AND state = 0", [id_service])
         db.commit()
         logging.info(
-            f"{user} requested service ID {id_service} ({config['services'][id_service]['title']}) start"
+            f"{user} requested service ID {id_service} "
+            f"({config['services'][id_service]['title']}) start"
         )
         message = "Service is starting"
 
@@ -65,7 +67,8 @@ def api_system(**kwargs):
         db.query("UPDATE services SET state=4 WHERE id=%s AND state = 3", [id_service])
         db.commit()
         logging.info(
-            f"{user} requested service ID {id_service} ({config['services'][id_service]['title']}) kill"
+            f"{user} requested service ID {id_service} "
+            f"({config['services'][id_service]['title']}) kill"
         )
         message = "Attempting to kill the service"
 
@@ -79,7 +82,8 @@ def api_system(**kwargs):
             "UPDATE services SET autostart=NOT autostart WHERE id=%s", [id_service]
         )
         logging.info(
-            f"{user} requested service ID {id_service} ({config['services'][id_service]['title']}) autostart"
+            f"{user} requested service ID {id_service} "
+            f"({config['services'][id_service]['title']}) autostart"
         )
         db.commit()
         message = "Service auto-start updated"
@@ -88,7 +92,10 @@ def api_system(**kwargs):
     if "services" in request:
         services = []
         db.query(
-            "SELECT id, service_type, host, title, autostart, state, last_seen FROM services ORDER BY id ASC"
+            """
+            SELECT id, service_type, host, title, autostart, state, last_seen
+            FROM services ORDER BY id ASC
+            """
         )
         for id, service_type, host, title, autostart, state, last_seen in db.fetchall():
             service = {

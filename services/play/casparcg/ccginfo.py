@@ -1,8 +1,7 @@
 import os
 import copy
 
-from nxtools import *
-from nxtools.caspar import *
+from nxtools import logging, log_traceback, xml, get_base_name
 
 LIVE = -1
 
@@ -40,7 +39,7 @@ class BaseInfoParser(object):
             try:
                 self.data = xml(response.data)
             except Exception:
-                log_traceback
+                log_traceback()
                 self.data = None
 
     def load_seek_fps(self):
@@ -61,9 +60,9 @@ class Caspar207InfoParser(BaseInfoParser):
     def parse(self, layer_index):
         try:
             layers = self.data.find("stage").find("layers")
-        except:
+        except Exception:
             return None
-        if layers == None:
+        if layers is None:
             return None
         video_layer = None
         for layer in layers.findall("layer"):
@@ -123,9 +122,9 @@ class Caspar21InfoParser(BaseInfoParser):
     def parse(self, layer_index):
         try:
             layers = self.data.find("stage").find("layers")
-        except:
+        except Exception:
             return None
-        if layers == None:
+        if layers is None:
             return None
         video_layer = None
         for layer in layers.findall("layer"):
@@ -190,7 +189,7 @@ class Caspar22InfoParser(BaseInfoParser):
     def parse(self, layer_index):
         try:
             layers = self.data.find("stage").find("layer")
-        except:
+        except Exception:
             return None
 
         feed_layer = None
@@ -212,7 +211,7 @@ class Caspar22InfoParser(BaseInfoParser):
             try:
                 data["cued"] = get_base_name(bg.find("file").find("path").text)
             except AttributeError:
-                data["cued"] == False
+                data["cued"] = False
         else:
             data["cued"] = False
 
@@ -227,7 +226,7 @@ class Caspar22InfoParser(BaseInfoParser):
             # fps
             try:
                 fpstags = f.find("streams").find("file")[0].findall("fps")
-            except:
+            except Exception:
                 log_traceback()
                 fps = self.default_fps
 

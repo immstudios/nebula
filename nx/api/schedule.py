@@ -41,9 +41,8 @@ def api_schedule(**kwargs):
         return NebulaResponse(400, "end_time must be an integer")
 
     if not id_channel or id_channel not in config["playout_channels"]:
-        return NebulaResponse(400, "Unknown playout channel ID {}".format(id_channel))
+        return NebulaResponse(400, f"Unknown playout channel ID {id_channel}")
 
-    channel_config = config["playout_channels"][id_channel]
     changed_event_ids = []
 
     #
@@ -168,7 +167,8 @@ def api_schedule(**kwargs):
     result = []
     if start_time and end_time:
         logging.debug(
-            f"Requested events of channel {id_channel} from {format_time(start_time)} to {format_time(end_time)}"
+            f"Requested events of channel {id_channel} "
+            f"from {format_time(start_time)} to {format_time(end_time)}"
         )
 
         db.query(

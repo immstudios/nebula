@@ -1,6 +1,5 @@
 import os
 
-from themis import Themis
 from nxtools import logging, log_traceback, get_temp, get_files
 
 from nx.db import DB
@@ -10,6 +9,8 @@ from nx.base_service import BaseService
 from nx.objects import Asset
 from nx.enum import AssetState, ContentType
 from nx.filetypes import FileTypes
+
+from .themis import Themis
 
 
 def temp_file(id_storage, ext):

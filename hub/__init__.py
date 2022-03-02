@@ -85,13 +85,13 @@ def user_context_helper(meta):
 
 static_dir = config.get(
     "hub_static_dir",
-    os.path.join(config["nebula_root"], "vendor", "nebula-hub", "dist", "static"),
+    os.path.join(config["nebula_root"], "hub", "static"),
 )
 
 
 templates_dir = config.get(
     "hub_templates_dir",
-    os.path.join(config["nebula_root"], "vendor", "nebula-hub", "dist", "templates"),
+    os.path.join(config["nebula_root"], "hub", "templates"),
 )
 
 
