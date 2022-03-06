@@ -8,7 +8,7 @@ from nx.core.common import NebulaResponse, config
 from nx.db import DB
 from nx.objects import Asset, Item, Event, anonymous
 from nx.helpers import get_item_runs
-from nx.core.enum import AssetState, RunMode
+from nx.core.enum import ObjectStatus, RunMode
 
 
 def get_rundown(id_channel, start_time=False, end_time=False, db=False):
@@ -106,9 +106,9 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
             if as_start:
                 ts_broadcast = as_start
                 if as_stop:
-                    airstatus = AssetState.AIRED
+                    airstatus = ObjectStatus.AIRED
                 else:
-                    airstatus = AssetState.ONAIR
+                    airstatus = ObjectStatus.ONAIR
 
             item.meta["asset_mtime"] = asset["mtime"] if asset else 0
             item.meta["rundown_scheduled"] = ts_scheduled
@@ -119,21 +119,21 @@ def get_rundown(id_channel, start_time=False, end_time=False, db=False):
 
             istatus = 0
             if not asset:
-                istatus = AssetState.ONLINE
+                istatus = ObjectStatus.ONLINE
             elif airstatus:
                 istatus = airstatus
-            elif asset["status"] == AssetState.OFFLINE:
-                istatus = AssetState.OFFLINE
+            elif asset["status"] == ObjectStatus.OFFLINE:
+                istatus = ObjectStatus.OFFLINE
             elif pskey not in asset.meta:
-                istatus = AssetState.REMOTE
-            elif asset[pskey]["status"] == AssetState.OFFLINE:
-                istatus = AssetState.REMOTE
-            elif asset[pskey]["status"] == AssetState.ONLINE:
-                istatus = AssetState.ONLINE
-            elif asset[pskey]["status"] == AssetState.CORRUPTED:
-                istatus = AssetState.CORRUPTED
+                istatus = ObjectStatus.REMOTE
+            elif asset[pskey]["status"] == ObjectStatus.OFFLINE:
+                istatus = ObjectStatus.REMOTE
+            elif asset[pskey]["status"] == ObjectStatus.ONLINE:
+                istatus = ObjectStatus.ONLINE
+            elif asset[pskey]["status"] == ObjectStatus.CORRUPTED:
+                istatus = ObjectStatus.CORRUPTED
             else:
-                istatus = AssetState.UNKNOWN
+                istatus = ObjectStatus.UNKNOWN
 
             item.meta["status"] = istatus
             if asset and asset.id in pending_assets:

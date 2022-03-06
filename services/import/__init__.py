@@ -4,7 +4,7 @@ from nxtools import logging, log_traceback, get_temp, get_files
 
 from nx.db import DB
 from nx.core.common import storages
-from nx.core.enum import AssetState, ContentType
+from nx.core.enum import ObjectStatus, ContentType
 from nx.core.metadata import meta_types
 from nx.mediaprobe import mediaprobe
 from nx.base_service import BaseService
@@ -120,7 +120,7 @@ def do_import(parent, import_file, asset):
     for key in allkeys:
         if meta_types[key]["ns"] in ["q", "f"]:
             del asset.meta[key]
-    asset["status"] = AssetState.CREATING
+    asset["status"] = ObjectStatus.CREATING
 
     asset.save()
 

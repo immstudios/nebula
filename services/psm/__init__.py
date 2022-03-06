@@ -6,16 +6,15 @@ from nxtools import logging
 
 from nx.base_service import BaseService
 from nx.core.common import storages, config
-from nx.core.enum import AssetState
+from nx.core.enum import ObjectStatus
 from nx.db import DB
 from nx.jobs import send_to
 from nx.objects import Asset
 from nx.mediaprobe import mediaprobe
-from nx.legacy.constants import get_object_state_name
 
 SCHEDULE_INTERVAL = 60
 UNSCHEDULE_INTERVAL = 86400
-DEFAULT_STATUS = {"status": AssetState.OFFLINE, "size": 0, "mtime": 0, "duration": 0}
+DEFAULT_STATUS = {"status": ObjectStatus.OFFLINE, "size": 0, "mtime": 0, "duration": 0}
 
 STORAGE_STATUS = {}
 
@@ -54,12 +53,12 @@ def check_file_validity(asset, id_channel):
         res = mediaprobe(path)
     except Exception:
         logging.error("Unable to read", path)
-        return AssetState.CORRUPTED, 0
+        return ObjectStatus.CORRUPTED, 0
     if not res:
-        return AssetState.CORRUPTED, 0
+        return ObjectStatus.CORRUPTED, 0
     if res["duration"]:
-        return AssetState.CREATING, res["duration"]
-    return AssetState.UNKNOWN, 0
+        return ObjectStatus.CREATING, res["duration"]
+    return ObjectStatus.UNKNOWN, 0
 
 
 class PlayoutStorageTool(object):
@@ -104,13 +103,13 @@ class PlayoutStorageTool(object):
 
             if file_exists:
                 if file_size:
-                    file_status = AssetState.ONLINE
+                    file_status = ObjectStatus.ONLINE
                 else:
-                    file_status = AssetState.CORRUPTED
+                    file_status = ObjectStatus.CORRUPTED
             else:
-                file_status = AssetState.OFFLINE
+                file_status = ObjectStatus.OFFLINE
 
-            ostatus = old_status.get("status", AssetState.OFFLINE)
+            ostatus = old_status.get("status", ObjectStatus.OFFLINE)
             omtime = old_status.get("mtime", 0)
             osize = old_status.get("size", 0)
             duration = old_status.get("duration", 0)
@@ -118,21 +117,21 @@ class PlayoutStorageTool(object):
             now = time.time()
 
             # if file changed, check using ffprobe
-            if file_status == AssetState.ONLINE:
+            if file_status == ObjectStatus.ONLINE:
                 if omtime != file_mtime or osize != file_size:
                     file_status, duration = check_file_validity(asset, self.id_channel)
                 else:
-                    if ostatus == AssetState.CREATING:
+                    if ostatus == ObjectStatus.CREATING:
                         if now - file_mtime > 10 and omtime == file_mtime:
-                            file_status = AssetState.ONLINE
+                            file_status = ObjectStatus.ONLINE
                         else:
-                            file_status = AssetState.CREATING
-                    elif ostatus == AssetState.UNKNOWN:
+                            file_status = ObjectStatus.CREATING
+                    elif ostatus == ObjectStatus.UNKNOWN:
                         if now - file_mtime > 10:
-                            file_status = AssetState.CORRUPTED
+                            file_status = ObjectStatus.CORRUPTED
 
             if ostatus != file_status or omtime != file_mtime or osize != file_size:
-                fs = get_object_state_name(file_status)
+                fs = ObjectStatus(file_status).name
                 logging.info(f"Set {asset} playout status to {fs}")
                 asset[self.status_key] = {
                     "status": file_status,
@@ -144,9 +143,13 @@ class PlayoutStorageTool(object):
 
             if (
                 file_status
-                not in [AssetState.ONLINE, AssetState.CREATING, AssetState.CORRUPTED]
+                not in [
+                    ObjectStatus.ONLINE,
+                    ObjectStatus.CREATING,
+                    ObjectStatus.CORRUPTED,
+                ]
                 and self.send_action
-                and asset["status"] == AssetState.ONLINE
+                and asset["status"] == ObjectStatus.ONLINE
                 and scheduled
             ):
                 result = send_to(

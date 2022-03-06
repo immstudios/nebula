@@ -1,7 +1,7 @@
 import enum
 
 
-class AssetState(enum.IntEnum):
+class ObjectStatus(enum.IntEnum):
     OFFLINE = 0
     ONLINE = 1
     CREATING = 2  # File exists, but was changed recently.

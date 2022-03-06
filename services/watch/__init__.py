@@ -4,12 +4,12 @@ import time
 from nxtools import s2time, logging, get_files, get_base_name, log_traceback
 
 from nx.core.common import config, storages
+from nx.core.enum import ObjectStatus, MediaType
 from nx.db import DB
 from nx.objects import Asset
 from nx.base_service import BaseService
 from nx.helpers import asset_by_path
 from nx.filetypes import FileTypes
-from nx.legacy.constants import FILE, CREATING
 
 
 class Service(BaseService):
@@ -80,12 +80,12 @@ class Service(BaseService):
 
                 asset = Asset(db=db)
                 asset["content_type"] = FileTypes.by_ext(ext)
-                asset["media_type"] = FILE
+                asset["media_type"] = MediaType.FILE
                 asset["id_storage"] = id_storage
                 asset["path"] = asset_path
                 asset["ctime"] = now
                 asset["mtime"] = now
-                asset["status"] = CREATING
+                asset["status"] = ObjectStatus.CREATING
                 asset["id_folder"] = id_folder
                 asset["title"] = base_name
 

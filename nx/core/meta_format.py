@@ -1,14 +1,7 @@
 from nxtools import format_filesize, format_time, s2time, unaccent, logging
 
 from .common import config, storages
-from .enum import MetaClass
-
-from nx.legacy.constants import (
-    get_content_type_name,
-    get_object_state_name,
-    get_media_type_name,
-)
-
+from .enum import MetaClass, ContentType, ObjectStatus, MediaType
 from .meta_utils import shorten, tree_indent
 
 #
@@ -41,13 +34,13 @@ def format_integer(meta_type, value, **kwargs):
         alias = config["folders"].get(value, {}).get("title", "")
 
     elif meta_type.key == "status":
-        alias = get_object_state_name(value).upper()
+        alias = ObjectStatus(value).name
 
     elif meta_type.key == "content_type":
-        alias = get_content_type_name(value).upper()
+        alias = ContentType(value).name
 
     elif meta_type.key == "media_type":
-        alias = get_media_type_name(value).upper()
+        alias = MediaType(value).name
 
     elif meta_type.key == "id_storage":
         alias = storages[value].__repr__().lstrip("storage ")

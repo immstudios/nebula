@@ -5,7 +5,7 @@ from nxtools import logging, s2time, FileObject
 
 from nx.db import DB
 from nx.core.common import config, storages
-from nx.core.enum import AssetState, MediaType
+from nx.core.enum import ObjectStatus, MediaType
 from nx.core.metadata import meta_types
 from nx.objects import Asset
 from nx.base_service import BaseService
@@ -87,12 +87,12 @@ class Service(BaseService):
 
         if not file_exists:
             if asset["status"] in [
-                AssetState.ONLINE,
-                AssetState.RESET,
-                AssetState.CREATING,
+                ObjectStatus.ONLINE,
+                ObjectStatus.RESET,
+                ObjectStatus.CREATING,
             ]:
                 logging.warning(f"{asset}: Turning offline")
-                asset["status"] = AssetState.OFFLINE
+                asset["status"] = ObjectStatus.OFFLINE
                 asset.save()
             return
 
@@ -100,15 +100,15 @@ class Service(BaseService):
         fsize = int(asset_file.size)
 
         if fsize == 0:
-            if asset["status"] not in [AssetState.OFFLINE, AssetState.RETRIEVING]:
+            if asset["status"] not in [ObjectStatus.OFFLINE, ObjectStatus.RETRIEVING]:
                 logging.warning(f"{asset}: Turning offline (empty file)")
-                asset["status"] = AssetState.OFFLINE
+                asset["status"] = ObjectStatus.OFFLINE
                 asset.save()
             return
 
         if fmtime != asset["file/mtime"] or asset["status"] in [
-            AssetState.RESET,
-            AssetState.RETRIEVING,
+            ObjectStatus.RESET,
+            ObjectStatus.RETRIEVING,
         ]:
             try:
                 f = asset_file.open("rb")
@@ -120,14 +120,14 @@ class Service(BaseService):
                 fsize = f.tell()
                 f.close()
 
-            if asset["status"] == AssetState.RESET:
+            if asset["status"] == ObjectStatus.RESET:
                 asset.load_sidecar_metadata()
 
             # Filesize must be changed to update metadata automatically.
 
             if fsize == asset["file/size"] and asset["status"] not in [
-                AssetState.RESET,
-                AssetState.RETRIEVING,
+                ObjectStatus.RESET,
+                ObjectStatus.RETRIEVING,
             ]:
                 logging.debug(
                     f"{asset}: File mtime has been changed. Updating metadata."
@@ -135,10 +135,10 @@ class Service(BaseService):
                 asset["file/mtime"] = fmtime
                 asset.save(set_mtime=False, notify=False)
             elif fsize != asset["file/size"] or asset["status"] in [
-                AssetState.RESET,
-                AssetState.RETRIEVING,
+                ObjectStatus.RESET,
+                ObjectStatus.RETRIEVING,
             ]:
-                if asset["status"] in [AssetState.RESET, AssetState.RETRIEVING]:
+                if asset["status"] in [ObjectStatus.RESET, ObjectStatus.RETRIEVING]:
                     logging.info(f"{asset}: Reset requested. Updating metadata.")
                 else:
                     logging.info(f"{asset}: File has been changed. Updating metadata.")
@@ -157,26 +157,29 @@ class Service(BaseService):
                 result = ffprobe_asset(asset)
                 if result:
                     asset = result
-                elif asset["status"] != AssetState.CREATING:
-                    asset["status"] = AssetState.CREATING
+                elif asset["status"] != ObjectStatus.CREATING:
+                    asset["status"] = ObjectStatus.CREATING
                     return
                 else:
                     return
 
-                if asset["status"] == AssetState.RESET:
-                    asset["status"] = AssetState.ONLINE
+                if asset["status"] == ObjectStatus.RESET:
+                    asset["status"] = ObjectStatus.ONLINE
                     logging.info(f"{asset}: Metadata reset completed")
                 else:
-                    asset["status"] = AssetState.CREATING
+                    asset["status"] = ObjectStatus.CREATING
                 asset.save()
 
-        if asset["status"] == AssetState.CREATING and asset["mtime"] + 15 > time.time():
+        if (
+            asset["status"] == ObjectStatus.CREATING
+            and asset["mtime"] + 15 > time.time()
+        ):
             logging.debug(f"{asset}: Waiting for completion assurance")
             asset.save(set_mtime=False, notify=False)
 
-        elif asset["status"] in (AssetState.CREATING, AssetState.OFFLINE):
+        elif asset["status"] in (ObjectStatus.CREATING, ObjectStatus.OFFLINE):
             logging.goodnews(f"{asset}: Turning online")
-            asset["status"] = AssetState.ONLINE
+            asset["status"] = ObjectStatus.ONLINE
             asset["qc/state"] = 0
             asset.save()
 

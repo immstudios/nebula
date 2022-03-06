@@ -4,7 +4,7 @@ from nx.db import DB
 from nx.objects import Asset
 from nx.base_service import BaseService
 from nx.jobs import send_to, Action
-from nx.core.enum import AssetState
+from nx.core.enum import ObjectStatus
 
 
 class Service(BaseService):
@@ -18,7 +18,7 @@ class Service(BaseService):
 
     def on_main(self):
         db = DB()
-        db.query("SELECT id, meta FROM assets WHERE status=%s", [AssetState.ONLINE])
+        db.query("SELECT id, meta FROM assets WHERE status=%s", [ObjectStatus.ONLINE])
         for _, meta in db.fetchall():
             asset = Asset(meta=meta, db=db)
             self.proc(asset)

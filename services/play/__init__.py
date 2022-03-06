@@ -5,21 +5,20 @@ import threading
 from nxtools import logging, log_traceback
 
 from nx.core.common import config, NebulaResponse
-from nx.core.enum import AssetState, RunMode
+from nx.core.enum import ObjectStatus, RunMode
 from nx.base_service import BaseService
 from nx.cache import cache, Cache
 from nx.db import DB
 from nx.helpers import get_next_item, get_item_event
 from nx.messaging import messaging
 from nx.objects import Asset, Item, Event
-from nx.legacy.constants import get_object_state_name
 
 from services.play.request_handler import HTTPServer, PlayoutRequestHandler
 from services.play.plugins import PlayoutPlugins
 
 
 DEFAULT_STATUS = {
-    "status": AssetState.OFFLINE,
+    "status": ObjectStatus.OFFLINE,
 }
 
 
@@ -148,9 +147,9 @@ class Service(BaseService):
 
         kwargs["fname"] = kwargs["full_path"] = None
         if playout_status in [
-            AssetState.ONLINE,
-            AssetState.CREATING,
-            AssetState.UNKNOWN,
+            ObjectStatus.ONLINE,
+            ObjectStatus.CREATING,
+            ObjectStatus.UNKNOWN,
         ]:
             kwargs["fname"] = asset.get_playout_name(self.id_channel)
             kwargs["full_path"] = asset.get_playout_full_path(self.id_channel)
@@ -158,13 +157,13 @@ class Service(BaseService):
         if (
             not kwargs["full_path"]
             and self.channel_config.get("allow_remote")
-            and asset["status"] in (AssetState.ONLINE, AssetState.CREATING)
+            and asset["status"] in (ObjectStatus.ONLINE, ObjectStatus.CREATING)
         ):
             kwargs["fname"] = kwargs["full_path"] = asset.file_path
             kwargs["remote"] = True
 
         if not kwargs["full_path"]:
-            state = get_object_state_name(playout_status)
+            state = ObjectStatus(playout_status).name
             return NebulaResponse(404, f"Unable to cue {state} playout file")
 
         kwargs["mark_in"] = item["mark_in"]

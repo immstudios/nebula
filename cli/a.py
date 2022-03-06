@@ -1,7 +1,7 @@
 import sys
 
 from nx.core.common import config
-from nx.core.enum import AssetState
+from nx.core.enum import ObjectStatus
 from nx.objects import Asset
 from nx.api.get import get_objects
 
@@ -9,12 +9,12 @@ from nx.api.get import get_objects
 def format_status(key, asset):
     colored = "\033[{}m{:<8}\033[0m"
     return {
-        AssetState.OFFLINE: colored.format(31, "OFFLINE"),
-        AssetState.ONLINE: colored.format(32, "ONLINE"),
-        AssetState.CREATING: colored.format(33, "CREATING"),
-        AssetState.TRASHED: colored.format(34, "TRASHED"),
-        AssetState.ARCHIVED: colored.format(34, "ARCHIVE"),
-        AssetState.RESET: colored.format(33, "RESET"),
+        ObjectStatus.OFFLINE: colored.format(31, "OFFLINE"),
+        ObjectStatus.ONLINE: colored.format(32, "ONLINE"),
+        ObjectStatus.CREATING: colored.format(33, "CREATING"),
+        ObjectStatus.TRASHED: colored.format(34, "TRASHED"),
+        ObjectStatus.ARCHIVED: colored.format(34, "ARCHIVE"),
+        ObjectStatus.RESET: colored.format(33, "RESET"),
     }[asset[key]]
 
 

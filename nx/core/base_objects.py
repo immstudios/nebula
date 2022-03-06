@@ -7,7 +7,7 @@ from nxtools import logging
 
 from .metadata import MetaTypes
 from .common import storages, config, get_hash
-from nx.legacy.constants import VIRTUAL, TEXT, FILE
+from .enum import MediaType, ContentType
 
 __all__ = [
     "BaseObject",
@@ -169,7 +169,7 @@ class BaseObject:
 class AssetMixIn:
     object_type_id = 0
     required = ["media_type", "content_type", "id_folder"]
-    defaults = {"media_type": VIRTUAL, "content_type": TEXT}
+    defaults = {"media_type": MediaType.VIRTUAL, "content_type": ContentType.TEXT}
 
     def mark_in(self, new_val=False):
         if new_val:
@@ -183,7 +183,7 @@ class AssetMixIn:
 
     @property
     def file_path(self):
-        if self["media_type"] != FILE:
+        if self["media_type"] != MediaType.FILE:
             return ""
         try:
             return os.path.join(
