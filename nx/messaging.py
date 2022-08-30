@@ -35,7 +35,7 @@ class RedisSender:
         self.channel = f"nebula-{config['site_name']}"
         self.connection = redis.Redis(
             config["redis_host"],
-            config["redis_port"],
+            config.get("redis_port", 6379),
             charset="utf-8",
             decode_responses=True,
         )

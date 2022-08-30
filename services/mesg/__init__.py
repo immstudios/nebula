@@ -99,6 +99,8 @@ class Service(BaseService):
 
         if config.get("messaging") == "rabbitmq":
             listener = self.listen_rabbit
+        elif config.get("messaging") == "redis":
+            listener = self.listen_redis
         else:
             listener = self.listen_udp
 
@@ -130,9 +132,35 @@ class Service(BaseService):
             print(data)
             print("\n")
             return
+
         if message.site_name != config["site_name"]:
+            print("msg mismatch", message.site_name, config["site_name"])
             return
         self.queue.append(message)
+
+    def listen_redis(self):
+        try:
+            import redis
+        except ModuleNotFoundError:
+            critical_error("'redis' module is not installed")
+
+        logging.info("Starting redis listener")
+
+        connection = redis.Redis(
+            config.get("redis_host", "redis"),
+            config.get("redis_port", 6379),
+        )
+        sub = connection.pubsub()
+        sub.subscribe(f"nebula-{config['site_name']}")
+
+        while True:
+            try:
+                for message in sub.listen():
+                    if message is not None and isinstance(message, dict):
+                        if message["type"] == "message":
+                            self.handle_data(message["data"])
+            except Exception:
+                log_traceback()
 
     def listen_rabbit(self):
         try:
