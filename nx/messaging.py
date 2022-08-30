@@ -10,12 +10,61 @@ from nxtools import logging, log_traceback, critical_error
 
 try:
     import pika
-
-    has_pika = True
 except ModuleNotFoundError:
-    has_pika = False
+    pika = None
+
+try:
+    import redis
+except ModuleNotFoundError:
+    redis = None
+
 
 from nx.core.common import config
+
+
+class RedisSender:
+    def __init__(self):
+        if redis is None:
+            critical_error("Redis module is not installed")
+        self.connection = None
+        self.channel = None
+        self.queue = queue.Queue()
+        self.lock = threading.Lock()
+
+    def connect(self):
+        self.channel = f"nebula-{config['site_name']}"
+        self.connection = redis.Redis(
+            config["redis_host"],
+            config["redis_port"],
+            charset="utf-8",
+            decode_responses=True,
+        )
+        return True
+
+    def __call__(self, method, **data):
+        self.queue.put([method, data])
+        self.lock.acquire()
+        while not self.queue.empty():
+            qm, qd = self.queue.get()
+            self.send_message(qm, **qd)
+        self.lock.release()
+
+    def send_message(self, method, **data):
+        if not (self.connection and self.channel):
+            if not self.connect():
+                time.sleep(0.1)
+                return
+
+        message = json.dumps(
+            [
+                time.time(),
+                config["site_name"],
+                config["host"],
+                method,
+                data,
+            ]
+        )
+        self.connection.publish(self.channel, message)
 
 
 class RabbitSender:
@@ -24,7 +73,7 @@ class RabbitSender:
         self.channel = None
         self.queue = queue.Queue()
         self.lock = threading.Lock()
-        if not has_pika:
+        if pika is None:
             critical_error("'pika' module is not installed")
 
     def connect(self):
@@ -110,6 +159,8 @@ class Messaging:
     def configure(self):
         if config.get("messaging") == "rabbitmq":
             self.sender = RabbitSender()
+        elif config.get("messaging") == "redis":
+            self.sender = RedisSender()
         else:
             self.sender = UDPSender()
 
