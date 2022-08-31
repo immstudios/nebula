@@ -25,7 +25,7 @@ from nx.core.common import config
 class RedisSender:
     def __init__(self):
         if redis is None:
-            critical_error("Redis module is not installed")
+            critical_error("Redis module is not installed", handlers=None)
         self.connection = None
         self.channel = None
         self.queue = queue.Queue()
@@ -33,12 +33,22 @@ class RedisSender:
 
     def connect(self):
         self.channel = f"nebula-{config['site_name']}"
-        self.connection = redis.Redis(
-            config["redis_host"],
-            config.get("redis_port", 6379),
-            charset="utf-8",
-            decode_responses=True,
-        )
+        try:
+            logging.debug(
+                f"Connecting messaging to {config.get('redis_host')}",
+                handlers=None,
+            )
+            self.connection = redis.Redis(
+                config.get("redis_host", "localhost"),
+                config.get("redis_port", 6379),
+                charset="utf-8",
+                decode_responses=True,
+                socket_timeout=3,
+                socket_connect_timeout=3,
+            )
+        except Exception:
+            log_traceback("Unable to connect redis", handlers=None)
+            return False
         return True
 
     def __call__(self, method, **data):
@@ -64,7 +74,15 @@ class RedisSender:
                 data,
             ]
         )
-        self.connection.publish(self.channel, message)
+        try:
+            self.connection.publish(self.channel, message)
+        except redis.exceptions.ConnectionError:
+            logging.error("Unable to connect Redis to send a message.", handlers=None)
+            time.sleep(1)
+            self.connect()
+        except Exception:
+            log_traceback(handlers=None)
+            self.connect()
 
 
 class RabbitSender:
@@ -157,10 +175,10 @@ class Messaging:
         self.sender = None
 
     def configure(self):
-        if config.get("messaging") == "rabbitmq":
-            self.sender = RabbitSender()
-        elif config.get("messaging") == "redis":
+        if config.get("redis_host"):
             self.sender = RedisSender()
+        elif config.get("messaging") == "rabbitmq":
+            self.sender = RabbitSender()
         else:
             self.sender = UDPSender()
 

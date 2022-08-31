@@ -97,10 +97,10 @@ class Service(BaseService):
         # Listener
         #
 
-        if config.get("messaging") == "rabbitmq":
-            listener = self.listen_rabbit
-        elif config.get("messaging") == "redis":
+        if config.get("redis_host") == "redis":
             listener = self.listen_redis
+        elif config.get("messaging") == "rabbitmq":
+            listener = self.listen_rabbit
         else:
             listener = self.listen_udp
 
@@ -144,23 +144,31 @@ class Service(BaseService):
         except ModuleNotFoundError:
             critical_error("'redis' module is not installed")
 
-        logging.info("Starting redis listener")
-
-        connection = redis.Redis(
-            config.get("redis_host", "redis"),
-            config.get("redis_port", 6379),
-        )
-        sub = connection.pubsub()
-        sub.subscribe(f"nebula-{config['site_name']}")
-
         while True:
+            logging.info("Connecting to redis")
+            try:
+                connection = redis.Redis(
+                    config.get("redis_host", "localhost"),
+                    config.get("redis_port", 6379),
+                )
+                sub = connection.pubsub()
+                sub.subscribe(f"nebula-{config['site_name']}")
+            except Exception:
+                logging.error("Unable to connect redis", handlers=None)
+                time.sleep(3)
+                continue
+
+            logging.debug("Listening")
+
             try:
                 for message in sub.listen():
                     if message is not None and isinstance(message, dict):
                         if message["type"] == "message":
                             self.handle_data(message["data"])
+            except redis.exceptions.ConnectionError:  # connection lost
+                logging.warning("Redis connection lost...", handlers=None)
             except Exception:
-                log_traceback()
+                log_traceback(handlers=False)
 
     def listen_rabbit(self):
         try:

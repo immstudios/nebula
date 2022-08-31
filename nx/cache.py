@@ -1,26 +1,57 @@
 __all__ = ["cache", "Cache"]
 
 import time
-from nxtools import log_traceback, critical_error
+from nxtools import log_traceback, critical_error, logging
 
 from nx.core.common import config
+
+try:
+    import pylibmc  # noqa
+except ModuleNotFoundError:
+    pylibmc = None
+
+try:
+    import redis  # noqa
+except ModuleNotFoundError:
+    redis = None
 
 
 MAX_RETRIES = 5
 
 
-try:
-    import pylibmc  # noqa
-
-    has_pylibmc = True
-except ModuleNotFoundError:
-    has_pylibmc = False
-
-
-class Cache:
+class RedisEngine:
     def __init__(self):
-        if "cache_host" in config:
-            self.configure()
+        if redis is None:
+            critical_error("redis module is not installed")
+
+    def configure(self):
+        self.site = config["site_name"]
+        self.host = config.get("redis_host", "localhost")
+        self.port = config.get("redis_port", 6379)
+        self.connect()
+
+    def connect(self):
+        self.conn = redis.Redis(
+            self.host,
+            self.port,
+            charset="utf-8",
+            decode_responses=True,
+        )
+
+    def load(self, key: str):
+        return self.conn.get(key)
+
+    def save(self, key: str, value):
+        self.conn.set(key, value)
+
+    def delete(self, key: str):
+        self.conn.delete(key)
+
+
+class MemcachedEngine:
+    def __init__(self):
+        if pylibmc is None:
+            critical_error("pylibmc module is not installed")
 
     def configure(self):
         self.site = config["site_name"]
@@ -29,20 +60,14 @@ class Cache:
         self.connect()
 
     def connect(self):
-        if config.get("cache_mode", "memcached") == "redis":
-            pass
-        else:
-            if not has_pylibmc:
-                critical_error("'pylibmc' module is not installed")
-            self.cstring = f"{self.host}:{self.port}"
-            self.pool = False
-            self.conn = pylibmc.Client([self.cstring])
+        self.cstring = f"{self.host}:{self.port}"
+        self.pool = False
+        self.conn = pylibmc.Client([self.cstring])
 
     def load(self, key):
         if config.get("mc_thread_safe", False):
             return self.threaded_load(key)
 
-        key = str(self.site + "-" + key)
         try:
             result = self.conn.get(key)
         except pylibmc.ConnectionError:
@@ -56,7 +81,6 @@ class Cache:
         if config.get("mc_thread_safe", False):
             return self.threaded_save(key, value)
 
-        key = self.site + "-" + key
         for i in range(MAX_RETRIES):
             try:
                 self.conn.set(str(key), str(value))
@@ -72,7 +96,6 @@ class Cache:
     def delete(self, key):
         if config.get("mc_thread_safe", False):
             return self.threaded_delete(key)
-        key = self.site + "-" + key
         for i in range(MAX_RETRIES):
             try:
                 self.conn.delete(key)
@@ -88,7 +111,6 @@ class Cache:
     def threaded_load(self, key):
         if not self.pool:
             self.pool = pylibmc.ThreadMappedPool(self.conn)
-        key = self.site + "-" + key
         result = False
         with self.pool.reserve() as mc:
             try:
@@ -102,7 +124,6 @@ class Cache:
     def threaded_save(self, key, value):
         if not self.pool:
             self.pool = pylibmc.ThreadMappedPool(self.conn)
-        key = self.site + "-" + key
         with self.pool.reserve() as mc:
             for i in range(MAX_RETRIES):
                 try:
@@ -120,7 +141,6 @@ class Cache:
     def threaded_delete(self, key):
         if not self.pool:
             self.pool = pylibmc.ThreadMappedPool(self.conn)
-        key = self.site + "-" + key
         with self.pool.reserve() as mc:
             for i in range(MAX_RETRIES):
                 try:
@@ -134,6 +154,34 @@ class Cache:
                 critical_error("Memcache delete failed. This should never happen.")
         self.pool.relinquish()
         return True
+
+
+class Cache:
+    def __init__(self):
+        self.site = config["site_name"]
+
+    def configure(self):
+        if config.get("redis_host"):
+            logging.debug("Initializing redis cache")
+            self.engine = RedisEngine()
+        elif config.get("cache_host"):
+            logging.debug("Initializing memcached")
+            self.engine = MemcachedEngine()
+        else:
+            critical_error("Cache is not configured properly")
+        self.engine.configure()
+
+    def load(self, key: str):
+        key = f"{self.site}-{key}"
+        return self.engine.load(key)
+
+    def save(self, key, value):
+        key = f"{self.site}-{key}"
+        return self.engine.save(key, value)
+
+    def delete(self, key):
+        key = f"{self.site}-{key}"
+        return self.engine.delete(key)
 
 
 cache = Cache()
