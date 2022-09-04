@@ -1,13 +1,14 @@
-__all__ = ["DB"]
+#!/usr/bin/env python
 
-from nxtools import log_traceback, critical_error
-from nx.core.common import config
+import os
+import time
+import psycopg2
 
-try:
-    import psycopg2
-except ImportError:
-    log_traceback("Import error")
-    critical_error("Unable to import psycopg2")
+config = {}
+for key, value in dict(os.environ).items():
+    if key.lower().startswith("nebula_"):
+        key = key.lower().replace("nebula_", "", 1)
+        config[key] = value
 
 
 class DB(object):
@@ -22,16 +23,12 @@ class DB(object):
         self.settings = {
             key: kwargs.get(
                 self.pmap[key], 
-                config[self.pmap[key]],
+                config[self.pmap[key]]
             ) for key in self.pmap
         }
 
         self.conn = psycopg2.connect(**self.settings)
         self.cur = self.conn.cursor()
-
-    def lastid(self):
-        self.query("SELECT LASTVAL()")
-        return self.fetchall()[0][0]
 
     def query(self, query, *args):
         self.cur.execute(query, *args)
@@ -42,14 +39,14 @@ class DB(object):
     def fetchall(self):
         return self.cur.fetchall()
 
-    def commit(self):
-        self.conn.commit()
 
-    def rollback(self):
-        self.conn.rollback()
+while True:
+    try:
+        db = DB()
+        db.query("select value from settings where key = 'redis_host'")
+    except Exception:
+        print("Waiting for db")
+    else:
+        break
+    time.sleep(1)
 
-    def close(self):
-        self.conn.close()
-
-    def __len__(self):
-        return True

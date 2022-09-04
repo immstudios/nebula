@@ -173,7 +173,7 @@ class Storage(object):
         if self["protocol"] == "local":
             return self["path"]
         elif PLATFORM == "unix":
-            return os.path.join("/mnt/{}_{:02d}".format(config["site_name"], self.id))
+            return os.path.join(f"/mnt/{config['site_name']}_{self.id:02d}")
         return ""
 
     def __len__(self):
@@ -215,7 +215,10 @@ class Storages(object):
         return config["storages"].__iter__()
 
     def items(self):
-        return [(id_storage, self[id_storage]) for id_storage in config["storages"]]
+        return [
+            (id_storage, self[id_storage]) 
+            for id_storage in config["storages"]
+        ]
 
 
 storages = Storages()

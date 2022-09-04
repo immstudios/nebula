@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
-if __name__ == "__main__":
-    print()
-
 import os
 import sys
 import time
 
 from nxtools import logging, log_traceback, critical_error
+
+if __name__ == "__main__":
+    print()
 
 from nx.core.common import config
 from nx.plugins import get_plugin_path
