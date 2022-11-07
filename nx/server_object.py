@@ -120,10 +120,12 @@ class ServerObject(BaseObject):
         self.db.query(query, vals)
 
         if not self.id:
-            self["id"] = self.db.fetchone()[0]
+            new_id = self.db.fetchall()[0][0]
+            assert new_id, "Unable to insert new object, database returned no ID"
+            self["id"] = new_id
             self.db.query(
                 f"UPDATE {self.table_name} SET meta=%s WHERE id=%s",
-                [json.dumps(self.meta), self.id],
+                [json.dumps(self.meta), new_id],
             )
 
     def _update(self, **kwargs):
