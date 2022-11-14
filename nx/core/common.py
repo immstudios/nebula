@@ -177,12 +177,16 @@ class Storage(object):
         return ""
 
     def __len__(self):
+        if os.environ.get("NEBULA_DISABLE_STORAGE_MONITOR"):
+            return True
         if self["protocol"] == "local" and os.path.isdir(self["path"]):
             return True
-        return (
-            os.path.isdir(self.local_path)
-            and ismount(self.local_path)
-            and len(os.listdir(self.local_path)) != 0
+        return all(
+            [
+                os.path.isdir(self.local_path),
+                ismount(self.local_path),
+                len(os.listdir(self.local_path)) != 0,
+            ]
         )
 
 
@@ -215,10 +219,7 @@ class Storages(object):
         return config["storages"].__iter__()
 
     def items(self):
-        return [
-            (id_storage, self[id_storage]) 
-            for id_storage in config["storages"]
-        ]
+        return [(id_storage, self[id_storage]) for id_storage in config["storages"]]
 
 
 storages = Storages()

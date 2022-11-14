@@ -67,8 +67,19 @@ if __name__ == "__main__":
         while are_running(agents):
             time.sleep(0.5)
 
+    agent_list = {
+        "storage-monitor": StorageMonitor,
+        "service-monitor": ServiceMonitor,
+        "system-monitor": SystemMonitor,
+    }
+
     agents = []
-    for Agent in [StorageMonitor, ServiceMonitor, SystemMonitor]:
+    for agent_name, Agent in agent_list.items():
+        env_name = f"NEBULA_DISABLE_{agent_name.upper().replace('-', '_')}"
+        if os.environ.get(env_name) or f"--disable-{agent_name}" in sys.argv:
+            os.environ[env_name] = "1"
+            logging.info(f"Agent {agent_name} is disabled")
+            continue
         try:
             agents.append(Agent())
         except Exception:
