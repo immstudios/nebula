@@ -27,7 +27,7 @@ def create_ft_index(meta):
     for key in meta:
         if key not in meta_types:
             continue
-        weight = meta_types[key]["fulltext"]
+        weight = meta_types[key].get("fulltext")
         if not weight:
             continue
         try:

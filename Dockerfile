@@ -16,9 +16,9 @@ RUN curl https://raw.githubusercontent.com/immstudios/installers/master/install.
 
 # Nebula codebase
 
-RUN mkdir /nebula
-COPY . /nebula
-WORKDIR /nebula
+RUN mkdir -p /opt/nebula
+COPY . /opt/nebula
+WORKDIR /opt/nebula
 
 # Python deps
 

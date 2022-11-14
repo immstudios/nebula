@@ -99,7 +99,7 @@ class BaseObject:
         if value == self[key]:
             return True  # No change
         self.meta_changed = True
-        if meta_type["fulltext"] or key == "subclips":
+        if meta_type.get("fulltext") or key == "subclips":
             self.text_changed = True
         if not value and key in self.meta:
             del self.meta[key]
