@@ -74,7 +74,10 @@ class Service(BaseService):
         id_storage = asset["id_storage"]
         if not id_storage:
             return
-        if id_storage not in self.mounted_storages:
+        if (
+            storages[id_storage]["protocol"] != "local"
+            and id_storage not in self.mounted_storages
+        ):
             logging.warning(
                 f"Skipping unmounted storage {asset['id_storage']} of {asset}"
             )

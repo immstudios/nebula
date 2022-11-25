@@ -177,6 +177,7 @@ class Storage(object):
         return ""
 
     def __len__(self):
+        # the following condition is probably not needed
         if os.environ.get("NEBULA_DISABLE_STORAGE_MONITOR"):
             return True
         if self["protocol"] == "local" and os.path.isdir(self["path"]):
@@ -211,6 +212,10 @@ class UnknownStorage(object):
 
 class Storages(object):
     def __getitem__(self, key):
+        if os.environ.get("NEBULA_DISABLE_STORAGE_MONITOR"):
+            return Storage(
+                key, protocol="local", path=f"/mnt/{config['site_name']}_{key:02d}",
+            )
         if key not in config["storages"]:
             return UnknownStorage(key)
         return Storage(key, **config["storages"][key])
